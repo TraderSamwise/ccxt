@@ -1577,9 +1577,63 @@ class ftx(Exchange):
         result = self.safe_value(response, 'result', {})
         positions = self.safe_value(result, 'positions', [])
 
-        # todo unify parsePosition/parsePositions
+        collateral = self.safe_float(result, 'collateral')
+        liquidating = self.safe_float(result, 'liquidating')
 
-        return
+        unifiedResult = []
+
+        for i in range(0, len(positions)):
+            position = positions[i]
+            info = None # response # annoying to see in pprint
+            id = None
+            marketId = self.safe_string(position, 'future')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            timestamp = None
+            datetime = None
+            isolated = False # no isolated on FTX
+            hedged = False # trading in opposite direction will close the position
+            side = self.safe_string(position, 'side')
+            contracts = self.safe_float(position, 'netSize')
+            price = self.safe_float(position, 'cost') # ???
+            markPrice = None # TODO
+            notational = contracts * price
+            leverage = notational / collateral
+            initialMargin = self.safe_float(position, 'initialMarginRequirement')
+            maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
+            initialMarginPercentage = initialMargin * notational
+            maintenanceMarginPercentage = maintenanceMargin * notational
+            unrealizedPnl = self.safe_float(position, 'unrealizedPnl')
+            realizedPnl = self.safe_float(position, 'realizedPnl')
+            pnl = unrealizedPnl + realizedPnl
+            liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
+            status = 'liquidating' if liquidating else 'open'
+
+            unifiedResult.append({
+                'info': info,
+                'id': id,
+                'symbol': symbol,
+                'timestamp': timestamp,
+                'datetime': datetime,
+                'isolated':isolated,
+                'hedged': hedged,
+                'side': side,
+                'contracts': contracts,
+                'price': price,
+                'markPrice': markPrice,
+                'notational': notational,
+                'leverage': leverage,
+                'initialMargin': initialMargin,
+                'maintenanceMargin': maintenanceMargin,
+                'initialMarginPercentage': initialMarginPercentage,
+                'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                'unrealizedPnl': unrealizedPnl,
+                'pnl': pnl,
+                'liquidationPrice': liquidationPrice,
+                'status': status
+            })
+
+        return unifiedResult
         # return self.safe_value(result, 'positions', [])
 
     def fetch_deposit_address(self, code, params={}):
