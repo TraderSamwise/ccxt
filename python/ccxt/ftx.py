@@ -1578,13 +1578,13 @@ class ftx(Exchange):
         positions = self.safe_value(result, 'positions', [])
 
         collateral = self.safe_float(result, 'collateral')
-        liquidating = self.safe_float(result, 'liquidating')
+        liquidating = self.safe_value(result, 'liquidating')
 
         unifiedResult = []
 
         for i in range(0, len(positions)):
             position = positions[i]
-            info = None # response # annoying to see in pprint
+            info = position
             id = i
             marketId = self.safe_string(position, 'future')
             market = self.safe_market(marketId)
@@ -1595,7 +1595,7 @@ class ftx(Exchange):
             hedged = False # trading in opposite direction will close the position
             side = self.safe_string(position, 'side')
             contracts = self.safe_float(position, 'netSize')
-            price = self.safe_float(position, 'entryPrice') # ???
+            price = self.safe_float(position, 'entryPrice')
             markPrice = self.safe_string(market.get('info'), 'price')
             notational = contracts * price
             leverage = notational / collateral

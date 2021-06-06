@@ -5,7 +5,7 @@ import ccxt
 
 # exchanges
 
-# fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 ftxExchange = ccxt.ftx({
     'apiKey': os.environ.get('ftx_key'),
     'secret': os.environ.get('ftx_secret'),
