@@ -34,8 +34,10 @@ phemexExchange = ccxt.phemex({
 
 def test_exchange_methods(exchange):
     print(exchange.name)
+    pprint(exchange.fetch_balance())
     pprint(exchange.fetch_positions())
     pprint(exchange.fetch_orders())
+    pprint(exchange.fetch_my_trades())
 
 
 def main():
