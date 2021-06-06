@@ -1575,8 +1575,12 @@ class ftx(Exchange):
         #     }
         #
         result = self.safe_value(response, 'result', {})
+        positions = self.safe_value(result, 'positions', [])
+
         # todo unify parsePosition/parsePositions
-        return self.safe_value(result, 'positions', [])
+
+        return
+        # return self.safe_value(result, 'positions', [])
 
     def fetch_deposit_address(self, code, params={}):
         self.load_markets()
