@@ -1585,18 +1585,18 @@ class ftx(Exchange):
         for i in range(0, len(positions)):
             position = positions[i]
             info = None # response # annoying to see in pprint
-            id = None
+            id = i
             marketId = self.safe_string(position, 'future')
             market = self.safe_market(marketId)
             symbol = market['symbol']
-            timestamp = None
-            datetime = None
-            isolated = False # no isolated on FTX
+            timestamp = None # do we need?
+            datetime = None # do we need?
+            isolated = False
             hedged = False # trading in opposite direction will close the position
             side = self.safe_string(position, 'side')
             contracts = self.safe_float(position, 'netSize')
-            price = self.safe_float(position, 'cost') # ???
-            markPrice = None # TODO
+            price = self.safe_float(position, 'entryPrice') # ???
+            markPrice = self.safe_string(market.get('info'), 'price')
             notational = contracts * price
             leverage = notational / collateral
             initialMargin = self.safe_float(position, 'initialMarginRequirement')
