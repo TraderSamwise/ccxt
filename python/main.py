@@ -7,6 +7,9 @@ import ccxt
 ftxExchange = ccxt.ftx({
     'apiKey': os.environ.get('ftx_key'),
     'secret': os.environ.get('ftx_secret'),
+    'headers': {
+        'FTX-SUBACCOUNT': 'APITEST',
+    },
     'enableRateLimit': True
 })
 bitmexExchange = ccxt.bitmex({
@@ -42,10 +45,10 @@ def test_exchange_methods(exchange):
 
 def main():
     test_exchange_methods(ftxExchange)
-    test_exchange_methods(bitmexExchange)
-    test_exchange_methods(bybitExchange)
-    test_exchange_methods(binanceExchange)
-    test_exchange_methods(phemexExchange)
+    #test_exchange_methods(bitmexExchange)
+    #test_exchange_methods(bybitExchange)
+    #test_exchange_methods(binanceExchange)
+    #test_exchange_methods(phemexExchange)
 
 
 if __name__ == "__main__":
