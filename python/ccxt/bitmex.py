@@ -1496,7 +1496,7 @@ class bitmex(Exchange):
         # todo unify parsePosition/parsePositions
 
         balance = self.fetch_balance()
-        collateral = balance.get('total')
+        collateral = balance.get('total').get('BTC')
 
         unifiedResult = []
 
@@ -1513,17 +1513,17 @@ class bitmex(Exchange):
             hedged = False # trading in opposite direction will close the position
             side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
             contracts = self.safe_integer(position, 'currentQty')
-            contracts = Precise.string_div(contracts, '1e8')
+            contracts1e8 = Precise.string_div(contracts, '1e8')
             price = self.safe_float(position, 'avgEntryPrice')
             markPrice = self.safe_float(position, 'markPrice')
-            notational = contracts * price
-            leverage = notational / (collateral * markPrice)
-            initialMargin = Precise.string_div(position.get('initMargin'), '1e8') # self.safe_float(position, 'initMargin')
-            maintenanceMargin = Precise.string_div(position.get('maintMargin'), '1e8') # self.safe_float(position, 'initMargin')
+            notational = float(contracts1e8) * price
+            leverage = notational / collateral # collateral is btc so you don't have to multiply by markPrice
+            initialMargin = float(Precise.string_div(position.get('initMargin'), '1e8')) # self.safe_float(position, 'initMargin')
+            maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8')) # self.safe_float(position, 'initMargin')
             initialMarginPercentage = initialMargin * notational
             maintenanceMarginPercentage = maintenanceMargin * notational
-            unrealizedPnl = Precise.string_div(position.get('unrealisedGrossPnl'), '1e8')
-            realizedPnl = Precise.string_div(position.get('realisedPnl'), '1e8')
+            unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
+            realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
             pnl = unrealizedPnl + realizedPnl
             liquidationPrice = self.safe_string(position, 'liquidationPrice')
             status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
