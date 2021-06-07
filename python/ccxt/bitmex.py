@@ -1495,20 +1495,56 @@ class bitmex(Exchange):
         #
         # todo unify parsePosition/parsePositions
 
+        # BINANCE COIN-M UNIFIED EXAMPLE
+        # {'collateral': 0.00033487,
+        # 'contracts': 1.0,
+        # 'datetime': None,
+        # 'entryPrice': 37501.69999941,
+        # 'info': {'crossMargin': '0.00033487',
+        #          'crossWalletBalance': '0.00034262',
+        #          'entryPrice': '37501.69999941',
+        #          'initialMargin': '0.00013371',
+        #          'isolated': False,
+        #          'isolatedWallet': '0',
+        #          'leverage': '20',
+        #          'maintMargin': '0.00002674',
+        #          'maxQty': '30',
+        #          'notionalValue': '0.00267430',
+        #          'openOrderInitialMargin': '0',
+        #          'positionInitialMargin': '0.00013371',
+        #          'positionSide': 'BOTH',
+        #          'symbol': 'BTCUSD_210924',
+        #          'unrealizedProfit': '-0.00000775'},
+        # 'initialMargin': 0.00013371,
+        # 'initialMarginPercentage': 0.05,
+        # 'leverage': 20,
+        # 'liquidationPrice': None,
+        # 'maintenanceMargin': 2.674e-05,
+        # 'maintenanceMarginPercentage': 0.01,
+        # 'marginRatio': 0.0798,
+        # 'marginType': 'cross',
+        # 'markPrice': None,
+        # 'notional': 0.0026743,
+        # 'percentage': -5.79,
+        # 'side': 'long',
+        # 'symbol': 'BTCUSD_210924',
+        # 'timestamp': None,
+        # 'unrealizedPnl': -7.75e-06}
+
         balance = self.fetch_balance()
         collateral = balance.get('total').get('BTC')
 
         unifiedResult = []
 
         for i in range(0, len(response)):
-            position = response[i]
-            info = position
-            id = i
-            marketId = self.safe_string(position, 'symbol')
-            market = self.safe_market(marketId)
-            symbol = market['symbol']
-            datetime =self.safe_string(position, 'openingTimestamp')
-            timestamp = self.parse8601(datetime)
+            position = response[i]#✓
+            info = position#✓
+            id = i#✓
+            marketId = self.safe_string(position, 'symbol')#✓
+            market = self.safe_market(marketId)#✓
+            symbol = market['symbol']#✓
+            datetime =self.safe_string(position, 'openingTimestamp')#✓
+            timestamp = self.parse8601(datetime)#✓
             isolated = False # TODO fix
             hedged = False # trading in opposite direction will close the position
             side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
@@ -1516,12 +1552,12 @@ class bitmex(Exchange):
             contracts1e8 = Precise.string_div(contracts, '1e8')
             price = self.safe_float(position, 'avgEntryPrice')
             markPrice = self.safe_float(position, 'markPrice')
-            notational = float(contracts1e8) * price
-            leverage = notational / collateral # collateral is btc so you don't have to multiply by markPrice
+            notional = float(contracts1e8) * price
+            leverage = notional / collateral # collateral is btc so you don't have to multiply by markPrice
             initialMargin = float(Precise.string_div(position.get('initMargin'), '1e8')) # self.safe_float(position, 'initMargin')
             maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8')) # self.safe_float(position, 'initMargin')
-            initialMarginPercentage = initialMargin * notational
-            maintenanceMarginPercentage = maintenanceMargin * notational
+            initialMarginPercentage = initialMargin * notional
+            maintenanceMarginPercentage = maintenanceMargin * notional
             unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
             realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
             pnl = unrealizedPnl + realizedPnl
@@ -1540,7 +1576,7 @@ class bitmex(Exchange):
                 'contracts': contracts,
                 'price': price,
                 'markPrice': markPrice,
-                'notational': notational,
+                'notional': notional,
                 'leverage': leverage,
                 'initialMargin': initialMargin,
                 'maintenanceMargin': maintenanceMargin,
@@ -1549,7 +1585,12 @@ class bitmex(Exchange):
                 'unrealizedPnl': unrealizedPnl,
                 'pnl': pnl,
                 'liquidationPrice': liquidationPrice,
-                'status': status
+                'status': status,
+                'entryPrice': None,
+                'marginRatio': None,
+                'collateral': None,
+                'marginType': None,
+                'percentage': None, # not important
             })
 
         return unifiedResult

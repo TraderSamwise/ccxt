@@ -1597,12 +1597,12 @@ class ftx(Exchange):
             contracts = self.safe_float(position, 'netSize')
             price = self.safe_float(position, 'entryPrice')
             markPrice = self.safe_string(market.get('info'), 'price')
-            notational = contracts * price
-            leverage = notational / collateral
+            notional = contracts * price
+            leverage = notional / collateral
             initialMargin = self.safe_float(position, 'initialMarginRequirement')
             maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
-            initialMarginPercentage = initialMargin * notational
-            maintenanceMarginPercentage = maintenanceMargin * notational
+            initialMarginPercentage = initialMargin * notional
+            maintenanceMarginPercentage = maintenanceMargin * notional
             unrealizedPnl = self.safe_float(position, 'unrealizedPnl')
             realizedPnl = self.safe_float(position, 'realizedPnl')
             pnl = unrealizedPnl + realizedPnl
@@ -1621,7 +1621,7 @@ class ftx(Exchange):
                 'contracts': contracts,
                 'price': price,
                 'markPrice': markPrice,
-                'notational': notational,
+                'notional': notional,
                 'leverage': leverage,
                 'initialMargin': initialMargin,
                 'maintenanceMargin': maintenanceMargin,
@@ -1630,7 +1630,12 @@ class ftx(Exchange):
                 'unrealizedPnl': unrealizedPnl,
                 'pnl': pnl,
                 'liquidationPrice': liquidationPrice,
-                'status': status
+                'status': status,
+                'entryPrice': None,
+                'marginRatio': None,
+                'collateral': None,
+                'marginType': None,
+                'percentage': None, # not important
             })
 
         return unifiedResult
