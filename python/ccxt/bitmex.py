@@ -331,6 +331,8 @@ class bitmex(Exchange):
                 total = Precise.string_div(total, '1e8')
             account['free'] = free
             account['total'] = total
+            # account['timestamp'] = self.safe_string(balance, 'timestamp')
+            # account['datetime'] = self.parse8601(account['timestamp'])
             result[code] = account
         return self.parse_balance(result, False)
 
@@ -1492,7 +1494,65 @@ class bitmex(Exchange):
         #     ]
         #
         # todo unify parsePosition/parsePositions
-        return response
+
+        balance = self.fetch_balance()
+        collateral = balance.get('total')
+
+        unifiedResult = []
+
+        for i in range(0, len(response)):
+            position = response[i]
+            info = position
+            id = i
+            marketId = self.safe_string(position, 'symbol')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            datetime =self.safe_string(position, 'openingTimestamp')
+            timestamp = self.parse8601(datetime)
+            isolated = False # TODO fix
+            hedged = False # trading in opposite direction will close the position
+            side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
+            contracts = self.safe_integer(position, 'currentQty')
+            contracts = Precise.string_div(contracts, '1e8')
+            price = self.safe_float(position, 'avgEntryPrice')
+            markPrice = self.safe_float(position, 'markPrice')
+            notational = contracts * price
+            leverage = notational / (collateral * markPrice)
+            initialMargin = Precise.string_div(position.get('initMargin'), '1e8') # self.safe_float(position, 'initMargin')
+            maintenanceMargin = Precise.string_div(position.get('maintMargin'), '1e8') # self.safe_float(position, 'initMargin')
+            initialMarginPercentage = initialMargin * notational
+            maintenanceMarginPercentage = maintenanceMargin * notational
+            unrealizedPnl = Precise.string_div(position.get('unrealisedGrossPnl'), '1e8')
+            realizedPnl = Precise.string_div(position.get('realisedPnl'), '1e8')
+            pnl = unrealizedPnl + realizedPnl
+            liquidationPrice = self.safe_string(position, 'liquidationPrice')
+            status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
+
+            unifiedResult.append({
+                'info': info,
+                'id': id,
+                'symbol': symbol,
+                'timestamp': timestamp,
+                'datetime': datetime,
+                'isolated': isolated,
+                'hedged': hedged,
+                'side': side,
+                'contracts': contracts,
+                'price': price,
+                'markPrice': markPrice,
+                'notational': notational,
+                'leverage': leverage,
+                'initialMargin': initialMargin,
+                'maintenanceMargin': maintenanceMargin,
+                'initialMarginPercentage': initialMarginPercentage,
+                'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                'unrealizedPnl': unrealizedPnl,
+                'pnl': pnl,
+                'liquidationPrice': liquidationPrice,
+                'status': status
+            })
+
+        return unifiedResult
 
     def is_fiat(self, currency):
         if currency == 'EUR':
