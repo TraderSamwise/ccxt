@@ -1396,7 +1396,8 @@ class bitmex(Exchange):
 
     def fetch_positions(self, symbols=None, params={}):
         self.load_markets()
-        response = self.privateGetPosition(params)
+        unfilteredResponse = self.privateGetPosition(params)
+        response = [x for x in unfilteredResponse if x['isOpen'] == True] # isOpen only
         #     [
         #         {
         #             "account": 0,
@@ -1530,7 +1531,6 @@ class bitmex(Exchange):
         # 'symbol': 'BTCUSD_210924',
         # 'timestamp': None,
         # 'unrealizedPnl': -7.75e-06}
-
         balance = self.fetch_balance()
         collateral = balance.get('total').get('BTC')
 

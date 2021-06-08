@@ -61,8 +61,8 @@ def test_exchange_methods(exchange):
 
 
 def main():
-    test_exchange_methods(ftxExchange)
-    #test_exchange_methods(bitmexExchange)
+    #test_exchange_methods(ftxExchange)
+    test_exchange_methods(bitmexExchange)
     #test_exchange_methods(bybitExchange)
     #test_exchange_methods(binanceExchange)
     #test_exchange_methods(phemexExchange)
