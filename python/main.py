@@ -12,13 +12,13 @@ ftxExchange = ccxt.ftx({
     'headers': {
         'FTX-SUBACCOUNT': 'APITEST',
     },
-    'enableRateLimit': True
+    'enableRateLimit': True,
 })
 # fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 bitmexExchange = ccxt.bitmex({
     'apiKey': os.environ.get('bitmex_key'),
     'secret': os.environ.get('bitmex_secret'),
-    'enableRateLimit': True
+    'enableRateLimit': True,
 })
 # for bitmex testnet https://github.com/ccxt/ccxt/issues/5717
 bitmexExchange.urls['api'] = bitmexExchange.urls['test']
@@ -27,7 +27,7 @@ bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
-    'enableRateLimit': True
+    'enableRateLimit': True,
 })
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 binanceExchange = ccxt.binance({
@@ -44,7 +44,7 @@ binanceExchange = ccxt.binance({
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),
-    'enableRateLimit': True
+    'enableRateLimit': True,
 })
 
 
@@ -61,8 +61,8 @@ def test_exchange_methods(exchange):
 
 
 def main():
-    #test_exchange_methods(ftxExchange)
-    test_exchange_methods(bitmexExchange)
+    test_exchange_methods(ftxExchange)
+    #test_exchange_methods(bitmexExchange)
     #test_exchange_methods(bybitExchange)
     #test_exchange_methods(binanceExchange)
     #test_exchange_methods(phemexExchange)

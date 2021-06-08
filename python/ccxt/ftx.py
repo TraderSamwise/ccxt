@@ -1527,7 +1527,11 @@ class ftx(Exchange):
 
     def fetch_positions(self, symbols=None, params={}):
         self.load_markets()
-        response = self.privateGetAccount(params)
+        account_response = self.privateGetAccount(params)
+        positions_response = self.privateGetPositions({
+            'showAvgPrice': False,
+            **params
+        })
         #
         #     {
         #         "result":{
@@ -1574,18 +1578,18 @@ class ftx(Exchange):
         #         "success":true
         #     }
         #
-        result = self.safe_value(response, 'result', {})
-        positions = self.safe_value(result, 'positions', [])
-
-        collateral = self.safe_float(result, 'collateral')
-        liquidating = self.safe_value(result, 'liquidating')
+        account_result = self.safe_value(account_response, 'result', {})
+        # positions = self.safe_value(account_result, 'positions', [])
+        positions = self.safe_value(positions_response, 'result', [])
+        collateral = self.safe_float(account_result, 'collateral')
+        liquidating = self.safe_value(account_result, 'liquidating')
 
         unifiedResult = []
 
-        for i in range(0, len(positions)):
-            position = positions[i]
+        for i in positions:
+            position = i
             info = position
-            id = i
+            id = None
             marketId = self.safe_string(position, 'future')
             market = self.safe_market(marketId)
             symbol = market['symbol']
@@ -1596,7 +1600,7 @@ class ftx(Exchange):
             side = self.safe_string(position, 'side')
             contracts = self.safe_float(position, 'netSize')
             price = self.safe_float(position, 'entryPrice')
-            markPrice = self.safe_string(market.get('info'), 'price')
+            markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
             leverage = notional / collateral
             initialMargin = self.safe_float(position, 'initialMarginRequirement')
@@ -1608,6 +1612,11 @@ class ftx(Exchange):
             pnl = unrealizedPnl + realizedPnl
             liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
             status = 'liquidating' if liquidating else 'open'
+            entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
+            marginRatio = maintenanceMargin / collateral # not sure what this is, followed binance calc
+            marginType = 'cross'
+            percentage = unrealizedPnl / initialMargin
+            # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
 
             unifiedResult.append({
                 'info': info,
@@ -1631,11 +1640,11 @@ class ftx(Exchange):
                 'pnl': pnl,
                 'liquidationPrice': liquidationPrice,
                 'status': status,
-                'entryPrice': None,
-                'marginRatio': None,
-                'collateral': None,
-                'marginType': None,
-                'percentage': None, # not important
+                'entryPrice': entryPrice,
+                'marginRatio': marginRatio,
+                'collateral': collateral,
+                'marginType': marginType,
+                'percentage': percentage, # not important
             })
 
         return unifiedResult
