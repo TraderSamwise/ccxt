@@ -14,7 +14,8 @@ ftxExchange = ccxt.ftx({
     },
     'enableRateLimit': True,
 })
-# fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+
+# fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
 bitmexExchange = ccxt.bitmex({
     'apiKey': os.environ.get('bitmex_key'),
     'secret': os.environ.get('bitmex_secret'),
@@ -29,6 +30,7 @@ bybitExchange = ccxt.bybit({
     'secret': os.environ.get('bybit_secret'),
     'enableRateLimit': True,
 })
+
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 binanceExchange = ccxt.binance({
     'apiKey': os.environ.get('binance_key'),
@@ -40,6 +42,7 @@ binanceExchange = ccxt.binance({
         'leverageBrackets': None,
     },
 })
+
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
@@ -52,10 +55,10 @@ def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
     #pprint(exchange.fetch_balance())
-    print('##########\nfetch_positions\n##########')
-    pprint(exchange.fetch_positions())
-    print('##########\nfetch_orders\n##########')
-    pprint(exchange.fetch_orders())
+    #print('##########\nfetch_positions\n##########')
+    #pprint(exchange.fetch_positions())
+    #print('##########\nfetch_orders\n##########')
+    #pprint(exchange.fetch_orders())
     print('##########\nfetch_my_trades\n##########')
     pprint(exchange.fetch_my_trades())
 
