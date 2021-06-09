@@ -2200,12 +2200,55 @@ class bybit(Exchange):
         defaultType = self.safe_string(self.options, 'defaultType', 'linear')
         type = self.safe_string(params, 'type', defaultType)
         params = self.omit(params, 'type')
-        response = None
-        if type == 'linear':
-            response = self.privateLinearGetPositionList(self.extend(request, params))
-        elif type == 'inverse':
+        unifiedResult = []
+
+        if type == 'linear' or type == 'all':
+            unfilteredResponse = self.privateLinearGetPositionList(self.extend(request, params))
+            # {'data': {'user_id': '228297', 'symbol': 'AAVEUSDT', 'side': 'Buy', 'size': '0', 'position_value': '0',
+            #          'entry_price': '0', 'liq_price': '0', 'bust_price': '0', 'leverage': '25', 'auto_add_margin': '0',
+            #          'is_isolated': False, 'position_margin': '0', 'occ_closing_fee': '0', 'realised_pnl': '0',
+            #          'cum_realised_pnl': '0', 'free_qty': '0', 'tp_sl_mode': 'Full', 'unrealised_pnl': '0',
+            #          'deleverage_indicator': '0', 'risk_id': '191'}, 'is_valid': True}
+            response = [ d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
+
+            for i in range(0, len(response)):
+                position = response[i]
+                info = position
+
+
+
+
+        # unifiedResult.append({
+        #     'info': info,
+        #     'id': id,
+        #     'symbol': symbol,
+        #     'timestamp': timestamp,
+        #     'datetime': datetime,
+        #     'isolated': isolated,
+        #     'hedged': hedged,
+        #     'side': side,
+        #     'contracts': contracts,
+        #     'price': price,
+        #     'markPrice': markPrice,
+        #     'notional': notional,
+        #     'leverage': leverage,
+        #     'initialMargin': initialMargin,
+        #     'maintenanceMargin': maintenanceMargin,
+        #     'initialMarginPercentage': initialMarginPercentage,
+        #     'maintenanceMarginPercentage': maintenanceMarginPercentage,
+        #     'unrealizedPnl': unrealizedPnl,
+        #     'pnl': pnl,
+        #     'liquidationPrice': liquidationPrice,
+        #     'status': status,
+        #     'entryPrice': entryPrice,
+        #     'marginRatio': marginRatio,
+        #     'collateral': collateral,
+        #     'marginType': marginType,
+        #     'percentage': percentage,  # not important
+        # })
+        elif type == 'inverse' or type == 'all':
             response = self.v2PrivateGetPositionList(self.extend(request, params))
-        elif type == 'inverseFuture':
+        elif type == 'inverseFuture' or type == 'all':
             response = self.futuresPrivateGetPositionList(self.extend(request, params))
         # {
         #   ret_code: 0,
@@ -2214,7 +2257,8 @@ class bybit(Exchange):
         #   ext_info: '',
         #   result: [] or {} depending on the request
         # }
-        return self.safe_value(response, 'result')
+        return unifiedResult
+        #return self.safe_value(response, 'result')
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         url = self.implode_params(self.urls['api'], {'hostname': self.hostname})

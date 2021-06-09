@@ -1397,7 +1397,7 @@ class bitmex(Exchange):
     def fetch_positions(self, symbols=None, params={}):
         self.load_markets()
         unfilteredResponse = self.privateGetPosition(params)
-        response = [x for x in unfilteredResponse if x['isOpen'] == True] # isOpen only
+        response = [x for x in unfilteredResponse if x['isOpen'] == True]
         #     [
         #         {
         #             "account": 0,
