@@ -24,7 +24,7 @@ bitmexExchange = ccxt.bitmex({
 # for bitmex testnet https://github.com/ccxt/ccxt/issues/5717
 bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 
-# fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [ ]
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
@@ -56,11 +56,12 @@ def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
     #pprint(exchange.fetch_balance())
-    print('##########\nfetch_positions\n##########')
+    #print('##########\nfetch_positions\n##########')
     #pprint(exchange.fetch_positions()
-    pprint(exchange.fetch_positions(None, {'type': 'all'})) #bybit
-    #print('##########\nfetch_orders\n##########')
+    #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
+    print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
+    #pprint(exchange.fetch_orders('BTC/USD', None, None)) # bybit
     #print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
 
