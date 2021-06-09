@@ -2200,22 +2200,22 @@ class bybit(Exchange):
         defaultType = self.safe_string(self.options, 'defaultType', 'linear')
         type = self.safe_string(params, 'type', defaultType)
         params = self.omit(params, 'type')
+        tickers = self.fetch_tickers()
         unifiedResult = []
 
         if type == 'linear' or type == 'all':
             unfilteredResponse = self.privateLinearGetPositionList(self.extend(request, params))
-
             # {'user_id': '228297', 'symbol': 'BTCUSDT', 'side': 'Buy', 'size': '0.5', 'position_value': '17442.25',
             # 'entry_price': '34884.5', 'liq_price': '25113.5', 'bust_price': '24939', 'leverage': '100',
             # 'auto_add_margin': '0', 'is_isolated': False, 'position_margin': '4972.957274', 'occ_closing_fee': '9.352125',
             # 'realised_pnl': '-13.0816875', 'cum_realised_pnl': '-13.0816875', 'free_qty': '0.5', 'tp_sl_mode': 'Full',
             # 'unrealised_pnl': '102.54', 'deleverage_indicator': '3', 'risk_id': '1'}
-            response = [ d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
+            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
 
             for i in range(0, len(response)):
                 position = response[i]
                 info = position
-                id = None
+                id = None # do we need a unique id?
                 marketId = self.safe_string(position, 'symbol')
                 market = self.safe_market(marketId)
                 symbol = market['symbol']
@@ -2225,8 +2225,9 @@ class bybit(Exchange):
                 hedged = False  # trading in opposite direction will close the position
                 side = self.safe_string(position, "side").lower()
                 contracts = self.safe_float(position, 'size')
-                price = self.safe_float(position, 'entry_price')
-                markPrice = self.safe_float(market.get('info'), 'price') # TODO
+                price = self.safe_float(position, 'entry_price') # average open price according to bybit doc
+                ticker = tickers.get(symbol)
+                markPrice = self.safe_float(ticker, 'last')
                 notional = contracts * price
                 leverage = self.safe_float(position, 'leverage') # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0 # TODO
@@ -2236,7 +2237,7 @@ class bybit(Exchange):
                 unrealizedPnl = self.safe_float(position, 'unrealised_pnl')
                 realizedPnl = self.safe_float(position, 'realised_pnl')
                 pnl = unrealizedPnl + realizedPnl
-                liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
+                liquidationPrice = self.safe_float(position, 'liq_price')
                 status = True if contracts != 0 else False
                 collateral = 0 # TODO
                 entryPrice = self.safe_float(position, 'entry_price')
