@@ -1537,14 +1537,14 @@ class bitmex(Exchange):
         unifiedResult = []
 
         for i in range(0, len(response)):
-            position = response[i]#✓
-            info = position#✓
-            id = i#✓
-            marketId = self.safe_string(position, 'symbol')#✓
-            market = self.safe_market(marketId)#✓
-            symbol = market['symbol']#✓
-            datetime =self.safe_string(position, 'openingTimestamp')#✓
-            timestamp = self.parse8601(datetime)#✓
+            position = response[i]
+            info = position
+            id = i
+            marketId = self.safe_string(position, 'symbol')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            datetime =self.safe_string(position, 'openingTimestamp')
+            timestamp = self.parse8601(datetime)
             isolated = False if self.safe_value(position, 'crossMargin') == True else True
             hedged = False # trading in opposite direction will close the position
             side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
@@ -1565,6 +1565,10 @@ class bitmex(Exchange):
             pnl = unrealizedPnl + realizedPnl
             liquidationPrice = self.safe_string(position, 'liquidationPrice')
             status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
+            entryPrice = self.safe_float(position, 'avgEntryPrice')
+            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+            marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
+            percentage = unrealizedPnl / initialMargin
 
             unifiedResult.append({
                 'info': info,
@@ -1588,11 +1592,11 @@ class bitmex(Exchange):
                 'pnl': pnl,
                 'liquidationPrice': liquidationPrice,
                 'status': status,
-                'entryPrice': None,
-                'marginRatio': None,
-                'collateral': None,
-                'marginType': None,
-                'percentage': None, # not important
+                'entryPrice': entryPrice,
+                'marginRatio': marginRatio,
+                'collateral': collateral,
+                'marginType': marginType,
+                'percentage': percentage, # not important
             })
 
         return unifiedResult

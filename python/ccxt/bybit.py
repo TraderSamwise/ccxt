@@ -2204,48 +2204,74 @@ class bybit(Exchange):
 
         if type == 'linear' or type == 'all':
             unfilteredResponse = self.privateLinearGetPositionList(self.extend(request, params))
-            # {'data': {'user_id': '228297', 'symbol': 'AAVEUSDT', 'side': 'Buy', 'size': '0', 'position_value': '0',
-            #          'entry_price': '0', 'liq_price': '0', 'bust_price': '0', 'leverage': '25', 'auto_add_margin': '0',
-            #          'is_isolated': False, 'position_margin': '0', 'occ_closing_fee': '0', 'realised_pnl': '0',
-            #          'cum_realised_pnl': '0', 'free_qty': '0', 'tp_sl_mode': 'Full', 'unrealised_pnl': '0',
-            #          'deleverage_indicator': '0', 'risk_id': '191'}, 'is_valid': True}
+
+            # {'user_id': '228297', 'symbol': 'BTCUSDT', 'side': 'Buy', 'size': '0.5', 'position_value': '17442.25',
+            # 'entry_price': '34884.5', 'liq_price': '25113.5', 'bust_price': '24939', 'leverage': '100',
+            # 'auto_add_margin': '0', 'is_isolated': False, 'position_margin': '4972.957274', 'occ_closing_fee': '9.352125',
+            # 'realised_pnl': '-13.0816875', 'cum_realised_pnl': '-13.0816875', 'free_qty': '0.5', 'tp_sl_mode': 'Full',
+            # 'unrealised_pnl': '102.54', 'deleverage_indicator': '3', 'risk_id': '1'}
             response = [ d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
 
             for i in range(0, len(response)):
                 position = response[i]
                 info = position
+                id = None
+                marketId = self.safe_string(position, 'symbol')
+                market = self.safe_market(marketId)
+                symbol = market['symbol']
+                datetime = None # TODO
+                timestamp = self.parse8601(datetime)
+                isolated = self.safe_value(position, 'is_isolated')
+                hedged = False  # trading in opposite direction will close the position
+                side = self.safe_string(position, "side").lower()
+                contracts = self.safe_float(position, 'size')
+                price = self.safe_float(position, 'entry_price')
+                markPrice = self.safe_float(market.get('info'), 'price') # TODO
+                notional = contracts * price
+                leverage = self.safe_float(position, 'leverage') # notional / collateral # TODO calculate actual leverage
+                initialMargin = 0 # TODO
+                maintenanceMargin = 0 # TODO
+                initialMarginPercentage = initialMargin * notional
+                maintenanceMarginPercentage = maintenanceMargin * notional
+                unrealizedPnl = self.safe_float(position, 'unrealised_pnl')
+                realizedPnl = self.safe_float(position, 'realised_pnl')
+                pnl = unrealizedPnl + realizedPnl
+                liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
+                status = True if contracts != 0 else False
+                collateral = 0 # TODO
+                entryPrice = self.safe_float(position, 'entry_price')
+                marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
+                marginType = 'isolated' if isolated else 'cross'
+                percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
 
-
-
-
-        # unifiedResult.append({
-        #     'info': info,
-        #     'id': id,
-        #     'symbol': symbol,
-        #     'timestamp': timestamp,
-        #     'datetime': datetime,
-        #     'isolated': isolated,
-        #     'hedged': hedged,
-        #     'side': side,
-        #     'contracts': contracts,
-        #     'price': price,
-        #     'markPrice': markPrice,
-        #     'notional': notional,
-        #     'leverage': leverage,
-        #     'initialMargin': initialMargin,
-        #     'maintenanceMargin': maintenanceMargin,
-        #     'initialMarginPercentage': initialMarginPercentage,
-        #     'maintenanceMarginPercentage': maintenanceMarginPercentage,
-        #     'unrealizedPnl': unrealizedPnl,
-        #     'pnl': pnl,
-        #     'liquidationPrice': liquidationPrice,
-        #     'status': status,
-        #     'entryPrice': entryPrice,
-        #     'marginRatio': marginRatio,
-        #     'collateral': collateral,
-        #     'marginType': marginType,
-        #     'percentage': percentage,  # not important
-        # })
+                unifiedResult.append({
+                    'info': info,
+                    'id': id,
+                    'symbol': symbol,
+                    'timestamp': timestamp,
+                    'datetime': datetime,
+                    'isolated': isolated,
+                    'hedged': hedged,
+                    'side': side,
+                    'contracts': contracts,
+                    'price': price,
+                    'markPrice': markPrice,
+                    'notional': notional,
+                    'leverage': leverage,
+                    'initialMargin': initialMargin,
+                    'maintenanceMargin': maintenanceMargin,
+                    'initialMarginPercentage': initialMarginPercentage,
+                    'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                    'unrealizedPnl': unrealizedPnl,
+                    'pnl': pnl,
+                    'liquidationPrice': liquidationPrice,
+                    'status': status,
+                    'entryPrice': entryPrice,
+                    'marginRatio': marginRatio,
+                    'collateral': collateral,
+                    'marginType': marginType,
+                    'percentage': percentage,  # not important
+                })
         elif type == 'inverse' or type == 'all':
             response = self.v2PrivateGetPositionList(self.extend(request, params))
         elif type == 'inverseFuture' or type == 'all':
