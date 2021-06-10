@@ -44,7 +44,7 @@ binanceExchange = ccxt.binance({
     },
 })
 
-# fetch_balance [x], fetch_positions [x], fetch_orders [ ], fetch_my_trades [ ]
+# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),

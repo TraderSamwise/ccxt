@@ -2277,7 +2277,7 @@ class phemex(Exchange):
             currency = self.currency(code)
             params = self.omit(params, 'code')
             request['currency'] = currency['id']
-        # response = self.privateGetAccountsAccountPositions(self.extend(request, params))
+        # response = self.privateGetAccountsAccountPositions(self.extend(request, params)) # this call is not prone to be rate limited
         response = self.privateGetAccountsPositions(self.extend(request, params))
         #
         #     {
@@ -2369,6 +2369,7 @@ class phemex(Exchange):
         for i in range(0, len(positions)):
             position = positions[i]
             info = position
+            evScale = '1e8' if contractType == 'inverse' else '1e4'
             id = i
             marketId = self.safe_string(position, 'symbol')
             market = self.safe_market(marketId)
@@ -2379,22 +2380,21 @@ class phemex(Exchange):
             hedged = False  # trading in opposite direction will close the position
             side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
             contracts = self.safe_integer(position, 'size')
-            price = self.safe_float(position, 'avgEntryPrice')
-            markPrice = self.safe_float(position, 'markPrice')
-            notional = self.safe_float(position, 'valueEv') # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
-            collateral = self.safe_string(accountBalance, 'accountBalanceEv')
-            collateral = float(Precise.string_div(collateral, '1e8' if contractType == 'inverse' else '1e4')) # why do they store usd in 1e4
+            price = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
+            markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
+            notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale)) # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
+            collateral = float(Precise.string_div(self.safe_string(accountBalance, 'accountBalanceEv'), evScale))
             leverage =  notional / collateral
-            initialMargin = 0  # TODO
-            maintenanceMargin = 0  # TODO
+            initialMargin = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
+            maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
             initialMarginPercentage = initialMargin * notional
             maintenanceMarginPercentage = maintenanceMargin * notional
-            unrealizedPnl = 0.0 # TODO https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
-            realizedPnl = self.safe_float(position, 'realisedPnl', 0.0)
+            unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv'), '1e8')) # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
+            realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv'), '1e8'))
             pnl = unrealizedPnl + realizedPnl
-            liquidationPrice = self.safe_string(position, 'liquidationPrice')
+            liquidationPrice = float(Precise.string_div(self.safe_string(position, 'liquidationPriceEp'), '1e4'))
             status = 'open'
-            entryPrice = self.safe_float(position, 'avgEntryPrice')
+            entryPrice = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
             marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
             marginType = 'cross' # only cross
             percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
