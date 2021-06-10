@@ -2354,7 +2354,76 @@ class phemex(Exchange):
         #
         data = self.safe_value(response, 'data', {})
         positions = self.safe_value(data, 'positions', [])
-        # todo unify parsePosition/parsePositions
+
+        unifiedResult = []
+
+        for i in range(0, len(positions)):
+            position = response[i]
+            info = position
+            id = i
+            marketId = self.safe_string(position, 'symbol')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            datetime = self.safe_string(position, 'openingTimestamp')
+            timestamp = self.parse8601(datetime)
+            isolated = False if self.safe_value(position, 'crossMargin') == True else True
+            hedged = False  # trading in opposite direction will close the position
+            side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
+            contracts = self.safe_integer(position, 'currentQty')
+            # contracts1e8 = Precise.string_div(contracts, '1e8')
+            price = self.safe_float(position, 'avgEntryPrice')
+            markPrice = self.safe_float(position, 'markPrice')
+            # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
+            # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
+            notional = self.safe_float(position,
+                                       'homeNotional')  # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
+            leverage = self.safe_float(position,
+                                       'leverage')  # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
+            initialMargin = self.safe_float(position, 'initMarginReq')  # self.safe_float(position, 'initMargin')
+            maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
+            initialMarginPercentage = initialMargin * notional  # TODO make initialMargin * btcNotional?
+            maintenanceMarginPercentage = maintenanceMargin * notional  # TODO make maintenanceMargin * btcNotional?
+            unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
+            realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
+            pnl = unrealizedPnl + realizedPnl
+            liquidationPrice = self.safe_string(position, 'liquidationPrice')
+            status = 'open' if position.get('isOpen') else 'closed'  # TODO liquidating status
+            entryPrice = self.safe_float(position, 'avgEntryPrice')
+            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+            marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
+            percentage = unrealizedPnl / initialMargin
+
+            unifiedResult.append({
+                'info': info,
+                'id': id,
+                'symbol': symbol,
+                'timestamp': timestamp,
+                'datetime': datetime,
+                'isolated': isolated,
+                'hedged': hedged,
+                'side': side,
+                'contracts': contracts,
+                'price': price,
+                'markPrice': markPrice,
+                'notional': notional,
+                'leverage': leverage,
+                'initialMargin': initialMargin,
+                'maintenanceMargin': maintenanceMargin,
+                'initialMarginPercentage': initialMarginPercentage,
+                'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                'unrealizedPnl': unrealizedPnl,
+                'pnl': pnl,
+                'liquidationPrice': liquidationPrice,
+                'status': status,
+                'entryPrice': entryPrice,
+                'marginRatio': marginRatio,
+                'collateral': collateral,
+                'marginType': marginType,
+                'percentage': percentage,  # not important
+            })
+
+
+
         return positions
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
