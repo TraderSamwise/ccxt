@@ -2277,7 +2277,8 @@ class phemex(Exchange):
             currency = self.currency(code)
             params = self.omit(params, 'code')
             request['currency'] = currency['id']
-        response = self.privateGetAccountsAccountPositions(self.extend(request, params))
+        # response = self.privateGetAccountsAccountPositions(self.extend(request, params))
+        response = self.privateGetAccountsPositions(self.extend(request, params))
         #
         #     {
         #         "code":0,"msg":"",
@@ -2361,6 +2362,10 @@ class phemex(Exchange):
 
         contractType = 'inverse' if accountBalance.get('currency') == 'BTC' else 'linear'
 
+        # scales
+        # Ep = 1e4
+        # Er = 1e8
+        # Ev = 1e8 for bitcoin, 1e4 for inverse
         for i in range(0, len(positions)):
             position = positions[i]
             info = position
@@ -2376,7 +2381,7 @@ class phemex(Exchange):
             contracts = self.safe_integer(position, 'size')
             price = self.safe_float(position, 'avgEntryPrice')
             markPrice = self.safe_float(position, 'markPrice')
-            notional = self.safe_float(position, 'value') # value of contracts in settlement currency
+            notional = self.safe_float(position, 'valueEv') # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
             collateral = self.safe_string(accountBalance, 'accountBalanceEv')
             collateral = float(Precise.string_div(collateral, '1e8' if contractType == 'inverse' else '1e4')) # why do they store usd in 1e4
             leverage =  notional / collateral

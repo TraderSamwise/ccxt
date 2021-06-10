@@ -61,12 +61,12 @@ def test_exchange_methods(exchange):
     #pprint(exchange.fetch_positions())
     print(exchange.fetch_positions(None, {'currency': 'BTC'})) # phemex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
-    print('##########\nfetch_orders\n##########')
+    #print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
-    pprint(exchange.fetch_orders('DOGE/USD', None, None)) # phemex /  bybit
-    print('##########\nfetch_my_trades\n##########')
+    #pprint(exchange.fetch_orders('DOGE/USD', None, None)) # phemex /  bybit
+    #print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
-    pprint(exchange.fetch_my_trades('DOGE/USD', None, None))
+    p#print(exchange.fetch_my_trades('DOGE/USD', None, None))
 
 
 def main():
