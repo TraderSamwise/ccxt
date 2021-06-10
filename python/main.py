@@ -44,7 +44,7 @@ binanceExchange = ccxt.binance({
     },
 })
 
-# fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+# fetch_balance [x], fetch_positions [x], fetch_orders [ ], fetch_my_trades [ ]
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),
@@ -57,13 +57,13 @@ def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
     #pprint(exchange.fetch_balance())
-    print('##########\nfetch_positions\n##########')
+    #print('##########\nfetch_positions\n##########')
     #pprint(exchange.fetch_positions())
-    pprint(exchange.fetch_positions(None, {'currency': 'BTC'})) # phemex - make ts call that calls all
+    #pprint(exchange.fetch_positions(None, {'currency': 'BTC'})) # phemex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
-    #print('##########\nfetch_orders\n##########')
+    print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
-    #pprint(exchange.fetch_orders('BTC/USD', None, None)) # bybit
+    pprint(exchange.fetch_orders('BTC/USD', None, None)) # phemex /  bybit
     #print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
     #pprint(exchange.fetch_my_trades('BTC/USD', None, None))
