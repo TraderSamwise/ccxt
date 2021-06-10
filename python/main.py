@@ -44,20 +44,21 @@ binanceExchange = ccxt.binance({
     },
 })
 
-# fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+# fetch_balance [x], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),
     'enableRateLimit': True,
 })
+phemexExchange.urls['api'] = phemexExchange.urls['test']
 
 
 def test_exchange_methods(exchange):
     print(exchange.name)
-    print('##########\nfetch_balance\n##########')
-    pprint(exchange.fetch_balance())
-    #print('##########\nfetch_positions\n##########')
-    #pprint(exchange.fetch_positions()
+    #print('##########\nfetch_balance\n##########')
+    #pprint(exchange.fetch_balance())
+    print('##########\nfetch_positions\n##########')
+    pprint(exchange.fetch_positions())
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
@@ -70,9 +71,9 @@ def test_exchange_methods(exchange):
 def main():
     #test_exchange_methods(ftxExchange)
     #test_exchange_methods(bitmexExchange)
-    test_exchange_methods(bybitExchange)
+    #test_exchange_methods(bybitExchange)
     #test_exchange_methods(binanceExchange)
-    #test_exchange_methods(phemexExchange)
+    test_exchange_methods(phemexExchange)
 
 
 if __name__ == "__main__":
