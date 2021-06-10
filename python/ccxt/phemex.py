@@ -1177,7 +1177,7 @@ class phemex(Exchange):
             price = self.from_ep(self.safe_number(trade, 'execPriceEp'), market)
             amount = self.from_ev(self.safe_number(trade, 'execBaseQtyEv'), market)
             amount = self.safe_number(trade, 'execQty', amount)
-            cost = self.from_ev(self.safe_number_2(trade, 'execQuoteQtyEv', 'execValueEv'), market)
+            cost = self.from_ev(self.safe_number(trade, 'execValueEv'), market)
             feeCost = self.from_ev(self.safe_number(trade, 'execFeeEv'), market)
             if feeCost is not None:
                 feeRate = None
@@ -2010,6 +2010,7 @@ class phemex(Exchange):
             raise ArgumentsRequired(self.id + ' fetchClosedOrders() requires a symbol argument')
         self.load_markets()
         market = self.market(symbol)
+        market['valueScale'] = 0 if market['valueScale'] is None else market['valueScale'] # fixes bug for parsing price into None scale
         method = 'privateGetExchangeSpotOrderTrades' if market['spot'] else 'privateGetExchangeOrderTrade'
         request = {
             'symbol': market['id'],
