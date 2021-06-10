@@ -22,6 +22,7 @@ from ccxt.base.errors import DDoSProtection
 from ccxt.base.decimal_to_precision import ROUND
 from ccxt.base.decimal_to_precision import DECIMAL_PLACES
 from ccxt.base.decimal_to_precision import TICK_SIZE
+from ccxt.base.precise import Precise
 
 
 class phemex(Exchange):
@@ -2353,45 +2354,44 @@ class phemex(Exchange):
         #     }
         #
         data = self.safe_value(response, 'data', {})
-        positions = self.safe_value(data, 'positions', [])
-
+        accountBalance = data.get('account')
+        positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0'] # only open positions
         unifiedResult = []
 
+        contractType = 'inverse' if accountBalance.get('currency') == 'BTC' else 'linear'
+
         for i in range(0, len(positions)):
-            position = response[i]
+            position = positions[i]
             info = position
             id = i
             marketId = self.safe_string(position, 'symbol')
             market = self.safe_market(marketId)
             symbol = market['symbol']
-            datetime = self.safe_string(position, 'openingTimestamp')
+            datetime = None # TODO
             timestamp = self.parse8601(datetime)
-            isolated = False if self.safe_value(position, 'crossMargin') == True else True
+            isolated = False # don't have isolated
             hedged = False  # trading in opposite direction will close the position
-            side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
-            contracts = self.safe_integer(position, 'currentQty')
-            # contracts1e8 = Precise.string_div(contracts, '1e8')
+            side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
+            contracts = self.safe_integer(position, 'size')
             price = self.safe_float(position, 'avgEntryPrice')
             markPrice = self.safe_float(position, 'markPrice')
-            # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
-            # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
-            notional = self.safe_float(position,
-                                       'homeNotional')  # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
-            leverage = self.safe_float(position,
-                                       'leverage')  # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
-            initialMargin = self.safe_float(position, 'initMarginReq')  # self.safe_float(position, 'initMargin')
-            maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
-            initialMarginPercentage = initialMargin * notional  # TODO make initialMargin * btcNotional?
-            maintenanceMarginPercentage = maintenanceMargin * notional  # TODO make maintenanceMargin * btcNotional?
-            unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
-            realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
+            notional = self.safe_float(position, 'value') # value of contracts in settlement currency
+            collateral = self.safe_string(accountBalance, 'accountBalanceEv')
+            collateral = float(Precise.string_div(collateral, '1e8' if contractType == 'inverse' else '1e4')) # why do they store usd in 1e4
+            leverage =  notional / collateral
+            initialMargin = 0  # TODO
+            maintenanceMargin = 0  # TODO
+            initialMarginPercentage = initialMargin * notional
+            maintenanceMarginPercentage = maintenanceMargin * notional
+            unrealizedPnl = 0.0 # TODO https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
+            realizedPnl = self.safe_float(position, 'realisedPnl', 0.0)
             pnl = unrealizedPnl + realizedPnl
             liquidationPrice = self.safe_string(position, 'liquidationPrice')
-            status = 'open' if position.get('isOpen') else 'closed'  # TODO liquidating status
+            status = 'open'
             entryPrice = self.safe_float(position, 'avgEntryPrice')
             marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
-            marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
-            percentage = unrealizedPnl / initialMargin
+            marginType = 'cross' # only cross
+            percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
 
             unifiedResult.append({
                 'info': info,
@@ -2422,9 +2422,7 @@ class phemex(Exchange):
                 'percentage': percentage,  # not important
             })
 
-
-
-        return positions
+        return unifiedResult
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         query = self.omit(params, self.extract_params(path))
