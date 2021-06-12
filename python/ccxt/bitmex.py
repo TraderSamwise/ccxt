@@ -18,7 +18,220 @@ from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
 
-class bitmex(Exchange):
+class BitmexUnifiedMixin(object):
+
+    def parse_position(self, position, collateral=None):
+            info = position
+            id = self.safe_string(position, 'symbol')
+            marketId = self.safe_string(position, 'symbol')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            datetime =self.safe_string(position, 'openingTimestamp')
+            timestamp = self.parse8601(datetime)
+            isolated = False if self.safe_value(position, 'crossMargin') == True else True
+            hedged = False # trading in opposite direction will close the position
+            side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
+            contracts = self.safe_integer(position, 'currentQty')
+            # contracts1e8 = Precise.string_div(contracts, '1e8')
+            price = self.safe_float(position, 'avgEntryPrice')
+            markPrice = self.safe_float(position, 'markPrice')
+            # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
+            # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
+            notional = self.safe_float(position, 'homeNotional') # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
+            leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
+            initialMargin = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
+            maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
+            initialMarginPercentage = initialMargin * notional # TODO make initialMargin * btcNotional?
+            maintenanceMarginPercentage = maintenanceMargin * notional # TODO make maintenanceMargin * btcNotional?
+            unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
+            realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
+            pnl = unrealizedPnl + realizedPnl
+            liquidationPrice = self.safe_string(position, 'liquidationPrice')
+            status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
+            entryPrice = self.safe_float(position, 'avgEntryPrice')
+            marginRatio = maintenanceMargin / collateral if collateral else None  # not sure what this is, followed binance calc
+            marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
+            percentage = unrealizedPnl / initialMargin
+
+            return ({
+                'info': info,
+                'id': id,
+                'symbol': symbol,
+                'timestamp': timestamp,
+                'datetime': datetime,
+                'isolated': isolated,
+                'hedged': hedged,
+                'side': side,
+                'contracts': contracts,
+                'price': price,
+                'markPrice': markPrice,
+                'notional': notional,
+                'leverage': leverage,
+                'initialMargin': initialMargin,
+                'maintenanceMargin': maintenanceMargin,
+                'initialMarginPercentage': initialMarginPercentage,
+                'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                'unrealizedPnl': unrealizedPnl,
+                'pnl': pnl,
+                'liquidationPrice': liquidationPrice,
+                'status': status,
+                'entryPrice': entryPrice,
+                'marginRatio': marginRatio,
+                'collateral': collateral,
+                'marginType': marginType,
+                'percentage': percentage, # not important
+            })
+
+    def fetch_positions(self, symbols=None, params={}):
+        self.load_markets()
+        unfilteredResponse = self.privateGetPosition(params)
+        balance = self.fetch_balance()
+        collateral = balance.get('total').get('BTC')
+
+        #     [
+        #         {
+        #             "account": 0,
+        #             "symbol": "string",
+        #             "currency": "string",
+        #             "underlying": "string",
+        #             "quoteCurrency": "string",
+        #             "commission": 0,
+        #             "initMarginReq": 0,
+        #             "maintMarginReq": 0,
+        #             "riskLimit": 0,
+        #             "leverage": 0,
+        #             "crossMargin": True,
+        #             "deleveragePercentile": 0,
+        #             "rebalancedPnl": 0,
+        #             "prevRealisedPnl": 0,
+        #             "prevUnrealisedPnl": 0,
+        #             "prevClosePrice": 0,
+        #             "openingTimestamp": "2020-11-09T06:53:59.892Z",
+        #             "openingQty": 0,
+        #             "openingCost": 0,
+        #             "openingComm": 0,
+        #             "openOrderBuyQty": 0,
+        #             "openOrderBuyCost": 0,
+        #             "openOrderBuyPremium": 0,
+        #             "openOrderSellQty": 0,
+        #             "openOrderSellCost": 0,
+        #             "openOrderSellPremium": 0,
+        #             "execBuyQty": 0,
+        #             "execBuyCost": 0,
+        #             "execSellQty": 0,
+        #             "execSellCost": 0,
+        #             "execQty": 0,
+        #             "execCost": 0,
+        #             "execComm": 0,
+        #             "currentTimestamp": "2020-11-09T06:53:59.893Z",
+        #             "currentQty": 0,
+        #             "currentCost": 0,
+        #             "currentComm": 0,
+        #             "realisedCost": 0,
+        #             "unrealisedCost": 0,
+        #             "grossOpenCost": 0,
+        #             "grossOpenPremium": 0,
+        #             "grossExecCost": 0,
+        #             "isOpen": True,
+        #             "markPrice": 0,
+        #             "markValue": 0,
+        #             "riskValue": 0,
+        #             "homeNotional": 0,
+        #             "foreignNotional": 0,
+        #             "posState": "string",
+        #             "posCost": 0,
+        #             "posCost2": 0,
+        #             "posCross": 0,
+        #             "posInit": 0,
+        #             "posComm": 0,
+        #             "posLoss": 0,
+        #             "posMargin": 0,
+        #             "posMaint": 0,
+        #             "posAllowance": 0,
+        #             "taxableMargin": 0,
+        #             "initMargin": 0,
+        #             "maintMargin": 0,
+        #             "sessionMargin": 0,
+        #             "targetExcessMargin": 0,
+        #             "varMargin": 0,
+        #             "realisedGrossPnl": 0,
+        #             "realisedTax": 0,
+        #             "realisedPnl": 0,
+        #             "unrealisedGrossPnl": 0,
+        #             "longBankrupt": 0,
+        #             "shortBankrupt": 0,
+        #             "taxBase": 0,
+        #             "indicativeTaxRate": 0,
+        #             "indicativeTax": 0,
+        #             "unrealisedTax": 0,
+        #             "unrealisedPnl": 0,
+        #             "unrealisedPnlPcnt": 0,
+        #             "unrealisedRoePcnt": 0,
+        #             "simpleQty": 0,
+        #             "simpleCost": 0,
+        #             "simpleValue": 0,
+        #             "simplePnl": 0,
+        #             "simplePnlPcnt": 0,
+        #             "avgCostPrice": 0,
+        #             "avgEntryPrice": 0,
+        #             "breakEvenPrice": 0,
+        #             "marginCallPrice": 0,
+        #             "liquidationPrice": 0,
+        #             "bankruptPrice": 0,
+        #             "timestamp": "2020-11-09T06:53:59.894Z",
+        #             "lastPrice": 0,
+        #             "lastValue": 0
+        #         }
+        #     ]
+        #
+        # todo unify parsePosition/parsePositions
+
+        # BINANCE COIN-M UNIFIED EXAMPLE
+        # {'collateral': 0.00033487,
+        # 'contracts': 1.0,
+        # 'datetime': None,
+        # 'entryPrice': 37501.69999941,
+        # 'info': {'crossMargin': '0.00033487',
+        #          'crossWalletBalance': '0.00034262',
+        #          'entryPrice': '37501.69999941',
+        #          'initialMargin': '0.00013371',
+        #          'isolated': False,
+        #          'isolatedWallet': '0',
+        #          'leverage': '20',
+        #          'maintMargin': '0.00002674',
+        #          'maxQty': '30',
+        #          'notionalValue': '0.00267430',
+        #          'openOrderInitialMargin': '0',
+        #          'positionInitialMargin': '0.00013371',
+        #          'positionSide': 'BOTH',
+        #          'symbol': 'BTCUSD_210924',
+        #          'unrealizedProfit': '-0.00000775'},
+        # 'initialMargin': 0.00013371,
+        # 'initialMarginPercentage': 0.05,
+        # 'leverage': 20,
+        # 'liquidationPrice': None,
+        # 'maintenanceMargin': 2.674e-05,
+        # 'maintenanceMarginPercentage': 0.01,
+        # 'marginRatio': 0.0798,
+        # 'marginType': 'cross',
+        # 'markPrice': None,
+        # 'notional': 0.0026743,
+        # 'percentage': -5.79,
+        # 'side': 'long',
+        # 'symbol': 'BTCUSD_210924',
+        # 'timestamp': None,
+        # 'unrealizedPnl': -7.75e-06}
+        # balance = self.fetch_balance()
+        # collateral = balance.get('total').get('BTC')
+
+        response = [x for x in unfilteredResponse if x['isOpen'] == True]
+        unifiedResult = []
+        for i in range(0, len(response)):
+            position = response[i]
+            unifiedResult.append(self.parse_position(position, collateral))
+        return unifiedResult
+
+class bitmex(Exchange, BitmexUnifiedMixin):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {
@@ -1393,213 +1606,6 @@ class bitmex(Exchange):
         #     ]
         #
         return self.parse_orders(response, market)
-
-    def fetch_positions(self, symbols=None, params={}):
-        self.load_markets()
-        unfilteredResponse = self.privateGetPosition(params)
-        response = [x for x in unfilteredResponse if x['isOpen'] == True]
-        #     [
-        #         {
-        #             "account": 0,
-        #             "symbol": "string",
-        #             "currency": "string",
-        #             "underlying": "string",
-        #             "quoteCurrency": "string",
-        #             "commission": 0,
-        #             "initMarginReq": 0,
-        #             "maintMarginReq": 0,
-        #             "riskLimit": 0,
-        #             "leverage": 0,
-        #             "crossMargin": True,
-        #             "deleveragePercentile": 0,
-        #             "rebalancedPnl": 0,
-        #             "prevRealisedPnl": 0,
-        #             "prevUnrealisedPnl": 0,
-        #             "prevClosePrice": 0,
-        #             "openingTimestamp": "2020-11-09T06:53:59.892Z",
-        #             "openingQty": 0,
-        #             "openingCost": 0,
-        #             "openingComm": 0,
-        #             "openOrderBuyQty": 0,
-        #             "openOrderBuyCost": 0,
-        #             "openOrderBuyPremium": 0,
-        #             "openOrderSellQty": 0,
-        #             "openOrderSellCost": 0,
-        #             "openOrderSellPremium": 0,
-        #             "execBuyQty": 0,
-        #             "execBuyCost": 0,
-        #             "execSellQty": 0,
-        #             "execSellCost": 0,
-        #             "execQty": 0,
-        #             "execCost": 0,
-        #             "execComm": 0,
-        #             "currentTimestamp": "2020-11-09T06:53:59.893Z",
-        #             "currentQty": 0,
-        #             "currentCost": 0,
-        #             "currentComm": 0,
-        #             "realisedCost": 0,
-        #             "unrealisedCost": 0,
-        #             "grossOpenCost": 0,
-        #             "grossOpenPremium": 0,
-        #             "grossExecCost": 0,
-        #             "isOpen": True,
-        #             "markPrice": 0,
-        #             "markValue": 0,
-        #             "riskValue": 0,
-        #             "homeNotional": 0,
-        #             "foreignNotional": 0,
-        #             "posState": "string",
-        #             "posCost": 0,
-        #             "posCost2": 0,
-        #             "posCross": 0,
-        #             "posInit": 0,
-        #             "posComm": 0,
-        #             "posLoss": 0,
-        #             "posMargin": 0,
-        #             "posMaint": 0,
-        #             "posAllowance": 0,
-        #             "taxableMargin": 0,
-        #             "initMargin": 0,
-        #             "maintMargin": 0,
-        #             "sessionMargin": 0,
-        #             "targetExcessMargin": 0,
-        #             "varMargin": 0,
-        #             "realisedGrossPnl": 0,
-        #             "realisedTax": 0,
-        #             "realisedPnl": 0,
-        #             "unrealisedGrossPnl": 0,
-        #             "longBankrupt": 0,
-        #             "shortBankrupt": 0,
-        #             "taxBase": 0,
-        #             "indicativeTaxRate": 0,
-        #             "indicativeTax": 0,
-        #             "unrealisedTax": 0,
-        #             "unrealisedPnl": 0,
-        #             "unrealisedPnlPcnt": 0,
-        #             "unrealisedRoePcnt": 0,
-        #             "simpleQty": 0,
-        #             "simpleCost": 0,
-        #             "simpleValue": 0,
-        #             "simplePnl": 0,
-        #             "simplePnlPcnt": 0,
-        #             "avgCostPrice": 0,
-        #             "avgEntryPrice": 0,
-        #             "breakEvenPrice": 0,
-        #             "marginCallPrice": 0,
-        #             "liquidationPrice": 0,
-        #             "bankruptPrice": 0,
-        #             "timestamp": "2020-11-09T06:53:59.894Z",
-        #             "lastPrice": 0,
-        #             "lastValue": 0
-        #         }
-        #     ]
-        #
-        # todo unify parsePosition/parsePositions
-
-        # BINANCE COIN-M UNIFIED EXAMPLE
-        # {'collateral': 0.00033487,
-        # 'contracts': 1.0,
-        # 'datetime': None,
-        # 'entryPrice': 37501.69999941,
-        # 'info': {'crossMargin': '0.00033487',
-        #          'crossWalletBalance': '0.00034262',
-        #          'entryPrice': '37501.69999941',
-        #          'initialMargin': '0.00013371',
-        #          'isolated': False,
-        #          'isolatedWallet': '0',
-        #          'leverage': '20',
-        #          'maintMargin': '0.00002674',
-        #          'maxQty': '30',
-        #          'notionalValue': '0.00267430',
-        #          'openOrderInitialMargin': '0',
-        #          'positionInitialMargin': '0.00013371',
-        #          'positionSide': 'BOTH',
-        #          'symbol': 'BTCUSD_210924',
-        #          'unrealizedProfit': '-0.00000775'},
-        # 'initialMargin': 0.00013371,
-        # 'initialMarginPercentage': 0.05,
-        # 'leverage': 20,
-        # 'liquidationPrice': None,
-        # 'maintenanceMargin': 2.674e-05,
-        # 'maintenanceMarginPercentage': 0.01,
-        # 'marginRatio': 0.0798,
-        # 'marginType': 'cross',
-        # 'markPrice': None,
-        # 'notional': 0.0026743,
-        # 'percentage': -5.79,
-        # 'side': 'long',
-        # 'symbol': 'BTCUSD_210924',
-        # 'timestamp': None,
-        # 'unrealizedPnl': -7.75e-06}
-        balance = self.fetch_balance()
-        collateral = balance.get('total').get('BTC')
-
-        unifiedResult = []
-
-        for i in range(0, len(response)):
-            position = response[i]
-            info = position
-            id = i
-            marketId = self.safe_string(position, 'symbol')
-            market = self.safe_market(marketId)
-            symbol = market['symbol']
-            datetime =self.safe_string(position, 'openingTimestamp')
-            timestamp = self.parse8601(datetime)
-            isolated = False if self.safe_value(position, 'crossMargin') == True else True
-            hedged = False # trading in opposite direction will close the position
-            side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
-            contracts = self.safe_integer(position, 'currentQty')
-            # contracts1e8 = Precise.string_div(contracts, '1e8')
-            price = self.safe_float(position, 'avgEntryPrice')
-            markPrice = self.safe_float(position, 'markPrice')
-            # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
-            # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
-            notional = self.safe_float(position, 'homeNotional') # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
-            leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
-            initialMargin = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
-            maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
-            initialMarginPercentage = initialMargin * notional # TODO make initialMargin * btcNotional?
-            maintenanceMarginPercentage = maintenanceMargin * notional # TODO make maintenanceMargin * btcNotional?
-            unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
-            realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
-            pnl = unrealizedPnl + realizedPnl
-            liquidationPrice = self.safe_string(position, 'liquidationPrice')
-            status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
-            entryPrice = self.safe_float(position, 'avgEntryPrice')
-            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
-            marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
-            percentage = unrealizedPnl / initialMargin
-
-            unifiedResult.append({
-                'info': info,
-                'id': id,
-                'symbol': symbol,
-                'timestamp': timestamp,
-                'datetime': datetime,
-                'isolated': isolated,
-                'hedged': hedged,
-                'side': side,
-                'contracts': contracts,
-                'price': price,
-                'markPrice': markPrice,
-                'notional': notional,
-                'leverage': leverage,
-                'initialMargin': initialMargin,
-                'maintenanceMargin': maintenanceMargin,
-                'initialMarginPercentage': initialMarginPercentage,
-                'maintenanceMarginPercentage': maintenanceMarginPercentage,
-                'unrealizedPnl': unrealizedPnl,
-                'pnl': pnl,
-                'liquidationPrice': liquidationPrice,
-                'status': status,
-                'entryPrice': entryPrice,
-                'marginRatio': marginRatio,
-                'collateral': collateral,
-                'marginType': marginType,
-                'percentage': percentage, # not important
-            })
-
-        return unifiedResult
 
     def is_fiat(self, currency):
         if currency == 'EUR':

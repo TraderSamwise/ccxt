@@ -108,6 +108,7 @@ except ImportError:
 # -----------------------------------------------------------------------------
 
 
+
 class Exchange(object):
     """Base exchange class"""
     id = None
@@ -219,6 +220,7 @@ class Exchange(object):
     orders = None
     myTrades = None
     trades = None
+    positions = None
     transactions = None
     ohlcvs = None
     tickers = None

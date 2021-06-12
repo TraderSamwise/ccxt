@@ -16,9 +16,10 @@ from ccxt.base.errors import DDoSProtection
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+from ccxt.bitmex import BitmexUnifiedMixin
 
 
-class bitmex(Exchange):
+class bitmex(Exchange, BitmexUnifiedMixin):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {
