@@ -25,8 +25,12 @@ from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TRUNCATE
 from ccxt.base.precise import Precise
 
+class BinanceTealstreetMixin (object):
+    def parse_position(self):
+        return None
 
-class binance(Exchange):
+
+class binance(Exchange, BinanceTealstreetMixin):
 
     def describe(self):
         return self.deep_extend(super(binance, self).describe(), {
