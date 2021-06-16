@@ -348,6 +348,12 @@ class Exchange(object):
         self.decimal_to_precision = decimal_to_precision
         self.number_to_string = number_to_string
 
+        # TEALSTREET: needed to get snapshots for websocket initial calls that don't provide snapshots
+        self.first_my_trades = True
+        self.first_balance = True
+        self.first_orders = True
+        self.first_postions = True
+
         # version = '.'.join(map(str, sys.version_info[:3]))
         # self.userAgent = {
         #     'User-Agent': 'ccxt/' + __version__ + ' (+https://github.com/ccxt/ccxt) Python/' + version
