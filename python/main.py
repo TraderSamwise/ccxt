@@ -39,7 +39,8 @@ binanceExchange = ccxt.binance({
     'enableRateLimit': True,
     'options': {
         # 'defaultType': 'future', # USD-M
-        'defaultType': 'delivery', # COIN-M
+        #'defaultType': 'delivery', # COIN-M
+        'defaultType': 'spot', # COIN-M
         'leverageBrackets': None,
     },
 })
@@ -59,22 +60,22 @@ def test_exchange_methods(exchange):
     #pprint(exchange.fetch_balance())
     #print('##########\nfetch_positions\n##########')
     #pprint(exchange.fetch_positions())
-    print(exchange.fetch_positions(None, {'currency': 'BTC'})) # phemex - make ts call that calls all
+    #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # phemex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
-    #pprint(exchange.fetch_orders('DOGE/USD', None, None)) # phemex /  bybit
+    pprint(exchange.fetch_orders('COCOS/USDT', None, None)) # phemex /  bybit
     #print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
-    p#print(exchange.fetch_my_trades('DOGE/USD', None, None))
+    #pprint(exchange.fetch_my_trades('DOGE/USD', None, None))
 
 
 def main():
     #test_exchange_methods(ftxExchange)
     #test_exchange_methods(bitmexExchange)
     #test_exchange_methods(bybitExchange)
-    #test_exchange_methods(binanceExchange)
-    test_exchange_methods(phemexExchange)
+    test_exchange_methods(binanceExchange)
+    #test_exchange_methods(phemexExchange)
 
 
 if __name__ == "__main__":
