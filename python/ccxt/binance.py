@@ -3140,8 +3140,10 @@ class binance(Exchange, BinanceTealstreetMixin):
                     # since he has more collateral than the size of the position
                     truncatedLiquidationPrice = None
                 liquidationPrice = self.parse_number(truncatedLiquidationPrice)
+        id = symbol + ":" + side
         return {
             'info': position,
+            'id': id,
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),

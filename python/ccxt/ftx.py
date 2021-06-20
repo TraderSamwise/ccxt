@@ -1589,7 +1589,6 @@ class ftx(Exchange):
         for i in positions:
             position = i
             info = position
-            id = None
             marketId = self.safe_string(position, 'future')
             market = self.safe_market(marketId)
             symbol = market['symbol']
@@ -1598,6 +1597,7 @@ class ftx(Exchange):
             isolated = False
             hedged = False # trading in opposite direction will close the position
             side = self.safe_string(position, 'side')
+            id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
             price = self.safe_float(position, 'entryPrice')
             markPrice = self.safe_float(market.get('info'), 'price')
