@@ -24,10 +24,8 @@ from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TRUNCATE
 from ccxt.base.precise import Precise
-from ccxt.binance import BinanceTealstreetMixin
 
-
-class binance(Exchange, BinanceTealstreetMixin):
+class binance(Exchange):
 
     def describe(self):
         return self.deep_extend(super(binance, self).describe(), {
