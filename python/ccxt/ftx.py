@@ -1599,7 +1599,8 @@ class ftx(Exchange):
             side = self.safe_string(position, 'side')
             id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
-            price = self.safe_float(position, 'entryPrice')
+            # TODO: ftx entryPrice goes away when position is closed
+            price = self.safe_float(position, 'entryPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
             leverage = notional / collateral

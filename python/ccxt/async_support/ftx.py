@@ -1527,7 +1527,11 @@ class ftx(Exchange):
 
     async def fetch_positions(self, symbols=None, params={}):
         await self.load_markets()
-        response = await self.privateGetAccount(params)
+        account_response = await self.privateGetAccount(params)
+        positions_response = await self.privateGetPositions({
+            'showAvgPrice': False,
+            **params
+        })
         #
         #     {
         #         "result":{
@@ -1574,9 +1578,78 @@ class ftx(Exchange):
         #         "success":true
         #     }
         #
-        result = self.safe_value(response, 'result', {})
-        # todo unify parsePosition/parsePositions
-        return self.safe_value(result, 'positions', [])
+        account_result = self.safe_value(account_response, 'result', {})
+        # positions = self.safe_value(account_result, 'positions', [])
+        positions = self.safe_value(positions_response, 'result', [])
+        collateral = self.safe_float(account_result, 'collateral')
+        liquidating = self.safe_value(account_result, 'liquidating')
+
+        unifiedResult = []
+
+        for i in positions:
+            position = i
+            info = position
+            marketId = self.safe_string(position, 'future')
+            market = self.safe_market(marketId)
+            symbol = market['symbol']
+            timestamp = None  # do we need?
+            datetime = None  # do we need?
+            isolated = False
+            hedged = False  # trading in opposite direction will close the position
+            side = self.safe_string(position, 'side')
+            id = symbol + ":" + side
+            contracts = self.safe_float(position, 'netSize')
+            # TODO: ftx entryPrice goes away when position is closed
+            price = self.safe_float(position, 'entryPrice') or 0
+            markPrice = self.safe_float(market.get('info'), 'price')
+            notional = contracts * price
+            leverage = notional / collateral
+            initialMargin = self.safe_float(position, 'initialMarginRequirement')
+            maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
+            initialMarginPercentage = initialMargin * notional
+            maintenanceMarginPercentage = maintenanceMargin * notional
+            unrealizedPnl = self.safe_float(position, 'unrealizedPnl')
+            realizedPnl = self.safe_float(position, 'realizedPnl')
+            pnl = unrealizedPnl + realizedPnl
+            liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
+            status = 'liquidating' if liquidating else 'open'
+            entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
+            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+            marginType = 'cross'
+            percentage = unrealizedPnl / initialMargin
+            # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
+
+            unifiedResult.append({
+                'info': info,
+                'id': id,
+                'symbol': symbol,
+                'timestamp': timestamp,
+                'datetime': datetime,
+                'isolated': isolated,
+                'hedged': hedged,
+                'side': side,
+                'contracts': contracts,
+                'price': price,
+                'markPrice': markPrice,
+                'notional': notional,
+                'leverage': leverage,
+                'initialMargin': initialMargin,
+                'maintenanceMargin': maintenanceMargin,
+                'initialMarginPercentage': initialMarginPercentage,
+                'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                'unrealizedPnl': unrealizedPnl,
+                'pnl': pnl,
+                'liquidationPrice': liquidationPrice,
+                'status': status,
+                'entryPrice': entryPrice,
+                'marginRatio': marginRatio,
+                'collateral': collateral,
+                'marginType': marginType,
+                'percentage': percentage,  # not important
+            })
+
+        return unifiedResult
+        # return self.safe_value(result, 'positions', [])
 
     async def fetch_deposit_address(self, code, params={}):
         await self.load_markets()
