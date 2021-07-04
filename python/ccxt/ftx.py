@@ -1602,7 +1602,7 @@ class ftx(Exchange):
             # TODO: ftx entryPrice goes away when position is closed
             price = self.safe_float(position, 'entryPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
-            notional = contracts * price
+            notional = abs(contracts) * price
             leverage = notional / collateral
             initialMargin = self.safe_float(position, 'initialMarginRequirement')
             maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
