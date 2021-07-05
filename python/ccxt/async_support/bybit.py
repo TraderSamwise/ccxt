@@ -72,9 +72,15 @@ class bybit(Exchange):
                 '1y': 'Y',
             },
             'urls': {
-                'test': 'https://api-testnet.{hostname}',
+                'test': {
+                    'public': 'https://api-testnet.{hostname}',
+                    'private': 'https://api-testnet.{hostname}'
+                },
                 'logo': 'https://user-images.githubusercontent.com/51840849/76547799-daff5b80-649e-11ea-87fb-3be9bac08954.jpg',
-                'api': 'https://api.{hostname}',
+                'api': {
+                    'public': 'https://api.{hostname}',
+                    'private': 'https://api.{hostname}',
+                },
                 'www': 'https://www.bybit.com',
                 'doc': [
                     'https://bybit-exchange.github.io/docs/inverse/',
@@ -2217,9 +2223,9 @@ class bybit(Exchange):
         return self.safe_value(response, 'result')
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
-        url = self.implode_params(self.urls['api'], {'hostname': self.hostname})
         type = self.safe_string(api, 0)
         section = self.safe_string(api, 1)
+        url = self.implode_params(self.urls['api']["public"], {'hostname': self.hostname})
         request = '/' + type + '/' + section + '/' + path
         # public v2
         if section == 'public':
