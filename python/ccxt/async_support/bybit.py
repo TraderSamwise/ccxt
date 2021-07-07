@@ -2236,8 +2236,7 @@ class bybit(Exchange):
                 ticker = tickers.get(symbol)
                 markPrice = self.safe_float(ticker, 'last')
                 notional = contracts * price
-                leverage = self.safe_float(position,
-                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
                 maintenanceMargin = 0  # TODO
                 initialMarginPercentage = initialMargin * notional
@@ -2304,8 +2303,7 @@ class bybit(Exchange):
                 ticker = tickers.get(symbol)
                 markPrice = self.safe_float(ticker, 'last')
                 notional = contracts  # because is usd already
-                leverage = self.safe_float(position,
-                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
                 maintenanceMargin = 0  # TODO
                 initialMarginPercentage = initialMargin * notional
@@ -2372,8 +2370,7 @@ class bybit(Exchange):
                 ticker = tickers.get(symbol)
                 markPrice = self.safe_float(ticker, 'last')
                 notional = contracts  # because is usd already
-                leverage = self.safe_float(position,
-                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
                 maintenanceMargin = 0  # TODO
                 initialMarginPercentage = initialMargin * notional
