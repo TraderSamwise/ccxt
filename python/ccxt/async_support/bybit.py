@@ -2206,21 +2206,220 @@ class bybit(Exchange):
         defaultType = self.safe_string(self.options, 'defaultType', 'linear')
         type = self.safe_string(params, 'type', defaultType)
         params = self.omit(params, 'type')
-        response = None
-        if type == 'linear':
-            response = await self.privateLinearGetPositionList(self.extend(request, params))
-        elif type == 'inverse':
-            response = await self.v2PrivateGetPositionList(self.extend(request, params))
-        elif type == 'inverseFuture':
-            response = await self.futuresPrivateGetPositionList(self.extend(request, params))
-        # {
-        #   ret_code: 0,
-        #   ret_msg: 'OK',
-        #   ext_code: '',
-        #   ext_info: '',
-        #   result: [] or {} depending on the request
-        # }
-        return self.safe_value(response, 'result')
+        tickers = await self.fetch_tickers()
+        unifiedResult = []
+
+        if type == 'linear' or type == 'all':
+            unfilteredResponse = await self.privateLinearGetPositionList(self.extend(request, params))
+            # {'user_id': '228297', 'symbol': 'BTCUSDT', 'side': 'Buy', 'size': '0.5', 'position_value': '17442.25',
+            # 'entry_price': '34884.5', 'liq_price': '25113.5', 'bust_price': '24939', 'leverage': '100',
+            # 'auto_add_margin': '0', 'is_isolated': False, 'position_margin': '4972.957274', 'occ_closing_fee': '9.352125',
+            # 'realised_pnl': '-13.0816875', 'cum_realised_pnl': '-13.0816875', 'free_qty': '0.5', 'tp_sl_mode': 'Full',
+            # 'unrealised_pnl': '102.54', 'deleverage_indicator': '3', 'risk_id': '1'}
+            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
+                        d['size'] != '0']
+
+            for i in range(0, len(response)):
+                position = response[i]
+                info = position
+                id = None  # do we need a unique id?
+                marketId = self.safe_string(position, 'symbol')
+                market = self.safe_market(marketId)
+                symbol = market['symbol']
+                datetime = None  # TODO
+                timestamp = self.parse8601(datetime)
+                isolated = self.safe_value(position, 'is_isolated')
+                hedged = False  # trading in opposite direction will close the position
+                side = self.safe_string(position, "side").lower()
+                contracts = self.safe_float(position, 'size')
+                price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
+                ticker = tickers.get(symbol)
+                markPrice = self.safe_float(ticker, 'last')
+                notional = contracts * price
+                leverage = self.safe_float(position,
+                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                initialMargin = 0  # TODO
+                maintenanceMargin = 0  # TODO
+                initialMarginPercentage = initialMargin * notional
+                maintenanceMarginPercentage = maintenanceMargin * notional
+                unrealizedPnl = self.safe_float(position, 'unrealised_pnl')
+                realizedPnl = self.safe_float(position, 'realised_pnl')
+                pnl = unrealizedPnl + realizedPnl
+                liquidationPrice = self.safe_float(position, 'liq_price')
+                status = True if contracts != 0 else False
+                collateral = 0  # TODO
+                entryPrice = self.safe_float(position, 'entry_price')
+                marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
+                marginType = 'isolated' if isolated else 'cross'
+                percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+
+                unifiedResult.append({
+                    'info': info,
+                    'id': id,
+                    'symbol': symbol,
+                    'timestamp': timestamp,
+                    'datetime': datetime,
+                    'isolated': isolated,
+                    'hedged': hedged,
+                    'side': side,
+                    'contracts': contracts,
+                    'price': price,
+                    'markPrice': markPrice,
+                    'notional': notional,
+                    'leverage': leverage,
+                    'initialMargin': initialMargin,
+                    'maintenanceMargin': maintenanceMargin,
+                    'initialMarginPercentage': initialMarginPercentage,
+                    'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                    'unrealizedPnl': unrealizedPnl,
+                    'pnl': pnl,
+                    'liquidationPrice': liquidationPrice,
+                    'status': status,
+                    'entryPrice': entryPrice,
+                    'marginRatio': marginRatio,
+                    'collateral': collateral,
+                    'marginType': marginType,
+                    'percentage': percentage,  # not important
+                })
+
+        if type == 'inverse' or type == 'all':
+            unfilteredResponse = await self.v2PrivateGetPositionList(self.extend(request, params))
+            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
+                        d['size'] != '0']
+
+            for i in range(0, len(response)):
+                position = response[i]
+                info = position
+                id = None  # do we need a unique id?
+                marketId = self.safe_string(position, 'symbol')
+                market = self.safe_market(marketId)
+                symbol = market['symbol']
+                datetime = self.safe_string(position, 'created_at')
+                timestamp = self.parse8601(datetime)
+                isolated = self.safe_value(position, 'is_isolated')
+                hedged = False  # trading in opposite direction will close the position
+                side = self.safe_string(position, "side").lower()
+                contracts = self.safe_float(position, 'size')
+                price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
+                ticker = tickers.get(symbol)
+                markPrice = self.safe_float(ticker, 'last')
+                notional = contracts  # because is usd already
+                leverage = self.safe_float(position,
+                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                initialMargin = 0  # TODO
+                maintenanceMargin = 0  # TODO
+                initialMarginPercentage = initialMargin * notional
+                maintenanceMarginPercentage = maintenanceMargin * notional
+                unrealizedPnl = self.safe_float(position, 'unrealised_pnl')  # currently USD
+                realizedPnl = self.safe_float(position, 'realised_pnl')  # currently USD
+                pnl = unrealizedPnl + realizedPnl  # currently USD
+                liquidationPrice = self.safe_float(position, 'liq_price')
+                status = True if contracts != 0 else False
+                collateral = 0  # TODO
+                entryPrice = self.safe_float(position, 'entry_price')
+                marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
+                marginType = 'isolated' if isolated else 'cross'
+                percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+
+                unifiedResult.append({
+                    'info': info,
+                    'id': id,
+                    'symbol': symbol,
+                    'timestamp': timestamp,
+                    'datetime': datetime,
+                    'isolated': isolated,
+                    'hedged': hedged,
+                    'side': side,
+                    'contracts': contracts,
+                    'price': price,
+                    'markPrice': markPrice,
+                    'notional': notional,
+                    'leverage': leverage,
+                    'initialMargin': initialMargin,
+                    'maintenanceMargin': maintenanceMargin,
+                    'initialMarginPercentage': initialMarginPercentage,
+                    'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                    'unrealizedPnl': unrealizedPnl,
+                    'pnl': pnl,
+                    'liquidationPrice': liquidationPrice,
+                    'status': status,
+                    'entryPrice': entryPrice,
+                    'marginRatio': marginRatio,
+                    'collateral': collateral,
+                    'marginType': marginType,
+                    'percentage': percentage,  # not important
+                })
+
+        if type == 'inverseFuture' or type == 'all':
+            unfilteredResponse = await self.futuresPrivateGetPositionList(self.extend(request, params))
+            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
+                        d['size'] != '0']
+
+            for i in range(0, len(response)):
+                position = response[i]
+                info = position
+                id = None  # do we need a unique id?
+                marketId = self.safe_string(position, 'symbol')
+                market = self.safe_market(marketId)
+                symbol = market['symbol']
+                datetime = self.safe_string(position, 'created_at')
+                timestamp = self.parse8601(datetime)
+                isolated = self.safe_value(position, 'is_isolated')
+                hedged = False  # trading in opposite direction will close the position
+                side = self.safe_string(position, "side").lower()
+                contracts = self.safe_float(position, 'size')
+                price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
+                ticker = tickers.get(symbol)
+                markPrice = self.safe_float(ticker, 'last')
+                notional = contracts  # because is usd already
+                leverage = self.safe_float(position,
+                                           'leverage')  # notional / collateral # TODO calculate actual leverage
+                initialMargin = 0  # TODO
+                maintenanceMargin = 0  # TODO
+                initialMarginPercentage = initialMargin * notional
+                maintenanceMarginPercentage = maintenanceMargin * notional
+                # TODO they are doing something weird here with swapping real and unrl and making unrl negative when it is positive
+                unrealizedPnl = self.safe_float(position, 'unrealised_pnl')  # currently BTC
+                realizedPnl = self.safe_float(position, 'realised_pnl')  # currently BTC
+                pnl = unrealizedPnl + realizedPnl  # currently BTC
+                liquidationPrice = self.safe_float(position, 'liq_price')
+                status = True if contracts != 0 else False
+                collateral = 0  # TODO
+                entryPrice = self.safe_float(position, 'entry_price')
+                marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
+                marginType = 'isolated' if isolated else 'cross'
+                percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+
+                unifiedResult.append({
+                    'info': info,
+                    'id': id,
+                    'symbol': symbol,
+                    'timestamp': timestamp,
+                    'datetime': datetime,
+                    'isolated': isolated,
+                    'hedged': hedged,
+                    'side': side,
+                    'contracts': contracts,
+                    'price': price,
+                    'markPrice': markPrice,
+                    'notional': notional,
+                    'leverage': leverage,
+                    'initialMargin': initialMargin,
+                    'maintenanceMargin': maintenanceMargin,
+                    'initialMarginPercentage': initialMarginPercentage,
+                    'maintenanceMarginPercentage': maintenanceMarginPercentage,
+                    'unrealizedPnl': unrealizedPnl,
+                    'pnl': pnl,
+                    'liquidationPrice': liquidationPrice,
+                    'status': status,
+                    'entryPrice': entryPrice,
+                    'marginRatio': marginRatio,
+                    'collateral': collateral,
+                    'marginType': marginType,
+                    'percentage': percentage,  # not important
+                })
+
+        return unifiedResult
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         type = self.safe_string(api, 0)
