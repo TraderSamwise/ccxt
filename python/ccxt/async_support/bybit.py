@@ -1123,7 +1123,7 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        timestamp = self.parse8601(self.safe_string(order, 'created_at'))
+        timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp'))
         id = self.safe_string_2(order, 'order_id', 'stop_order_id')
         type = self.safe_string_lower(order, 'order_type')
         price = self.safe_number(order, 'price')
@@ -1158,7 +1158,7 @@ class bybit(Exchange):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'time_in_force'))
-        stopPrice = self.safe_number(order, 'stop_px')
+        stopPrice = self.safe_number(order, 'stop_px') or self.safe_number(order, 'stop_loss') or self.safe_number(order, 'trigger_price')
         postOnly = (timeInForce == 'PO')
         return self.safe_order({
             'info': order,
