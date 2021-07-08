@@ -828,9 +828,14 @@ class bybit(Exchange):
         cost = self.safe_number(trade, 'exec_value')
         amount = self.parse_number(amountString)
         price = self.parse_number(priceString)
+        inverse = market['inverse']
+        linear = market['linear']
         if cost is None:
-            cost = self.parse_number(Precise.string_mul(priceString, amountString))
-        timestamp = self.parse8601(self.safe_string(trade, 'time'))
+            if linear:
+                cost = self.parse_number(Precise.string_mul(priceString, amountString))
+            elif inverse:
+                cost = amount
+        timestamp = self.parse8601(self.safe_string(trade, 'time') or self.safe_string(trade, 'trade_time'))
         if timestamp is None:
             timestamp = self.safe_integer(trade, 'trade_time_ms')
         side = self.safe_string_lower(trade, 'side')
