@@ -22,9 +22,10 @@ from ccxt.base.errors import DDoSProtection
 from ccxt.base.decimal_to_precision import ROUND
 from ccxt.base.decimal_to_precision import DECIMAL_PLACES
 from ccxt.base.decimal_to_precision import TICK_SIZE
+from ccxt.phemex import PhemexTealstreetMixin
 
 
-class phemex(Exchange):
+class phemex(Exchange, PhemexTealstreetMixin):
 
     def describe(self):
         return self.deep_extend(super(phemex, self).describe(), {
@@ -2263,7 +2264,7 @@ class phemex(Exchange):
             'fee': fee,
         }
 
-    async def fetch_positions(self, symbols=None, params={}):
+    async def fetch_positions(self: 'phemex', symbols=None, params={}):
         await self.load_markets()
         code = self.safe_string(params, 'code')
         request = {}
@@ -2276,7 +2277,7 @@ class phemex(Exchange):
             params = self.omit(params, 'code')
             request['currency'] = currency['id']
         # response = self.privateGetAccountsAccountPositions(self.extend(request, params)) # this call is not prone to be rate limited
-        response = self.privateGetAccountsPositions(self.extend(request, params))
+        response = await self.privateGetAccountsPositions(self.extend(request, params))
         #
         #     {
         #         "code":0,"msg":"",
@@ -2354,9 +2355,21 @@ class phemex(Exchange):
         #     }
         #
         data = self.safe_value(response, 'data', {})
-        positions = self.safe_value(data, 'positions', [])
-        # todo unify parsePosition/parsePositions
-        return positions
+        accountBalance = data.get('account')
+        positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0']  # only open positions
+        unifiedResult = []
+
+        contractType = 'inverse' if accountBalance.get('currency') == 'BTC' else 'linear'
+
+        # scales
+        # Ep = 1e4
+        # Er = 1e8
+        # Ev = 1e8 for bitcoin, 1e4 for inverse
+        for i in range(0, len(positions)):
+            position = positions[i]
+            unifiedResult.append(self.parse_position(position, contractType, accountBalance))
+
+        return unifiedResult
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         query = self.omit(params, self.extract_params(path))

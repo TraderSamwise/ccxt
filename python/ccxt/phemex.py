@@ -24,8 +24,72 @@ from ccxt.base.decimal_to_precision import DECIMAL_PLACES
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
+# TEALSTREET
+class PhemexTealstreetMixin(object):
+    def parse_position(self: 'phemex', position, contract_type, account_balance):
+        info = position
+        evScale = '1e8' if contract_type == 'inverse' else '1e4'
+        marketId = self.safe_string(position, 'symbol')
+        market = self.safe_market(marketId)
+        symbol = market['symbol']
+        datetime = None  # TODO
+        timestamp = self.parse8601(datetime)
+        isolated = False  # don't have isolated
+        hedged = False  # trading in opposite direction will close the position
+        side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
+        id = symbol + ':' + side
+        contracts = self.safe_integer(position, 'size')
+        price = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
+        markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
+        notional = float(Precise.string_div(self.safe_string(position, 'valueEv'),
+                                            evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
+        collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
+        leverage = notional / collateral
+        initialMargin = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
+        maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
+        initialMarginPercentage = initialMargin * notional
+        maintenanceMarginPercentage = maintenanceMargin * notional
+        unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv'),
+                                                 '1e8'))  # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
+        realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv'), '1e8'))
+        pnl = unrealizedPnl + realizedPnl
+        liquidationPrice = float(Precise.string_div(self.safe_string(position, 'liquidationPriceEp'), '1e4'))
+        status = 'open'
+        entryPrice = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
+        marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+        marginType = 'cross'  # only cross
+        percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
 
-class phemex(Exchange):
+        return {
+            'info': info,
+            'id': id,
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': datetime,
+            'isolated': isolated,
+            'hedged': hedged,
+            'side': side,
+            'contracts': contracts,
+            'price': price,
+            'markPrice': markPrice,
+            'notional': notional,
+            'leverage': leverage,
+            'initialMargin': initialMargin,
+            'maintenanceMargin': maintenanceMargin,
+            'initialMarginPercentage': initialMarginPercentage,
+            'maintenanceMarginPercentage': maintenanceMarginPercentage,
+            'unrealizedPnl': unrealizedPnl,
+            'pnl': pnl,
+            'liquidationPrice': liquidationPrice,
+            'status': status,
+            'entryPrice': entryPrice,
+            'marginRatio': marginRatio,
+            'collateral': collateral,
+            'marginType': marginType,
+            'percentage': percentage,  # not important
+        }
+
+class phemex(Exchange, PhemexTealstreetMixin):
 
     def describe(self):
         return self.deep_extend(super(phemex, self).describe(), {
@@ -2368,65 +2432,7 @@ class phemex(Exchange):
         # Ev = 1e8 for bitcoin, 1e4 for inverse
         for i in range(0, len(positions)):
             position = positions[i]
-            info = position
-            evScale = '1e8' if contractType == 'inverse' else '1e4'
-            id = i
-            marketId = self.safe_string(position, 'symbol')
-            market = self.safe_market(marketId)
-            symbol = market['symbol']
-            datetime = None # TODO
-            timestamp = self.parse8601(datetime)
-            isolated = False # don't have isolated
-            hedged = False  # trading in opposite direction will close the position
-            side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
-            contracts = self.safe_integer(position, 'size')
-            price = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
-            markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
-            notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale)) # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
-            collateral = float(Precise.string_div(self.safe_string(accountBalance, 'accountBalanceEv'), evScale))
-            leverage =  notional / collateral
-            initialMargin = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
-            maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
-            initialMarginPercentage = initialMargin * notional
-            maintenanceMarginPercentage = maintenanceMargin * notional
-            unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv'), '1e8')) # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
-            realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv'), '1e8'))
-            pnl = unrealizedPnl + realizedPnl
-            liquidationPrice = float(Precise.string_div(self.safe_string(position, 'liquidationPriceEp'), '1e4'))
-            status = 'open'
-            entryPrice = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
-            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
-            marginType = 'cross' # only cross
-            percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
-
-            unifiedResult.append({
-                'info': info,
-                'id': id,
-                'symbol': symbol,
-                'timestamp': timestamp,
-                'datetime': datetime,
-                'isolated': isolated,
-                'hedged': hedged,
-                'side': side,
-                'contracts': contracts,
-                'price': price,
-                'markPrice': markPrice,
-                'notional': notional,
-                'leverage': leverage,
-                'initialMargin': initialMargin,
-                'maintenanceMargin': maintenanceMargin,
-                'initialMarginPercentage': initialMarginPercentage,
-                'maintenanceMarginPercentage': maintenanceMarginPercentage,
-                'unrealizedPnl': unrealizedPnl,
-                'pnl': pnl,
-                'liquidationPrice': liquidationPrice,
-                'status': status,
-                'entryPrice': entryPrice,
-                'marginRatio': marginRatio,
-                'collateral': collateral,
-                'marginType': marginType,
-                'percentage': percentage,  # not important
-            })
+            unifiedResult.append(self.parse_position(position, contractType, accountBalance))
 
         return unifiedResult
 
