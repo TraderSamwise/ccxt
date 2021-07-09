@@ -2275,7 +2275,8 @@ class phemex(Exchange):
             currency = self.currency(code)
             params = self.omit(params, 'code')
             request['currency'] = currency['id']
-        response = await self.privateGetAccountsAccountPositions(self.extend(request, params))
+        # response = self.privateGetAccountsAccountPositions(self.extend(request, params)) # this call is not prone to be rate limited
+        response = self.privateGetAccountsPositions(self.extend(request, params))
         #
         #     {
         #         "code":0,"msg":"",

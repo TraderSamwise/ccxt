@@ -17,7 +17,7 @@ from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
-
+# TEALSTREET: did the private api implementations
 class bybit(Exchange):
 
     def describe(self):
