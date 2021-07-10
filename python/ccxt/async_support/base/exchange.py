@@ -40,42 +40,7 @@ __all__ = [
 
 # -----------------------------------------------------------------------------
 
-class ExchangeTealstreetMixin(object):
-    def get_new_position_dict(self):
-        return {
-                'id': None,
-                'symbol': None,
-                'timestamp': None,
-                'datetime': None,
-                'isolated': False,
-                'hedged': False,
-                'side': None,
-                'contracts': 0,
-                'price': 0,
-                'markPrice': 0,
-                'notional': 0.0,
-                'leverage': 0.0,
-                'initialMargin': 0.0,
-                'maintenanceMargin': 0.0,
-                'initialMarginPercentage': 0.0,
-                'maintenanceMarginPercentage': 0.0,
-                'unrealizedPnl': 0.0,
-                'pnl': 0.0,
-                'liquidationPrice': None,
-                'status': 'open',
-                'entryPrice': 0,
-                'marginRatio':0,
-                'collateral':0,
-                'marginType':'cross',
-                'percentage':0.0
-            }
-
-    def update_balance_free_used_total_from_currency_balance(self, currency, balance):
-        self.balance['free'][currency] = balance.get('free')
-        self.balance['total'][currency] = balance.get('total')
-        self.balance['used'][currency] = balance.get('used')
-
-class Exchange(BaseExchange, ExchangeTealstreetMixin):
+class Exchange(BaseExchange):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:
