@@ -70,6 +70,11 @@ class ExchangeTealstreetMixin(object):
                 'percentage':0.0
             }
 
+    def update_balance_free_used_total_from_currency_balance(self, currency, balance):
+        self.balance['free'][currency] = balance.get('free')
+        self.balance['total'][currency] = balance.get('total')
+        self.balance['used'][currency] = balance.get('used')
+
 class Exchange(BaseExchange, ExchangeTealstreetMixin):
 
     def __init__(self, config={}):
