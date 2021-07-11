@@ -48,8 +48,8 @@ class PhemexTealstreetMixin(object):
         maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
         initialMarginPercentage = initialMargin * notional
         maintenanceMarginPercentage = maintenanceMargin * notional
-        unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv'), '1e8'))  # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
-        realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv'), '1e8'))
+        unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv') or self.safe_string(position, 'unrealisedPnlEv'), evScale))  # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
+        realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv') or self.safe_string(position, 'curTermRealisedPnlEv'), evScale))
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = float(Precise.string_div(self.safe_string(position, 'liquidationPriceEp'), '1e4'))
         status = 'open'

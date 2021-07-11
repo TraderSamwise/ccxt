@@ -2355,7 +2355,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         #     }
         #
         data = self.safe_value(response, 'data', {})
-        accountBalance = data.get('account')
+        accountBalance = self.safe_value(data, 'account')
         positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0']  # only open positions
         unifiedResult = []
 
