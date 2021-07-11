@@ -1726,22 +1726,24 @@ class phemex(Exchange, PhemexTealstreetMixin):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None
         marketId = self.safe_string(order, 'symbol')
+        evScale = '1e8' if marketId == 'BTCUSD' else '1e4'
         symbol = self.safe_symbol(marketId, market)
         status = self.parse_order_status(self.safe_string(order, 'ordStatus'))
         side = self.safe_string_lower(order, 'side')
-        type = self.parse_order_type(self.safe_string(order, 'orderType'))
+        type = self.parse_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
         price = self.from_ep(self.safe_number(order, 'priceEp'), market)
         amount = self.safe_number(order, 'orderQty')
         filled = self.safe_number(order, 'cumQty')
         remaining = self.safe_number(order, 'leavesQty')
         timestamp = self.safe_integer_product(order, 'actionTimeNs', 0.000001)
-        cost = self.safe_number(order, 'cumValue')
+        cost = self.safe_number(order, 'cumValue') or float(Precise.string_div(self.safe_string(order, 'cumValueEv'), evScale))
         lastTradeTimestamp = self.safe_integer_product(order, 'transactTimeNs', 0.000001)
         if lastTradeTimestamp == 0:
             lastTradeTimestamp = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
-        stopPrice = self.safe_number(order, 'stopPx')
+        stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'))
         postOnly = (timeInForce == 'PO')
+        fee = self.from_er(self.safe_number(order, 'feeRateEr'))
         return {
             'info': order,
             'id': id,
@@ -1762,12 +1764,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'cost': cost,
             'average': None,
             'status': status,
-            'fee': None,
+            'fee': fee,
             'trades': None,
         }
 
     def parse_order(self, order, market=None):
-        if 'closedPnl' in order:
+        if 'closedPnl' in order or 'closedPnlEv' in order:
             return self.parse_swap_order(order, market)
         return self.parse_spot_order(order, market)
 
