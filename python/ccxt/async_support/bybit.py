@@ -2302,7 +2302,7 @@ class bybit(Exchange):
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
                 side = self.safe_string(position, "side").lower()
-                id = symbol + ':' + side
+                id = symbol
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
                 ticker = tickers.get(symbol)
@@ -2369,7 +2369,7 @@ class bybit(Exchange):
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
                 side = self.safe_string(position, "side").lower()
-                id = symbol + ':' + side
+                id = symbol
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
                 ticker = tickers.get(symbol)
