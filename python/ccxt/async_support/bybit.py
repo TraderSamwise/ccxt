@@ -1130,7 +1130,7 @@ class bybit(Exchange):
         feeCurrency = None
         timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp'))
         id = self.safe_string_2(order, 'order_id', 'stop_order_id')
-        type = self.safe_string_lower(order, 'order_type')
+        type = self.safe_string_lower(order, 'stop_order_type') or self.safe_string_lower(order, 'order_type')
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
@@ -1622,7 +1622,7 @@ class bybit(Exchange):
             defaultMethod = 'futuresPrivateGetOrderList'
         query = params
         if ('stop_order_id' in params) or ('stop_order_status' in params):
-            stopOrderStatus = self.safe_value(params, 'stopOrderStatus')
+            stopOrderStatus = self.safe_value(params, 'stop_order_status', 'Untriggered')
             if stopOrderStatus is not None:
                 if isinstance(stopOrderStatus, list):
                     stopOrderStatus = ','.join(stopOrderStatus)
@@ -1752,7 +1752,7 @@ class bybit(Exchange):
 
     async def fetch_open_orders(self, symbol=None, since=None, limit=None, params={}):
         defaultStatuses = [
-            'Created',
+            # 'Created',
             'New',
             'PartiallyFilled',
             'PendingCancel',
