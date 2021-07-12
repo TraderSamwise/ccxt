@@ -67,7 +67,8 @@ def test_exchange_methods(exchange):
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
-    pprint(exchange.fetch_orders('BTC/USD', None, None)) # phemex /  bybit
+    #pprint(exchange.fetch_orders('BTC/USD', None, None)) # phemex /  bybit
+    pprint(exchange.fetch_orders()) # phemex /  bybit
     #print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
@@ -78,7 +79,7 @@ def main():
     #test_exchange_methods(bitmexExchange)
     #test_exchange_methods(bybitExchange)
     # test_exchange_methods(binanceExchange)
-    test_exchange_methods(phemexExchange)
+    test_exchange_methods(ftxExchange)
 
 
 if __name__ == "__main__":

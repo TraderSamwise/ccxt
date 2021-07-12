@@ -1404,7 +1404,7 @@ class ftx(Exchange):
         result = self.safe_value(response, 'result', [])
         return self.parse_orders(result, market, since, limit)
 
-    async def fetch_orders(self, symbol=None, since=None, limit=None, params={}):
+    async def fetch_orders(self: 'ftx', symbol=None, since=None, limit=None, params={}):
         await self.load_markets()
         request = {}
         market, marketId = self.get_market_params(symbol, 'market', params)
