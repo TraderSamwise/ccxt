@@ -907,6 +907,8 @@ class ftx(Exchange):
             'info': response,
         }
         balances = self.safe_value(response, 'result', [])
+
+        usdNotionalValue = { 'free': 0.0, 'used': 0.0, 'total': 0.0 } # TEALSTREET
         for i in range(0, len(balances)):
             balance = balances[i]
             code = self.safe_currency_code(self.safe_string(balance, 'coin'))
@@ -914,6 +916,23 @@ class ftx(Exchange):
             account['free'] = self.safe_string(balance, 'free')
             account['total'] = self.safe_string(balance, 'total')
             result[code] = account
+
+            # TEALSTREET: get usd value for this currency
+            account['usdValue'] = self.safe_string(balance, 'usdValue')
+
+            usdTotalValue = self.safe_float(balance, 'usdValue')
+            freePercent = self.safe_float(balance, 'free') / self.safe_float(balance, 'total')
+            usdFreeValue = freePercent * usdTotalValue
+            usdUsedValue = usdTotalValue - usdFreeValue
+
+            usdNotionalValue['free'] += usdFreeValue
+            usdNotionalValue['used'] += usdUsedValue
+            usdNotionalValue['total'] += usdTotalValue
+
+        usdNotionalValue['free'] = self.safe_string(usdNotionalValue, 'free')
+        usdNotionalValue['used'] = self.safe_string(usdNotionalValue, 'used')
+        usdNotionalValue['total'] = self.safe_string(usdNotionalValue, 'total')
+        result['usdNotionalValue'] = usdNotionalValue
         return self.parse_balance(result, False)
 
     def parse_order_status(self, status):
