@@ -1163,7 +1163,7 @@ class bybit(Exchange):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'time_in_force'))
-        stopPrice = self.safe_number(order, 'stop_px') or self.safe_number(order, 'stop_loss') or self.safe_number(order, 'trigger_price')
+        stopPrice = self.safe_number(order, 'trigger_price') or self.safe_number(order, 'stop_px') or self.safe_number(order, 'stop_loss')
         postOnly = (timeInForce == 'PO')
         return self.safe_order({
             'info': order,
@@ -1614,12 +1614,13 @@ class bybit(Exchange):
         linear = (marketDefined and market['linear']) or (marketType == 'linear')
         inverse = (marketDefined and market['swap'] and market['inverse']) or (marketType == 'inverse')
         futures = (marketDefined and market['futures']) or (marketType == 'futures')
+        # TEALSTREET making inverse fetch bot perpetual and linear orders
         if linear:
             defaultMethod = 'privateLinearGetOrderList'
-        elif inverse:
-            defaultMethod = 'v2PrivateGetOrderList'
         elif futures:
             defaultMethod = 'futuresPrivateGetOrderList'
+        elif inverse:
+            defaultMethod = 'v2PrivateGetOrderList'
         query = params
         if ('stop_order_id' in params) or ('stop_order_status' in params):
             stopOrderStatus = self.safe_value(params, 'stop_order_status', 'Untriggered')
@@ -1628,14 +1629,17 @@ class bybit(Exchange):
                     stopOrderStatus = ','.join(stopOrderStatus)
                 request['stop_order_status'] = stopOrderStatus
                 query = self.omit(params, 'stop_order_status')
+            # TEALSTREET making inverse fetch bot perpetual and linear orders
             if linear:
                 defaultMethod = 'privateLinearGetStopOrderList'
-            elif inverse:
-                defaultMethod = 'v2PrivateGetStopOrderList'
             elif futures:
                 defaultMethod = 'futuresPrivateGetStopOrderList'
+            elif inverse:
+                defaultMethod = 'v2PrivateGetStopOrderList'
         method = self.safe_string(options, 'method', defaultMethod)
         response = await getattr(self, method)(self.extend(request, query))
+        # response = await getattr(self, method)({'symbol': 'BTCUSDT', 'limit': 1000, 'order_status': 'Created,New,PartiallyFilled,PendingCancel'})
+
         #
         #     {
         #         "ret_code": 0,
@@ -2353,7 +2357,8 @@ class bybit(Exchange):
                     'percentage': percentage,  # not important
                 })
 
-        if type == 'futures' or type == 'all':
+        # TEALSTREET making inverse fetch bot perpetual and linear positions
+        if type == 'futures' or type == 'all' or type == 'inverse':
             unfilteredResponse = await self.futuresPrivateGetPositionList(self.extend(request, params))
             response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
                         d['size'] != '0']
