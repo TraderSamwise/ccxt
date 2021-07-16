@@ -1680,7 +1680,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         if lastTradeTimestamp == 0:
             lastTradeTimestamp = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
-        stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'))
+        stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'), market)
         postOnly = (timeInForce == 'PO')
         fee = self.from_er(self.safe_number(order, 'feeRateEr'))
         return {

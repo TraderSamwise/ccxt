@@ -30,22 +30,22 @@ bybitExchange = ccxt.bybit({
     'secret': os.environ.get('bybit_secret'),
     'enableRateLimit': True,
     'options': {
-         'defaultType': 'inverse'
+         'defaultType': 'linear'
     }
 })
 bybitExchange.urls['api'] = bybitExchange.urls['test']
 
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
-binanceExchange = ccxt.binance({
+binanceExchange = ccxt.binanceusdm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
     'enableRateLimit': True,
-    'options': {
-         'defaultType': 'future', # USD-M
-        #'defaultType': 'delivery', # COIN-M
-        #'defaultType': 'spot', # COIN-M
-        'leverageBrackets': None,
-    },
+    # 'options': {
+    #      'defaultType': 'future', # USD-M
+    #     #'defaultType': 'delivery', # COIN-M
+    #     #'defaultType': 'spot', # COIN-M
+    #     'leverageBrackets': None,
+    # },
 })
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
@@ -60,17 +60,17 @@ phemexExchange.urls['api'] = phemexExchange.urls['test']
 def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
-    #pprint(exchange.fetch_balance())
+    pprint(exchange.fetch_balance())
     #print('##########\nfetch_positions\n##########')
     # pprint(exchange.fetch_positions())
     #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
     #pprint(exchange.fetch_orders())
-    #pprint(exchange.fetch_orders('BTC/USD', None, None)) # phemex /  bybit
+    # pprint(exchange.fetch_open_orders('LINK/USDT', None, None)) # phemex /  bybit
     # pprint(exchange.fetch_orders()) # phemex /  bybit
-    pprint(exchange.fetch_open_orders())
-    #print('##########\nfetch_my_trades\n##########')
+    # pprint(exchange.fetch_open_orders())
+    # print('##########\nfetch_my_trades\n##########')
     #pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
 
@@ -80,7 +80,7 @@ def main():
     #test_exchange_methods(bitmexExchange)
     #test_exchange_methods(bybitExchange)
     # test_exchange_methods(binanceExchange)
-    test_exchange_methods(ftxExchange)
+    test_exchange_methods(binanceExchange)
 
 
 if __name__ == "__main__":
