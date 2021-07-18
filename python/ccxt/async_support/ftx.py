@@ -922,7 +922,7 @@ class ftx(Exchange):
 
             usdTotalValue = self.safe_float(balance, 'usdValue')
             total = self.safe_float(balance, 'total')
-            freePercent = 0 if not total else self.safe_float(balance, 'free') / self.safe_float(balance, 'total')
+            freePercent = 0 if total == 0 else self.safe_float(balance, 'free') / total 
             usdFreeValue = freePercent * usdTotalValue
             usdUsedValue = usdTotalValue - usdFreeValue
 
