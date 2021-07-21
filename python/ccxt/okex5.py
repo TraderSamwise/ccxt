@@ -2181,7 +2181,7 @@ class okex5(Exchange):
 
         unifiedPositions = self.parse_positions(positions)
 
-        return self.safe_value(response, 'data', [])
+        return unifiedPositions
 
     def parse_positions(self, positions):
         result = []
@@ -2199,19 +2199,19 @@ class okex5(Exchange):
         datetime = self.iso8601(timestamp)
         isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
         hedged = False  # TODO: not sure if you can hedge positions on okex
-        side = self.safe_string(position, 'posSide')
-        id = symbol + ":" + side
         contracts = self.safe_float(position, 'pos')
+        side = 'long' if contracts > 0 else 'short'
+        id = symbol + ":" + side
         price = self.safe_float(position, 'avgPx') or 0 # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
         notional = self.safe_float(position, 'notionalUsd')
         leverage = self.safe_float(position, 'lever')
-        initialMargin = 0 # TODO
+        initialMargin = 1 # TODO
         maintenanceMargin = self.safe_float(position, 'mmr')
         initialMarginPercentage = initialMargin * notional
         maintenanceMarginPercentage = maintenanceMargin * notional
         unrealizedPnl = self.safe_float(position, 'upl')
-        realizedPnl = self.safe_float(position, 'realised_pnl')
+        realizedPnl = 0 # TODO
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = self.safe_float(position, 'liqPx')
         status = 'open' # TODO: can this be anything else?
