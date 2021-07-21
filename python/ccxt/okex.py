@@ -2401,7 +2401,9 @@ class okex(Exchange):
         #     }
         #
         data = self.safe_value(response, 'data', [])
-        return self.safe_value(data, 0)
+        position = self.safe_value(data, 0)
+
+        return self.parse_position(position)
 
     def fetch_positions(self, symbols=None, params={}):
         self.load_markets()
