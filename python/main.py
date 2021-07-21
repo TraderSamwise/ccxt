@@ -56,7 +56,7 @@ phemexExchange = ccxt.phemex({
 })
 phemexExchange.urls['api'] = phemexExchange.urls['test']
 
-okexExchange = ccxt.okex5({
+okexExchange = ccxt.okex({
     'apiKey': os.environ.get('okex_key'),
     'secret': os.environ.get('okex_secret'),
     'password': os.environ.get('okex_password'),
