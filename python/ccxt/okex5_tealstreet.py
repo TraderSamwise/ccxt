@@ -2178,7 +2178,6 @@ class okex5(Exchange):
         #     }
         #
         positions = self.safe_value(response, 'data', [])
-
         unifiedPositions = self.parse_positions(positions)
 
         return unifiedPositions
