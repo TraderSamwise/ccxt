@@ -1154,20 +1154,10 @@ class okex(Exchange):
 
     def fetch_balance(self, params={}):
         self.load_markets()
-        defaultType = self.safe_string(self.options, 'defaultType')
-        options = self.safe_value(self.options, 'fetchBalance', {})
-        type = self.safe_string(options, 'type', defaultType)
-        type = self.safe_string(params, 'type', type)
-        params = self.omit(params, 'type')
-        method = None
-        if (type == 'spot') or (type == 'trading'):
-            method = 'privateGetAccountBalance'
-        elif type == 'funding':
-            method = 'privateGetAssetBalances'
         request = {
             # 'ccy': 'BTC,ETH',  # comma-separated list of currency ids
         }
-        response = getattr(self, method)(self.extend(request, params))
+        response = self.privateGetAccountBalance(self.extend(request, params))
         #
         #     {
         #         "code":"0",
@@ -1255,22 +1245,29 @@ class okex(Exchange):
         #         "msg":""
         #     }
         #
-        # funding
-        #
-        #     {
-        #         "code":"0",
-        #         "data":[
-        #             {
-        #                 "availBal":"0.00005426",
-        #                 "bal":0.0000542600000000,
-        #                 "ccy":"BTC",
-        #                 "frozenBal":"0"
-        #             }
-        #         ],
-        #         "msg":""
-        #     }
-        #
-        return self.parse_balance_by_type(type, response)
+        result = {'info': response}
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0, {})
+        timestamp = self.safe_integer(first, 'uTime')
+        details = self.safe_value(first, 'details', [])
+        for i in range(0, len(details)):
+            balance = details[i]
+            currencyId = self.safe_string(balance, 'ccy')
+            code = self.safe_currency_code(currencyId)
+            account = self.account()
+            # it may be incorrect to use total, free and used for swap accounts
+            eq = self.safe_string(balance, 'eq')
+            availEq = self.safe_string(balance, 'availEq')
+            if (len(eq) < 1) or (len(availEq) < 1):
+                account['free'] = self.safe_string(balance, 'availBal')
+                account['used'] = self.safe_string(balance, 'frozenBal')
+            else:
+                account['total'] = eq
+                account['free'] = availEq
+            result[code] = account
+        result['timestamp'] = timestamp
+        result['datetime'] = self.iso8601(timestamp)
+        return self.parse_balance(result, False)
 
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()

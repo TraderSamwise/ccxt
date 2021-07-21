@@ -102,7 +102,8 @@ class okex(Exchange):
                 'fees': 'https://www.okex.com/pages/products/fees.html',
                 'referral': 'https://www.okex.com/join/1888677',
                 'test': {
-                    'rest': 'https://testnet.okex.com',
+                    'rest': 'https://www.okex.com',
+                    # 'rest': 'https://testnet.okex.com',
                 },
             },
             'api': {
@@ -1719,141 +1720,258 @@ class okex(Exchange):
         return self.parse_balance(result)
 
     async def fetch_balance(self, params={}):
-        defaultType = self.safe_string_2(self.options, 'fetchBalance', 'defaultType')
-        type = self.safe_string(params, 'type', defaultType)
-        if type is None:
-            raise ArgumentsRequired(self.id + " fetchBalance() requires a type parameter(one of 'account', 'spot', 'margin', 'futures', 'swap')")
         await self.load_markets()
-        suffix = 'Wallet' if (type == 'account') else 'Accounts'
-        method = type + 'Get' + suffix
-        query = self.omit(params, 'type')
-        response = await getattr(self, method)(query)
-        #
-        # account
-        #
-        #     [
-        #         {
-        #             balance:  0,
-        #             available:  0,
-        #             currency: "BTC",
-        #             hold:  0
-        #         },
-        #         {
-        #             balance:  0,
-        #             available:  0,
-        #             currency: "ETH",
-        #             hold:  0
-        #         }
-        #     ]
-        #
-        # spot
-        #
-        #     [
-        #         {
-        #             frozen: "0",
-        #             hold: "0",
-        #             id: "2149632",
-        #             currency: "BTC",
-        #             balance: "0.0000000497717339",
-        #             available: "0.0000000497717339",
-        #             holds: "0"
-        #         },
-        #         {
-        #             frozen: "0",
-        #             hold: "0",
-        #             id: "2149632",
-        #             currency: "ICN",
-        #             balance: "0.00000000925",
-        #             available: "0.00000000925",
-        #             holds: "0"
-        #         }
-        #     ]
-        #
-        # margin
-        #
-        #     [
-        #         {
-        #             "currency:BTC": {
-        #                 "available":"0",
-        #                 "balance":"0",
-        #                 "borrowed":"0",
-        #                 "can_withdraw":"0",
-        #                 "frozen":"0",
-        #                 "hold":"0",
-        #                 "holds":"0",
-        #                 "lending_fee":"0"
-        #             },
-        #             "currency:USDT": {
-        #                 "available":"100",
-        #                 "balance":"100",
-        #                 "borrowed":"0",
-        #                 "can_withdraw":"100",
-        #                 "frozen":"0",
-        #                 "hold":"0",
-        #                 "holds":"0",
-        #                 "lending_fee":"0"
-        #             },
-        #             "instrument_id":"BTC-USDT",
-        #             "liquidation_price":"0",
-        #             "product_id":"BTC-USDT",
-        #             "risk_rate":""
-        #         },
-        #     ]
-        #
-        # futures
+        request = {
+            # 'ccy': 'BTC,ETH',  # comma-separated list of currency ids
+        }
+        response = await self.privateGetAccountBalance(self.extend(request, params))
         #
         #     {
-        #         "info":{
-        #             "eos":{
-        #                 "auto_margin":"0",
-        #                 "contracts": [
-        #                     {
-        #                         "available_qty":"40.37069445",
-        #                         "fixed_balance":"0",
-        #                         "instrument_id":"EOS-USD-190329",
-        #                         "margin_for_unfilled":"0",
-        #                         "margin_frozen":"0",
-        #                         "realized_pnl":"0",
-        #                         "unrealized_pnl":"0"
-        #                     },
-        #                     {
-        #                         "available_qty":"40.37069445",
-        #                         "fixed_balance":"14.54895721",
-        #                         "instrument_id":"EOS-USD-190628",
-        #                         "margin_for_unfilled":"0",
-        #                         "margin_frozen":"10.64042157",
-        #                         "realized_pnl":"-3.90853564",
-        #                         "unrealized_pnl":"-0.259"
-        #                     },
-        #                 ],
-        #                 "equity":"50.75220665",
-        #                 "margin_mode":"fixed",
-        #                 "total_avail_balance":"40.37069445"
-        #             },
-        #         }
-        #     }
-        #
-        # swap
-        #
-        #     {
-        #         "info": [
+        #         "code":"0",
+        #         "data":[
         #             {
-        #                 "equity":"3.0139",
-        #                 "fixed_balance":"0.0000",
-        #                 "instrument_id":"EOS-USD-SWAP",
-        #                 "margin":"0.5523",
-        #                 "margin_frozen":"0.0000",
-        #                 "margin_mode":"crossed",
-        #                 "margin_ratio":"1.0913",
-        #                 "realized_pnl":"-0.0006",
-        #                 "timestamp":"2019-03-25T03:46:10.336Z",
-        #                 "total_avail_balance":"3.0000",
-        #                 "unrealized_pnl":"0.0145"
+        #                 "adjEq":"",
+        #                 "details":[
+        #                     {
+        #                         "availBal":"",
+        #                         "availEq":"28.21006347",
+        #                         "cashBal":"28.21006347",
+        #                         "ccy":"USDT",
+        #                         "crossLiab":"",
+        #                         "disEq":"28.2687404020176",
+        #                         "eq":"28.21006347",
+        #                         "eqUsd":"28.2687404020176",
+        #                         "frozenBal":"0",
+        #                         "interest":"",
+        #                         "isoEq":"0",
+        #                         "isoLiab":"",
+        #                         "liab":"",
+        #                         "maxLoan":"",
+        #                         "mgnRatio":"",
+        #                         "notionalLever":"0",
+        #                         "ordFrozen":"0",
+        #                         "twap":"0",
+        #                         "uTime":"1621556539861",
+        #                         "upl":"0",
+        #                         "uplLiab":""
+        #                     }
+        #                 ],
+        #                 "imr":"",
+        #                 "isoEq":"0",
+        #                 "mgnRatio":"",
+        #                 "mmr":"",
+        #                 "notionalUsd":"",
+        #                 "ordFroz":"",
+        #                 "totalEq":"28.2687404020176",
+        #                 "uTime":"1621556553510"
         #             }
-        #         ]
+        #         ],
+        #         "msg":""
         #     }
         #
-        return self.parse_balance_by_type(type, response)
+        #     {
+        #         "code":"0",
+        #         "data":[
+        #             {
+        #                 "adjEq":"",
+        #                 "details":[
+        #                     {
+        #                         "availBal":"0.049",
+        #                         "availEq":"",
+        #                         "cashBal":"0.049",
+        #                         "ccy":"BTC",
+        #                         "crossLiab":"",
+        #                         "disEq":"1918.55678",
+        #                         "eq":"0.049",
+        #                         "eqUsd":"1918.55678",
+        #                         "frozenBal":"0",
+        #                         "interest":"",
+        #                         "isoEq":"",
+        #                         "isoLiab":"",
+        #                         "liab":"",
+        #                         "maxLoan":"",
+        #                         "mgnRatio":"",
+        #                         "notionalLever":"",
+        #                         "ordFrozen":"0",
+        #                         "twap":"0",
+        #                         "uTime":"1621973128591",
+        #                         "upl":"",
+        #                         "uplLiab":""
+        #                     }
+        #                 ],
+        #                 "imr":"",
+        #                 "isoEq":"",
+        #                 "mgnRatio":"",
+        #                 "mmr":"",
+        #                 "notionalUsd":"",
+        #                 "ordFroz":"",
+        #                 "totalEq":"1918.55678",
+        #                 "uTime":"1622045126908"
+        #             }
+        #         ],
+        #         "msg":""
+        #     }
+        #
+        result = {'info': response}
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0, {})
+        timestamp = self.safe_integer(first, 'uTime')
+        details = self.safe_value(first, 'details', [])
+        for i in range(0, len(details)):
+            balance = details[i]
+            currencyId = self.safe_string(balance, 'ccy')
+            code = self.safe_currency_code(currencyId)
+            account = self.account()
+            # it may be incorrect to use total, free and used for swap accounts
+            eq = self.safe_string(balance, 'eq')
+            availEq = self.safe_string(balance, 'availEq')
+            if (len(eq) < 1) or (len(availEq) < 1):
+                account['free'] = self.safe_string(balance, 'availBal')
+                account['used'] = self.safe_string(balance, 'frozenBal')
+            else:
+                account['total'] = eq
+                account['free'] = availEq
+            result[code] = account
+        result['timestamp'] = timestamp
+        result['datetime'] = self.iso8601(timestamp)
+        return self.parse_balance(result, False)
+
+    # async def fetch_balance(self, params={}):
+    #     defaultType = self.safe_string_2(self.options, 'fetchBalance', 'defaultType')
+    #     type = self.safe_string(params, 'type', defaultType)
+    #     if type is None:
+    #         raise ArgumentsRequired(self.id + " fetchBalance() requires a type parameter(one of 'account', 'spot', 'margin', 'futures', 'swap')")
+    #     await self.load_markets()
+    #     suffix = 'Wallet' if (type == 'account') else 'Accounts'
+    #     method = type + 'Get' + suffix
+    #     query = self.omit(params, 'type')
+    #     response = await getattr(self, method)(query)
+    #     #
+    #     # account
+    #     #
+    #     #     [
+    #     #         {
+    #     #             balance:  0,
+    #     #             available:  0,
+    #     #             currency: "BTC",
+    #     #             hold:  0
+    #     #         },
+    #     #         {
+    #     #             balance:  0,
+    #     #             available:  0,
+    #     #             currency: "ETH",
+    #     #             hold:  0
+    #     #         }
+    #     #     ]
+    #     #
+    #     # spot
+    #     #
+    #     #     [
+    #     #         {
+    #     #             frozen: "0",
+    #     #             hold: "0",
+    #     #             id: "2149632",
+    #     #             currency: "BTC",
+    #     #             balance: "0.0000000497717339",
+    #     #             available: "0.0000000497717339",
+    #     #             holds: "0"
+    #     #         },
+    #     #         {
+    #     #             frozen: "0",
+    #     #             hold: "0",
+    #     #             id: "2149632",
+    #     #             currency: "ICN",
+    #     #             balance: "0.00000000925",
+    #     #             available: "0.00000000925",
+    #     #             holds: "0"
+    #     #         }
+    #     #     ]
+    #     #
+    #     # margin
+    #     #
+    #     #     [
+    #     #         {
+    #     #             "currency:BTC": {
+    #     #                 "available":"0",
+    #     #                 "balance":"0",
+    #     #                 "borrowed":"0",
+    #     #                 "can_withdraw":"0",
+    #     #                 "frozen":"0",
+    #     #                 "hold":"0",
+    #     #                 "holds":"0",
+    #     #                 "lending_fee":"0"
+    #     #             },
+    #     #             "currency:USDT": {
+    #     #                 "available":"100",
+    #     #                 "balance":"100",
+    #     #                 "borrowed":"0",
+    #     #                 "can_withdraw":"100",
+    #     #                 "frozen":"0",
+    #     #                 "hold":"0",
+    #     #                 "holds":"0",
+    #     #                 "lending_fee":"0"
+    #     #             },
+    #     #             "instrument_id":"BTC-USDT",
+    #     #             "liquidation_price":"0",
+    #     #             "product_id":"BTC-USDT",
+    #     #             "risk_rate":""
+    #     #         },
+    #     #     ]
+    #     #
+    #     # futures
+    #     #
+    #     #     {
+    #     #         "info":{
+    #     #             "eos":{
+    #     #                 "auto_margin":"0",
+    #     #                 "contracts": [
+    #     #                     {
+    #     #                         "available_qty":"40.37069445",
+    #     #                         "fixed_balance":"0",
+    #     #                         "instrument_id":"EOS-USD-190329",
+    #     #                         "margin_for_unfilled":"0",
+    #     #                         "margin_frozen":"0",
+    #     #                         "realized_pnl":"0",
+    #     #                         "unrealized_pnl":"0"
+    #     #                     },
+    #     #                     {
+    #     #                         "available_qty":"40.37069445",
+    #     #                         "fixed_balance":"14.54895721",
+    #     #                         "instrument_id":"EOS-USD-190628",
+    #     #                         "margin_for_unfilled":"0",
+    #     #                         "margin_frozen":"10.64042157",
+    #     #                         "realized_pnl":"-3.90853564",
+    #     #                         "unrealized_pnl":"-0.259"
+    #     #                     },
+    #     #                 ],
+    #     #                 "equity":"50.75220665",
+    #     #                 "margin_mode":"fixed",
+    #     #                 "total_avail_balance":"40.37069445"
+    #     #             },
+    #     #         }
+    #     #     }
+    #     #
+    #     # swap
+    #     #
+    #     #     {
+    #     #         "info": [
+    #     #             {
+    #     #                 "equity":"3.0139",
+    #     #                 "fixed_balance":"0.0000",
+    #     #                 "instrument_id":"EOS-USD-SWAP",
+    #     #                 "margin":"0.5523",
+    #     #                 "margin_frozen":"0.0000",
+    #     #                 "margin_mode":"crossed",
+    #     #                 "margin_ratio":"1.0913",
+    #     #                 "realized_pnl":"-0.0006",
+    #     #                 "timestamp":"2019-03-25T03:46:10.336Z",
+    #     #                 "total_avail_balance":"3.0000",
+    #     #                 "unrealized_pnl":"0.0145"
+    #     #             }
+    #     #         ]
+    #     #     }
+    #     #
+    #     return self.parse_balance_by_type(type, response)
 
     def parse_balance_by_type(self, type, response):
         if (type == 'account') or (type == 'spot'):
@@ -3044,7 +3162,10 @@ class okex(Exchange):
         #     }
         #
         # todo unify parsePosition/parsePositions
-        return response
+        data = self.safe_value(response, 'data', [])
+        position = self.safe_value(data, 0)
+
+        return self.parse_position(position)
 
     async def fetch_positions(self, symbols=None, params={}):
         await self.load_markets()
@@ -3110,7 +3231,10 @@ class okex(Exchange):
         #     }
         #
         # todo unify parsePosition/parsePositions
-        return response
+        positions = self.safe_value(response, 'data', [])
+        unifiedPositions = self.parse_positions(positions)
+
+        return unifiedPositions
 
     async def fetch_ledger(self, code=None, since=None, limit=None, params={}):
         await self.load_markets()
