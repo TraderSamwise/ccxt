@@ -2177,7 +2177,78 @@ class okex5(Exchange):
         #         ]
         #     }
         #
+        positions = self.safe_value(response, 'data', [])
+
+        unifiedPositions = self.parse_positions(positions)
+
         return self.safe_value(response, 'data', [])
+
+    def parse_positions(self, positions):
+        result = []
+        for i in positions:
+            position = self.parse_position(i)
+            result.append(position)
+        return result
+
+    def parse_position(self, position):
+        info = position
+        marketId = self.safe_string(position, 'instId')
+        market = self.safe_market(marketId)
+        symbol = market['symbol']
+        timestamp = self.safe_integer(position, 'uTime')
+        datetime = self.iso8601(timestamp)
+        isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
+        hedged = False  # TODO: not sure if you can hedge positions on okex
+        side = self.safe_string(position, 'posSide')
+        id = symbol + ":" + side
+        contracts = self.safe_float(position, 'pos')
+        price = self.safe_float(position, 'avgPx') or 0 # TODO: do we need entry?
+        markPrice = self.safe_float(position, 'last')
+        notional = self.safe_float(position, 'notionalUsd')
+        leverage = self.safe_float(position, 'lever')
+        initialMargin = 0 # TODO
+        maintenanceMargin = self.safe_float(position, 'mmr')
+        initialMarginPercentage = initialMargin * notional
+        maintenanceMarginPercentage = maintenanceMargin * notional
+        unrealizedPnl = self.safe_float(position, 'upl')
+        realizedPnl = self.safe_float(position, 'realised_pnl')
+        pnl = unrealizedPnl + realizedPnl
+        liquidationPrice = self.safe_float(position, 'liqPx')
+        status = 'open' # TODO: can this be anything else?
+        entryPrice = 0 # TODO
+        marginRatio = self.safe_float(position, 'mgnRatio')
+        marginType = 'isolated' if isolated else 'cross'
+        percentage = unrealizedPnl / initialMargin
+        collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
+
+        return {
+            'info': info,
+            'id': id,
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': datetime,
+            'isolated': isolated,
+            'hedged': hedged,
+            'side': side,
+            'contracts': contracts,
+            'price': price,
+            'markPrice': markPrice,
+            'notional': notional,
+            'leverage': leverage,
+            'initialMargin': initialMargin,
+            'maintenanceMargin': maintenanceMargin,
+            'initialMarginPercentage': initialMarginPercentage,
+            'maintenanceMarginPercentage': maintenanceMarginPercentage,
+            'unrealizedPnl': unrealizedPnl,
+            'pnl': pnl,
+            'liquidationPrice': liquidationPrice,
+            'status': status,
+            'entryPrice': entryPrice,
+            'marginRatio': marginRatio,
+            'collateral': collateral,
+            'marginType': marginType,
+            'percentage': percentage,  # not important
+        }
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         isArray = isinstance(params, list)
