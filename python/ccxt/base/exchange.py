@@ -505,8 +505,8 @@ class Exchange(object):
             self.resolve_error_message_future('{0} ({1})'.format(string, message))
             raise exact[string](message)
 
-    def throw_broadly_matched_exception(self, broad, string, message):
-        broad_key = self.resolve_error_message_future(broad, string)
+    def fi(self, broad, string, message):
+        broad_key = self.find_broadly_matched_key(broad, string)
         if broad_key is not None:
             self.resolve_error_message_future('{0} ({1})'.format(string, message))
             raise broad[broad_key](message)
