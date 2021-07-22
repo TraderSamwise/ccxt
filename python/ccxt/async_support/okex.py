@@ -1605,7 +1605,7 @@ class okex(Exchange):
                     accounts[code] = account
                 else:
                     raise NotSupported(self.id + ' margin balance response format has changed!')
-            result[symbol] = self.parse_balance(accounts)
+            result[symbol] = self.parse_balance(accounts, False)
         return result
 
     def parse_futures_balance(self, response):
@@ -1676,7 +1676,7 @@ class okex(Exchange):
             # it may be incorrect to use total, free and used for swap accounts
             account['total'] = self.safe_number(balance, 'equity')
             result[code] = account
-        return self.parse_balance(result)
+        return self.parse_balance(result, False)
 
     def parse_swap_balance(self, response):
         #
@@ -1717,7 +1717,33 @@ class okex(Exchange):
             result[symbol] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
-        return self.parse_balance(result)
+        return self.parse_balance(result, False)
+
+    # TEALSTREET
+    def parse_trading_balance(self, response):
+        result = {'info': response}
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0, {})
+        timestamp = self.safe_integer(first, 'uTime')
+        details = self.safe_value(first, 'details', [])
+        for i in range(0, len(details)):
+            balance = details[i]
+            currencyId = self.safe_string(balance, 'ccy')
+            code = self.safe_currency_code(currencyId)
+            account = self.account()
+            # it may be incorrect to use total, free and used for swap accounts
+            eq = self.safe_string(balance, 'eq')
+            availEq = self.safe_string(balance, 'availEq')
+            if (len(eq) < 1) or (len(availEq) < 1):
+                account['free'] = self.safe_string(balance, 'availBal')
+                account['used'] = self.safe_string(balance, 'frozenBal')
+            else:
+                account['total'] = eq
+                account['free'] = availEq
+            result[code] = account
+        result['timestamp'] = timestamp
+        result['datetime'] = self.iso8601(timestamp)
+        return self.parse_balance(result, False)
 
     async def fetch_balance(self, params={}):
         await self.load_markets()
