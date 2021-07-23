@@ -1869,127 +1869,103 @@ class okex(Exchange):
         # createOrder
         #
         #     {
-        #         "client_oid":"oktspot79",
-        #         "error_code":"",
-        #         "error_message":"",
-        #         "order_id":"2510789768709120",
-        #         "result":true
+        #         "clOrdId": "oktswap6",
+        #         "ordId": "312269865356374016",
+        #         "tag": "",
+        #         "sCode": "0",
+        #         "sMsg": ""
         #     }
         #
-        # cancelOrder
+        # fetchOrder, fetchOpenOrders
         #
         #     {
-        #         "result": True,
-        #         "client_oid": "oktfuture10",  # missing if requested by order_id
-        #         "order_id": "2517535534836736",
-        #         # instrument_id is missing for spot/margin orders
-        #         # available in futures and swap orders only
-        #         "instrument_id": "EOS-USD-190628",
-        #     }
-        #
-        # fetchOrder, fetchOrdersByState, fetchOpenOrders, fetchClosedOrders
-        #
-        #     # spot and margin orders
-        #
-        #     {
-        #         "client_oid":"oktspot76",
-        #         "created_at":"2019-03-18T07:26:49.000Z",
-        #         "filled_notional":"3.9734",
-        #         "filled_size":"0.001",  # filled_qty in futures and swap orders
-        #         "funds":"",  # self is most likely the same as notional
-        #         "instrument_id":"BTC-USDT",
-        #         "notional":"",
-        #         "order_id":"2500723297813504",
-        #         "order_type":"0",
-        #         "price":"4013",
-        #         "product_id":"BTC-USDT",  # missing in futures and swap orders
+        #         "accFillSz":"0",
+        #         "avgPx":"",
+        #         "cTime":"1621910749815",
+        #         "category":"normal",
+        #         "ccy":"",
+        #         "clOrdId":"",
+        #         "fee":"0",
+        #         "feeCcy":"ETH",
+        #         "fillPx":"",
+        #         "fillSz":"0",
+        #         "fillTime":"",
+        #         "instId":"ETH-USDT",
+        #         "instType":"SPOT",
+        #         "lever":"",
+        #         "ordId":"317251910906576896",
+        #         "ordType":"limit",
+        #         "pnl":"0",
+        #         "posSide":"net",
+        #         "px":"2000",
+        #         "rebate":"0",
+        #         "rebateCcy":"USDT",
         #         "side":"buy",
-        #         "size":"0.001",
-        #         "status":"filled",
-        #         "state": "2",
-        #         "timestamp":"2019-03-18T07:26:49.000Z",
-        #         "type":"limit"
+        #         "slOrdPx":"",
+        #         "slTriggerPx":"",
+        #         "state":"live",
+        #         "sz":"0.001",
+        #         "tag":"",
+        #         "tdMode":"cash",
+        #         "tpOrdPx":"",
+        #         "tpTriggerPx":"",
+        #         "tradeId":"",
+        #         "uTime":"1621910749815"
         #     }
         #
-        #     # futures and swap orders
-        #
-        #     {
-        #         "instrument_id":"EOS-USD-190628",
-        #         "size":"10",
-        #         "timestamp":"2019-03-20T10:04:55.000Z",
-        #         "filled_qty":"10",  # filled_size in spot and margin orders
-        #         "fee":"-0.00841043",
-        #         "order_id":"2512669605501952",
-        #         "price":"3.668",
-        #         "price_avg":"3.567",  # missing in spot and margin orders
-        #         "status":"2",
-        #         "state": "2",
-        #         "type":"4",
-        #         "contract_val":"10",
-        #         "leverage":"10",  # missing in swap, spot and margin orders
-        #         "client_oid":"",
-        #         "pnl":"1.09510794",  # missing in swap, spo and margin orders
-        #         "order_type":"0"
-        #     }
-        #
-        id = self.safe_string(order, 'order_id')
-        timestamp = self.parse8601(self.safe_string(order, 'timestamp'))
+        id = self.safe_string(order, 'ordId')
+        timestamp = self.safe_integer(order, 'cTime')
+        lastTradeTimestamp = self.safe_integer(order, 'fillTime')
         side = self.safe_string(order, 'side')
-        type = self.safe_string(order, 'type')
-        if (side != 'buy') and (side != 'sell'):
-            side = self.parse_order_side(type)
-        symbol = None
-        marketId = self.safe_string(order, 'instrument_id')
-        if marketId in self.markets_by_id:
-            market = self.markets_by_id[marketId]
-            symbol = market['symbol']
-        else:
-            symbol = marketId
-        if market is not None:
-            if symbol is None:
-                symbol = market['symbol']
-        amount = self.safe_number(order, 'size')
-        filled = self.safe_number_2(order, 'filled_size', 'filled_qty')
-        remaining = None
-        if amount is not None:
-            if filled is not None:
-                amount = max(amount, filled)
-                remaining = max(0, amount - filled)
-        if type == 'market':
-            remaining = 0
-        cost = self.safe_number_2(order, 'filled_notional', 'funds')
-        price = self.safe_number(order, 'price')
-        average = self.safe_number(order, 'price_avg')
-        if cost is None:
-            if filled is not None and average is not None:
-                cost = average * filled
-        else:
-            if (average is None) and (filled is not None) and (filled > 0):
-                average = cost / filled
+        type = self.safe_string(order, 'ordType')
+        postOnly = None
+        timeInForce = None
+        if type == 'post_only':
+            postOnly = True
+            type = 'limit'
+        elif type == 'fok':
+            timeInForce = 'FOK'
+            type = 'limit'
+        elif type == 'ioc':
+            timeInForce = 'IOC'
+            type = 'limit'
+        marketId = self.safe_string(order, 'instId')
+        symbol = self.safe_symbol(marketId, market, '-')
+        filled = self.safe_number(order, 'accFillSz')
+        price = self.safe_number_2(order, 'px', 'slOrdPx')
+        average = self.safe_number(order, 'avgPx')
         status = self.parse_order_status(self.safe_string(order, 'state'))
-        feeCost = self.safe_number(order, 'fee')
+        feeCostString = self.safe_string(order, 'fee')
+        amount = None
+        cost = None
+        if side == 'buy' and type == 'market':
+            cost = self.safe_number(order, 'sz')
+        else:
+            amount = self.safe_number(order, 'sz')
         fee = None
-        if feeCost is not None:
-            feeCurrency = None
+        if feeCostString is not None:
+            feeCostSigned = Precise.string_neg(feeCostString)
+            feeCurrencyId = self.safe_string(order, 'feeCcy')
+            feeCurrencyCode = self.safe_currency_code(feeCurrencyId)
             fee = {
-                'cost': feeCost,
-                'currency': feeCurrency,
+                'cost': self.parse_number(feeCostSigned),
+                'currency': feeCurrencyCode,
             }
-        clientOrderId = self.safe_string(order, 'client_oid')
+        clientOrderId = self.safe_string(order, 'clOrdId')
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
-        stopPrice = self.safe_number(order, 'trigger_price')
-        return {
+        stopPrice = self.safe_number(order, 'slTriggerPx')
+        return self.safe_order({
             'info': order,
             'id': id,
             'clientOrderId': clientOrderId,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
-            'lastTradeTimestamp': None,
+            'lastTradeTimestamp': lastTradeTimestamp,
             'symbol': symbol,
             'type': type,
-            'timeInForce': None,
-            'postOnly': None,
+            'timeInForce': timeInForce,
+            'postOnly': postOnly,
             'side': side,
             'price': price,
             'stopPrice': stopPrice,
@@ -1997,11 +1973,11 @@ class okex(Exchange):
             'cost': cost,
             'amount': amount,
             'filled': filled,
-            'remaining': remaining,
+            'remaining': None,
             'status': status,
             'fee': fee,
             'trades': None,
-        }
+        })
 
     async def fetch_order(self, id, symbol=None, params={}):
         if symbol is None:
