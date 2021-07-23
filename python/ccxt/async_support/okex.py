@@ -2076,7 +2076,8 @@ class okex(Exchange):
 
     async def fetch_orders_by_state(self, state, symbol=None, since=None, limit=None, params={}):
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOrdersByState() requires a symbol argument')
+            # raise ArgumentsRequired(self.id + ' fetchOrdersByState() requires a symbol argument')
+            market = self.market(symbol)
         await self.load_markets()
         market = self.market(symbol)
         type = None
@@ -2182,17 +2183,81 @@ class okex(Exchange):
                     orders = response[0]
         return self.parse_orders(orders, market, since, limit)
 
+    # async def fetch_open_orders(self, symbol=None, since=None, limit=None, params={}):
+    #     # '-2': failed,
+    #     # '-1': cancelled,
+    #     #  '0': open ,
+    #     #  '1': partially filled,
+    #     #  '2': fully filled,
+    #     #  '3': submitting,
+    #     #  '4': cancelling,
+    #     #  '6': incomplete（open+partially filled),
+    #     #  '7': complete（cancelled+fully filled),
+    #     return await self.fetch_orders_by_state('6', symbol, since, limit, params)
+
     async def fetch_open_orders(self, symbol=None, since=None, limit=None, params={}):
-        # '-2': failed,
-        # '-1': cancelled,
-        #  '0': open ,
-        #  '1': partially filled,
-        #  '2': fully filled,
-        #  '3': submitting,
-        #  '4': cancelling,
-        #  '6': incomplete（open+partially filled),
-        #  '7': complete（cancelled+fully filled),
-        return await self.fetch_orders_by_state('6', symbol, since, limit, params)
+        await self.load_markets()
+        request = {
+            # 'instType': 'SPOT',  # SPOT, MARGIN, SWAP, FUTURES, OPTION
+            # 'uly': currency['id'],
+            # 'instId': market['id'],
+            # 'ordType': 'limit',  # market, limit, post_only, fok, ioc, comma-separated
+            # 'state': 'live',  # live, partially_filled
+            # 'after': orderId,
+            # 'before': orderId,
+            # 'limit': limit,  # default 100, max 100
+        }
+        market = None
+        if symbol is not None:
+            market = await self.market(symbol)
+            request['instId'] = market['id']
+        if limit is not None:
+            request['limit'] = limit  # default 100, max 100 # TODO: make sure
+        response = await self.privateGetTradeOrdersPending(self.extend(request, params))
+        #
+        #     {
+        #         "code":"0",
+        #         "data":[
+        #             {
+        #                 "accFillSz":"0",
+        #                 "avgPx":"",
+        #                 "cTime":"1621910749815",
+        #                 "category":"normal",
+        #                 "ccy":"",
+        #                 "clOrdId":"",
+        #                 "fee":"0",
+        #                 "feeCcy":"ETH",
+        #                 "fillPx":"",
+        #                 "fillSz":"0",
+        #                 "fillTime":"",
+        #                 "instId":"ETH-USDT",
+        #                 "instType":"SPOT",
+        #                 "lever":"",
+        #                 "ordId":"317251910906576896",
+        #                 "ordType":"limit",
+        #                 "pnl":"0",
+        #                 "posSide":"net",
+        #                 "px":"2000",
+        #                 "rebate":"0",
+        #                 "rebateCcy":"USDT",
+        #                 "side":"buy",
+        #                 "slOrdPx":"",
+        #                 "slTriggerPx":"",
+        #                 "state":"live",
+        #                 "sz":"0.001",
+        #                 "tag":"",
+        #                 "tdMode":"cash",
+        #                 "tpOrdPx":"",
+        #                 "tpTriggerPx":"",
+        #                 "tradeId":"",
+        #                 "uTime":"1621910749815"
+        #             }
+        #         ],
+        #         "msg":""
+        #     }
+        #
+        data = self.safe_value(response, 'data', [])
+        return self.parse_orders(data, market, since, limit)
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         # '-2': failed,

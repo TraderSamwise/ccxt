@@ -70,9 +70,9 @@ okexExchange.set_sandbox_mode(True)
 def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
-    pprint(exchange.fetch_markets())
+    # pprint(exchange.fetch_markets())
     #pprint(exchange.fetch_balance())
-    # pprint(exchange.fetch_open_orders())
+    pprint(exchange.fetch_open_orders())
     #print('##########\nfetch_positions\n##########')
     #pprint(exchange.fetch_positions())
     #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
