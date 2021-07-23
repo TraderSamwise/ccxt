@@ -488,7 +488,8 @@ class okex5(Exchange):
                     'type': 'Candles',  # Candles or HistoryCandles, IndexCandles, MarkPriceCandles
                 },
                 'createMarketBuyOrderRequiresPrice': True,
-                'fetchMarkets': ['spot', 'futures', 'swap', 'option'],  # spot, futures, swap, option
+                # 'fetchMarkets': ['spot', 'futures', 'swap', 'option'], # TEALSTREET TODO: add spot and option eventually
+                'fetchMarkets': ['futures', 'swap'],
                 'defaultType': 'spot',  # 'account', 'spot', 'margin', 'futures', 'swap', 'option'
                 'auth': {
                     'time': 'public',
