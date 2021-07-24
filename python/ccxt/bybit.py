@@ -1752,7 +1752,7 @@ class bybit(Exchange):
             'PartiallyFilled',
             'PendingCancel',
             # conditional orders
-            # 'Untriggered',
+            'Untriggered',
         ]
         options = self.safe_value(self.options, 'fetchOpenOrders', {})
         status = self.safe_value(options, 'order_status', defaultStatuses)
