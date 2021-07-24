@@ -1913,13 +1913,72 @@ class okex(Exchange):
         #         "uTime":"1621910749815"
         #     }
         #
+        # algo order
+        # {
+        #     "actualPx": "",
+        #     "actualSide": "",
+        #     "actualSz": "0",
+        #     "algoId": "339146702171021312",
+        #     "cTime": "1627130874838",
+        #     "ccy": "",
+        #     "instId": "TRX-USD-210806",
+        #     "instType": "FUTURES",
+        #     "lever": "10",
+        #     "ordId": "0",
+        #     "ordPx": "",
+        #     "ordType": "conditional",
+        #     "posSide": "net",
+        #     "side": "sell",
+        #     "slOrdPx": "-1",
+        #     "slTriggerPx": "0.055",
+        #     "state": "live",
+        #     "sz": "1",
+        #     "tdMode": "cross",
+        #     "tgtCcy": "",
+        #     "tpOrdPx": "",
+        #     "tpTriggerPx": "",
+        #     "triggerPx": "",
+        #     "triggerTime": ""
+        # }
+        #
+        # oco
+        # {
+        #     "actualPx": "",
+        #     "actualSide": "",
+        #     "actualSz": "0",
+        #     "algoId": "339180839963598848",
+        #     "cTime": "1627139013923",
+        #     "ccy": "",
+        #     "instId": "TRX-USD-210806",
+        #     "instType": "FUTURES",
+        #     "lever": "10",
+        #     "ordId": "0",
+        #     "ordPx": "",
+        #     "ordType": "oco",
+        #     "posSide": "net",
+        #     "side": "sell",
+        #     "slOrdPx": "-1",
+        #     "slTriggerPx": "0.05",
+        #     "state": "live",
+        #     "sz": "1",
+        #     "tdMode": "cross",
+        #     "tgtCcy": "",
+        #     "tpOrdPx": "-1",
+        #     "tpTriggerPx": "0.06",
+        #     "triggerPx": "",
+        #     "triggerTime": ""
+        # }
+        # TEALSTREET TODO: make sure OCO is parsed correctly
         id = self.safe_string(order, 'ordId')
+        if id == '0' or not id:
+            id = self.safe_string(order, 'algoId')
         timestamp = self.safe_integer(order, 'cTime')
         lastTradeTimestamp = self.safe_integer(order, 'fillTime')
         side = self.safe_string(order, 'side')
         type = self.safe_string(order, 'ordType')
         postOnly = None
         timeInForce = None
+        price = self.safe_number_2(order, 'px', 'slOrdPx')
         if type == 'post_only':
             postOnly = True
             type = 'limit'
@@ -1929,6 +1988,8 @@ class okex(Exchange):
         elif type == 'ioc':
             timeInForce = 'IOC'
             type = 'limit'
+        elif type in ['conditional', 'oco', 'trigger']:
+            type = 'market' if price == -1 else 'limit'
         marketId = self.safe_string(order, 'instId')
         symbol = self.safe_symbol(marketId, market, '-')
         filled = self.safe_number(order, 'accFillSz')
@@ -2190,7 +2251,7 @@ class okex(Exchange):
         if limit is not None:
             request['limit'] = limit  # default 100, max 100 # TODO: make sure
         type = self.safe_value(params, 'type')
-        if (type == 'conditional') or (type == 'oco') or (type == 'trigger'):
+        if type in ['conditional', 'oco', 'trigger']:
             request['ordType'] = type
             response = await self.privateGetTradeOrdersAlgoPending(self.extend(request, params))
         else:
