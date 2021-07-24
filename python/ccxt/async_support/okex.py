@@ -2189,7 +2189,12 @@ class okex(Exchange):
             request['instId'] = market['id']
         if limit is not None:
             request['limit'] = limit  # default 100, max 100 # TODO: make sure
-        response = await self.privateGetTradeOrdersPending(self.extend(request, params))
+        type = self.safe_value(params, 'type')
+        if (type == 'conditional') or (type == 'oco') or (type == 'trigger'):
+            request['ordType'] = type
+            response = await self.privateGetTradeOrdersAlgoPending(self.extend(request, params))
+        else:
+            response = await self.privateGetTradeOrdersPending(self.extend(request, params))
         #
         #     {
         #         "code":"0",

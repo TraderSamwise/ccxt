@@ -500,6 +500,10 @@ class Exchange(object):
                 return gzip.GzipFile('', 'rb', 9, io.BytesIO(text)).read()
         return text
 
+    # TEALSTREET
+    def resolve_error_message_future(self, message):
+        pass
+
     def throw_exactly_matched_exception(self, exact, string, message):
         if string in exact:
             self.resolve_error_message_future('{0} ({1})'.format(string, message))
