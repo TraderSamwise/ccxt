@@ -937,61 +937,39 @@ class okex(Exchange):
         #             "side":"short",  # "buy" in futures trades
         #         }
         #
-        symbol = None
-        marketId = self.safe_string(trade, 'instrument_id')
-        base = None
-        quote = None
-        if marketId in self.markets_by_id:
-            market = self.markets_by_id[marketId]
-            symbol = market['symbol']
-            base = market['base']
-            quote = market['quote']
-        elif marketId is not None:
-            parts = marketId.split('-')
-            numParts = len(parts)
-            if numParts == 2:
-                baseId, quoteId = parts
-                base = self.safe_currency_code(baseId)
-                quote = self.safe_currency_code(quoteId)
-                symbol = base + '/' + quote
-            else:
-                symbol = marketId
-        if (symbol is None) and (market is not None):
-            symbol = market['symbol']
-            base = market['base']
-            quote = market['quote']
-        timestamp = self.parse8601(self.safe_string_2(trade, 'timestamp', 'created_at'))
-        priceString = self.safe_string(trade, 'price')
-        amountString = self.safe_string_2(trade, 'size', 'qty')
-        amountString = self.safe_string(trade, 'order_qty', amountString)
+        id = self.safe_string(trade, 'tradeId')
+        marketId = self.safe_string(trade, 'instId')
+        market = self.safe_market(marketId, market, '-')
+        symbol = market['symbol']
+        timestamp = self.safe_integer(trade, 'ts')
+        priceString = self.safe_string_2(trade, 'fillPx', 'px')
+        amountString = self.safe_string_2(trade, 'fillSz', 'sz')
         price = self.parse_number(priceString)
         amount = self.parse_number(amountString)
         cost = self.parse_number(Precise.string_mul(priceString, amountString))
-        takerOrMaker = self.safe_string_2(trade, 'exec_type', 'liquidity')
-        if takerOrMaker == 'M':
-            takerOrMaker = 'maker'
-        elif takerOrMaker == 'T':
-            takerOrMaker = 'taker'
         side = self.safe_string(trade, 'side')
-        feeCost = self.safe_number(trade, 'fee')
+        orderId = self.safe_string(trade, 'ordId')
+        feeCostString = self.safe_string(trade, 'fee')
         fee = None
-        if feeCost is not None:
-            feeCurrency = base if (side == 'buy') else quote
+        if feeCostString is not None:
+            feeCostSigned = Precise.string_neg(feeCostString)
+            feeCurrencyId = self.safe_string(trade, 'feeCcy')
+            feeCurrencyCode = self.safe_currency_code(feeCurrencyId)
             fee = {
-                # fee is either a positive number(invitation rebate)
-                # or a negative number(transaction fee deduction)
-                # therefore we need to invert the fee
-                # more about it https://github.com/ccxt/ccxt/issues/5909
-                'cost': -feeCost,
-                'currency': feeCurrency,
+                'cost': self.parse_number(feeCostSigned),
+                'currency': feeCurrencyCode,
             }
-        orderId = self.safe_string(trade, 'order_id')
+        takerOrMaker = self.safe_string(trade, 'execType')
+        if takerOrMaker == 'T':
+            takerOrMaker = 'taker'
+        elif takerOrMaker == 'M':
+            takerOrMaker = 'maker'
         return {
             'info': trade,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
             'symbol': symbol,
-            'id': self.safe_string_2(trade, 'trade_id', 'ledger_id'),
+            'id': id,
             'order': orderId,
             'type': None,
             'takerOrMaker': takerOrMaker,
