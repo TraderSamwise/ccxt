@@ -26,8 +26,25 @@ from ccxt.base.decimal_to_precision import TRUNCATE
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
+class OkexTealstreetMixin(object):
+    # TEALSTREET: this may work to cancel all without giving a order id
+    def cancel_all_orders(self, symbol=None, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
+        self.load_markets()
+        market = self.market(symbol)
+        request = {
+            'instId': market['id'],
+            # 'ordId': id,  # either ordId or clOrdId is required
+            # 'clOrdId': clientOrderId,
+        }
+        query = self.omit(params)
+        response = self.privatePostTradeCancelOrder(self.extend(request, query))
+        # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
+        data = self.safe_value(response, 'data', [])
+        return self.parse_orders(data, market)
 
-class okex(Exchange):
+class okex(Exchange, OkexTealstreetMixin):
 
     def describe(self):
         return self.deep_extend(super(okex, self).describe(), {
