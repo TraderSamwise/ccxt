@@ -1798,7 +1798,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         reduceOnly = self.safe_value(params, 'postOnly', False)
         timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
         params.pop('timeInForce', None)
-        triggerType = self.get_time_in_force(self.safe_string(params, 'triggerType'))
+        triggerType = self.get_trigger_type(self.safe_string(params, 'triggerType'))
         params.pop('triggerType', None)
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         request = {
