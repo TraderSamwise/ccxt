@@ -1773,31 +1773,54 @@ class phemex(Exchange, PhemexTealstreetMixin):
             return self.parse_swap_order(order, market)
         return self.parse_spot_order(order, market)
 
+    def get_time_in_force(self, unifiedTimeInForce):
+        timeInForces = {
+            'GTC': 'GoodTillCancel' ,
+            'PO': 'PostOnly',
+            'IOC': 'ImmediateOrCancel',
+            'FOK': 'FillOrKill',
+        }
+        return self.safe_string(timeInForces, unifiedTimeInForce, unifiedTimeInForce)
+
+    def get_trigger_type(self, unifiedTriggerType):
+        triggerTypes = {
+            'Mark': 'ByMarkPrice' ,
+            'Last': 'ByLastPrice',
+        }
+        return self.safe_string(triggerTypes, unifiedTriggerType, unifiedTriggerType)
+
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
         side = self.capitalize(side)
         type = self.capitalize(type)
+        # stopPrice = self.safe_float(params, 'stopPrice') # handled below
+        reduceOnly = self.safe_value(params, 'postOnly', False)
+        timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
+        params.pop('timeInForce', None)
+        triggerType = self.get_time_in_force(self.safe_string(params, 'triggerType'))
+        params.pop('triggerType', None)
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         request = {
             # common
             'symbol': market['id'],
             'side': side,  # Sell, Buy
             'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
-            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders
+            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders, handled below
             # 'priceEp': self.to_ep(price, market),  # required for limit orders
-            # 'timeInForce': 'GoodTillCancel',  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
+            'timeInForce': timeInForce,  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
             # ----------------------------------------------------------------
             # spot
             # 'qtyType': 'ByBase',  # ByBase, ByQuote
             # 'quoteQtyEv': self.to_ep(cost, market),
             # 'baseQtyEv': self.to_ev(amount, market),
-            # 'trigger': 'ByLastPrice',  # required for conditional orders
+            'triggerType': triggerType,  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
-            # 'clOrdID': self.uuid(),  # max length 40
+            'clOrdID': self.uuid(),  # max length 40
             # 'orderQty': self.amount_to_precision(amount, symbol),
-            # 'reduceOnly': False,
-            # 'closeOnTrigger': False,  # implicit reduceOnly and cancel other orders in the same direction
+            'reduceOnly': reduceOnly,
+            'closeOnTrigger': closeOnTrigger,  # implicit reduceOnly and cancel other orders in the same direction
             # 'takeProfitEp': self.to_ep(takeProfit, market),
             # 'stopLossEp': self.to_ep(stopLossEp, market),
             # 'triggerType': 'ByMarkPrice',  # ByMarkPrice, ByLastPrice
