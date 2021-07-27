@@ -1782,12 +1782,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
         return self.safe_string(timeInForces, unifiedTimeInForce, unifiedTimeInForce)
 
-    def get_trigger_type(self, unifiedTriggerType):
+    def get_trigger_type(self, unifiedTrigger):
         triggerTypes = {
             'Mark': 'ByMarkPrice' ,
             'Last': 'ByLastPrice',
         }
-        return self.safe_string(triggerTypes, unifiedTriggerType, unifiedTriggerType)
+        return self.safe_string(triggerTypes, unifiedTrigger, unifiedTrigger)
 
     def get_order_type(self, unifiedOrderType):
         orderTypes = {
@@ -1809,7 +1809,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         reduceOnly = self.safe_value(params, 'postOnly', False)
         timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
         params.pop('timeInForce', None)
-        triggerType = self.get_trigger_type(self.safe_string(params, 'triggerType'))
+        trigger = self.get_trigger_type(self.safe_string(params, 'trigger'))
         params.pop('triggerType', None)
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         request = {
@@ -1825,7 +1825,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             # 'qtyType': 'ByBase',  # ByBase, ByQuote
             # 'quoteQtyEv': self.to_ep(cost, market),
             # 'baseQtyEv': self.to_ev(amount, market),
-            'triggerType': triggerType,  # required for conditional orders
+            'triggerType': trigger,  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
             'clOrdID': self.uuid(),  # max length 40
