@@ -1789,11 +1789,22 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
         return self.safe_string(triggerTypes, unifiedTriggerType, unifiedTriggerType)
 
+    def get_order_type(self, unifiedOrderType):
+        orderTypes = {
+            'market': 'Market',
+            'limit': 'Limit' ,
+            'stop': 'Stop',
+            'stoplimit': 'StopLimit',
+            'marketiftouched': 'MarketIfTouched',
+            'limitiftouched': 'LimitIfTouched',
+        }
+        return self.safe_string(orderTypes, unifiedOrderType, self.capitalize(unifiedOrderType))
+
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
         side = self.capitalize(side)
-        type = self.capitalize(type)
+        type = self.get_order_type(type)
         # stopPrice = self.safe_float(params, 'stopPrice') # handled below
         reduceOnly = self.safe_value(params, 'postOnly', False)
         timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
@@ -1848,7 +1859,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 request['baseQtyEv'] = self.to_ev(amount, market)
         elif market['swap']:
             request['orderQty'] = int(amount)
-        if type == 'Limit':
+        if type in ['Limit', 'StopLimit', 'LimitIfTouched']:
             request['priceEp'] = self.to_ep(price, market)
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice is not None:
