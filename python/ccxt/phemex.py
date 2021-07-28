@@ -382,7 +382,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'options': {
                 'x-phemex-request-expiry': 60,  # in seconds
                 'createOrderByQuoteRequiresPrice': True,
-            },
+            }
         })
 
     def parse_safe_number(self, value=None):
@@ -1773,45 +1773,18 @@ class phemex(Exchange, PhemexTealstreetMixin):
             return self.parse_swap_order(order, market)
         return self.parse_spot_order(order, market)
 
-    def get_time_in_force(self, unifiedTimeInForce):
-        timeInForces = {
-            'GTC': 'GoodTillCancel' ,
-            'PO': 'PostOnly',
-            'IOC': 'ImmediateOrCancel',
-            'FOK': 'FillOrKill',
-        }
-        return self.safe_string(timeInForces, unifiedTimeInForce, unifiedTimeInForce)
-
-    def get_trigger_type(self, unifiedTrigger):
-        triggerTypes = {
-            'Mark': 'ByMarkPrice' ,
-            'Last': 'ByLastPrice',
-        }
-        return self.safe_string(triggerTypes, unifiedTrigger, unifiedTrigger)
-
-    def get_order_type(self, unifiedOrderType):
-        orderTypes = {
-            'market': 'Market',
-            'limit': 'Limit' ,
-            'stop': 'Stop',
-            'stoplimit': 'StopLimit',
-            'marketiftouched': 'MarketIfTouched',
-            'limitiftouched': 'LimitIfTouched',
-        }
-        return self.safe_string(orderTypes, unifiedOrderType, self.capitalize(unifiedOrderType))
-
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
         side = self.capitalize(side)
-        type = self.get_order_type(type)
-        # stopPrice = self.safe_float(params, 'stopPrice') # handled below
-        reduceOnly = self.safe_value(params, 'postOnly', False)
-        timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
-        params.pop('timeInForce', None)
-        trigger = self.get_trigger_type(self.safe_string(params, 'trigger'))
-        params.pop('triggerType', None)
+        type = self.api_order_type(type)
+
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+
         request = {
             # common
             'symbol': market['id'],

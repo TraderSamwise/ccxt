@@ -1291,6 +1291,14 @@ class bybit(Exchange):
         self.load_markets()
         market = self.market(symbol)
         qty = self.amount_to_precision(symbol, amount)
+
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
+        trigger = self.get_trigger_type(self.safe_string(params, 'trigger'))
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+
         if market['inverse']:
             qty = int(qty)
         else:
@@ -1305,7 +1313,7 @@ class bybit(Exchange):
             'time_in_force': 'GoodTillCancel',  # ImmediateOrCancel, FillOrKill, PostOnly
             # 'take_profit': 123.45,  # take profit price, only take effect upon opening the position
             # 'stop_loss': 123.45,  # stop loss price, only take effect upon opening the position
-            # 'reduce_only': False,  # reduce only, required for linear orders
+            'reduce_only': reduceOnly,  # reduce only, required for linear orders
             # when creating a closing order, bybit recommends a True value for
             # close_on_trigger to avoid failing due to insufficient available margin
             # 'close_on_trigger': False, required for linear orders

@@ -28,10 +28,7 @@ bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
-    'enableRateLimit': True,
-    'options': {
-         'defaultType': 'linear'
-    }
+    'enableRateLimit': True
 })
 bybitExchange.urls['api'] = bybitExchange.urls['test']
 
@@ -73,13 +70,13 @@ def test_exchange_methods(exchange):
     # pprint(exchange.fetch_markets())
     #pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_open_orders())
-    pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
+    # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
     #pprint(exchange.fetch_positions())
     #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
-    #pprint(exchange.fetch_orders())
+    pprint(exchange.fetch_orders())
     # pprint(exchange.fetch_open_orders('LINK/USDT', None, None)) # phemex /  bybit
     # pprint(exchange.fetch_orders()) # phemex /  bybit
     #pprint(exchange.fetch_open_orders())
@@ -91,10 +88,10 @@ def test_exchange_methods(exchange):
 def main():
     #test_exchange_methods(ftxExchange)
     #test_exchange_methods(bitmexExchange)
-    #test_exchange_methods(bybitExchange)
+    test_exchange_methods(bybitExchange)
     # test_exchange_methods(binanceExchange)
     # test_exchange_methods(binanceExchange)
-    test_exchange_methods(okexExchange)
+    # test_exchange_methods(okexExchange)
 
 if __name__ == "__main__":
     main()
