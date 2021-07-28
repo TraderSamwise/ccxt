@@ -169,6 +169,7 @@ class Exchange(object):
     triggerTypes = {
         'Mark': 'ByMarkPrice',
         'Last': 'ByLastPrice',
+        'Index': 'ByIndexPrice',
     }
 
     ids = None

@@ -30,7 +30,7 @@ bybitExchange = ccxt.bybit({
     'secret': os.environ.get('bybit_secret'),
     'enableRateLimit': True
 })
-bybitExchange.urls['api'] = bybitExchange.urls['test']
+bybitExchange.set_sandbox_mode(True)
 
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 binanceExchange = ccxt.binanceusdm({
@@ -68,16 +68,19 @@ def test_exchange_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
-    #pprint(exchange.fetch_balance())
+    pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
-    #pprint(exchange.fetch_positions())
+    # pprint(exchange.fetch_positions())
+    # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
+    # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
+    exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
-    pprint(exchange.fetch_orders())
-    # pprint(exchange.fetch_open_orders('LINK/USDT', None, None)) # phemex /  bybit
+    # pprint(exchange.fetch_orders())
+    # pprint(exchange.fetch_open_orders('BTC/USD', None, None)) # phemex /  bybit
     # pprint(exchange.fetch_orders()) # phemex /  bybit
     #pprint(exchange.fetch_open_orders())
     # print('##########\nfetch_my_trades\n##########')

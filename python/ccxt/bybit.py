@@ -368,6 +368,20 @@ class bybit(Exchange):
                     'deposit': {},
                 },
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Stop',
+                'stoplimit': 'StopLimit',
+                'marketiftouched': 'MarketIfTouched',
+                'limitiftouched': 'LimitIfTouched',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            }
         })
 
     def nonce(self):
@@ -1293,10 +1307,9 @@ class bybit(Exchange):
         qty = self.amount_to_precision(symbol, amount)
 
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        timeInForce = self.get_time_in_force(self.safe_string(params, 'timeInForce'))
-        trigger = self.get_trigger_type(self.safe_string(params, 'trigger'))
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
-
         params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
 
         if market['inverse']:
@@ -1310,13 +1323,13 @@ class bybit(Exchange):
             'order_type': self.capitalize(type),
             'qty': qty,  # order quantity in USD, integer only
             # 'price': float(self.price_to_precision(symbol, price)),  # required for limit orders
-            'time_in_force': 'GoodTillCancel',  # ImmediateOrCancel, FillOrKill, PostOnly
+            'time_in_force': timeInForce,  # ImmediateOrCancel, FillOrKill, PostOnly
             # 'take_profit': 123.45,  # take profit price, only take effect upon opening the position
             # 'stop_loss': 123.45,  # stop loss price, only take effect upon opening the position
             'reduce_only': reduceOnly,  # reduce only, required for linear orders
             # when creating a closing order, bybit recommends a True value for
             # close_on_trigger to avoid failing due to insufficient available margin
-            # 'close_on_trigger': False, required for linear orders
+            'close_on_trigger': closeOnTrigger, # required for linear orders
             # 'order_link_id': 'string',  # unique client order id, max 36 characters
             # conditional orders ---------------------------------------------
             # base_price is used to compare with the value of stop_px, to decide
@@ -1325,7 +1338,9 @@ class bybit(Exchange):
             # expected direction of the current conditional order
             # 'base_price': 123.45,  # required for conditional orders
             # 'stop_px': 123.45,  # trigger price, required for conditional orders
-            # 'trigger_by': 'LastPrice',  # IndexPrice, MarkPrice
+            # 'trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
+            # 'tp_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
+            # 'sl_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
         }
         priceIsRequired = False
         if type == 'limit':
@@ -1340,7 +1355,15 @@ class bybit(Exchange):
             request['order_link_id'] = clientOrderId
             params = self.omit(params, ['order_link_id', 'clientOrderId'])
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
+        if stopPx:
+            params = self.omit(params, 'stopPrice')
+            request['trigger_by'] = trigger, # IndexPrice, MarkPrice, LastPrice
+            request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+            request['sl_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
         basePrice = self.safe_value(params, 'base_price')
+        # TEALSTREET TODO: get current mark price and set to base price
+        if not basePrice:
+            basePrice = float(self.price_to_precision(symbol, price))
         method = None
         if market['swap']:
             if market['linear']:
@@ -1367,6 +1390,10 @@ class bybit(Exchange):
                 params = self.omit(params, ['stop_px', 'stopPrice', 'base_price'])
         elif basePrice is not None:
             raise ArgumentsRequired(self.id + ' createOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
+
+        # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
+        #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
+        params = self.omit(params, ['stopPrice'])
         response = getattr(self, method)(self.extend(request, params))
         #
         #     {
