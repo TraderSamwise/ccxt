@@ -1356,6 +1356,7 @@ class bybit(Exchange):
             params = self.omit(params, ['order_link_id', 'clientOrderId'])
         basePrice = self.safe_value(params, 'base_price')
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
+        stopPx = None if stopPx == 0.0 else stopPx
         if stopPx:
             # TEALSTREET TODO: get current mark price and set to base price
             if not basePrice:
