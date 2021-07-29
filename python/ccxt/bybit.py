@@ -372,8 +372,8 @@ class bybit(Exchange):
             'orderTypes': {
                 'market': 'Market',
                 'limit': 'Limit',
-                'stop': 'Stop',
-                'stoplimit': 'StopLimit',
+                'stop': 'Market',
+                'stoplimit': 'Limit',
                 'marketiftouched': 'MarketIfTouched',
                 'limitiftouched': 'LimitIfTouched',
             },
@@ -1320,7 +1320,7 @@ class bybit(Exchange):
             # orders ---------------------------------------------------------
             'side': self.capitalize(side),
             'symbol': market['id'],
-            'order_type': self.capitalize(type),
+            'order_type': self.api_order_type(type),
             'qty': qty,  # order quantity in USD, integer only
             # 'price': float(self.price_to_precision(symbol, price)),  # required for limit orders
             'time_in_force': timeInForce,  # ImmediateOrCancel, FillOrKill, PostOnly
@@ -1354,16 +1354,19 @@ class bybit(Exchange):
         if clientOrderId is not None:
             request['order_link_id'] = clientOrderId
             params = self.omit(params, ['order_link_id', 'clientOrderId'])
+        basePrice = self.safe_value(params, 'base_price')
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
         if stopPx:
+            # TEALSTREET TODO: get current mark price and set to base price
+            if not basePrice:
+                # ticker = self.fetch_ticker(symbol)
+                # if side =='buy':
+                #     basePrice = self.safe_float(ticker, 'last')
+                basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
             params = self.omit(params, 'stopPrice')
-            request['trigger_by'] = trigger, # IndexPrice, MarkPrice, LastPrice
+            request['trigger_by'] = trigger # IndexPrice, MarkPrice, LastPrice
             request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
             request['sl_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
-        basePrice = self.safe_value(params, 'base_price')
-        # TEALSTREET TODO: get current mark price and set to base price
-        if not basePrice:
-            basePrice = float(self.price_to_precision(symbol, price))
         method = None
         if market['swap']:
             if market['linear']:
@@ -1387,6 +1390,8 @@ class bybit(Exchange):
                     method = 'futuresPrivatePostStopOrderCreate'
                 request['stop_px'] = float(self.price_to_precision(symbol, stopPx))
                 request['base_price'] = float(self.price_to_precision(symbol, basePrice))
+                if price:
+                    request['price'] = float(self.price_to_precision(symbol, price))
                 params = self.omit(params, ['stop_px', 'stopPrice', 'base_price'])
         elif basePrice is not None:
             raise ArgumentsRequired(self.id + ' createOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
