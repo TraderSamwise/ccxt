@@ -1581,12 +1581,17 @@ class bybit(Exchange):
                 method = 'v2PrivatePostOrderCancel'
         elif market['futures']:
             method = 'futuresPrivatePostOrderCancel'
-        stopOrderId = self.safe_string(params, 'stop_order_id')
+        # stopOrderId = self.safe_string(params, 'stop_order_id')
+        order_type = self.safe_value(params, 'type')
+        stopOrderId = None
+        if order_type in ['stop', 'stoplimit', 'marketiftouched', 'limitiftouched']:
+            stopOrderId = id
         if stopOrderId is None:
             orderLinkId = self.safe_string(params, 'order_link_id')
             if orderLinkId is None:
                 request['order_id'] = id
         else:
+            request['stop_order_id'] = id
             if market['swap']:
                 if market['linear']:
                     method = 'privateLinearPostStopOrderCancel'
@@ -1594,6 +1599,7 @@ class bybit(Exchange):
                     method = 'v2PrivatePostStopOrderCancel'
             elif market['futures']:
                 method = 'futuresPrivatePostStopOrderCancel'
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         result = self.safe_value(response, 'result', {})
         return self.parse_order(result, market)
@@ -1608,14 +1614,25 @@ class bybit(Exchange):
         }
         options = self.safe_value(self.options, 'cancelAllOrders', {})
         defaultMethod = None
-        if market['swap']:
-            if market['linear']:
-                defaultMethod = 'privateLinearPostOrderCancelAll'
-            elif market['inverse']:
-                defaultMethod = 'v2PrivatePostOrderCancelAll'
-        elif market['futures']:
-            defaultMethod = 'futuresPrivatePostOrderCancelAll'
+        order_type = self.safe_string(params, 'type')
+        if order_type not in ['stop', 'stoplimit', 'marketiftouched', 'limitiftouched']:
+            if market['swap']:
+                if market['linear']:
+                    defaultMethod = 'privateLinearPostOrderCancelAll'
+                elif market['inverse']:
+                    defaultMethod = 'v2PrivatePostOrderCancelAll'
+            elif market['futures']:
+                defaultMethod = 'futuresPrivatePostOrderCancelAll'
+        else:
+            if market['swap']:
+                if market['linear']:
+                    defaultMethod = 'privateLinearPostStopOrderCancelAll'
+                elif market['inverse']:
+                    defaultMethod = 'v2PrivatePostStopOrderCancelAll'
+            elif market['futures']:
+                defaultMethod = 'futuresPrivatePostStopOrderCancelAll'
         method = self.safe_string(options, 'method', defaultMethod)
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         result = self.safe_value(response, 'result', [])
         return self.parse_orders(result, market)

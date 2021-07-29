@@ -1934,6 +1934,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         else:
             request['orderID'] = id
         method = 'privateDeleteSpotOrders' if market['spot'] else 'privateDeleteOrdersCancel'
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
@@ -1951,6 +1952,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             if not market['swap']:
                 raise NotSupported(self.id + ' cancelAllOrders() supports swap market type orders only')
             request['symbol'] = market['id']
+        params = self.omit(params, 'type')
         return self.privateDeleteOrdersAll(self.extend(request, params))
 
     def fetch_order(self, id, symbol=None, params={}):
