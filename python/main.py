@@ -64,7 +64,7 @@ okexExchange = ccxt.okex({
 })
 okexExchange.set_sandbox_mode(True)
 
-def test_exchange_methods(exchange):
+def test_exchange_get_methods(exchange):
     print(exchange.name)
     #print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
@@ -75,7 +75,7 @@ def test_exchange_methods(exchange):
     # pprint(exchange.fetch_positions())
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
-    exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
+    # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
     #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
     #print('##########\nfetch_orders\n##########')
@@ -87,14 +87,75 @@ def test_exchange_methods(exchange):
     #pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
 
+orders = []
+
+def test_create_order(exchange, args):
+    print('༼ つ ◕_◕ ༽つ =========================')
+    print('create_order(', *args, ')')
+    result = exchange.create_order(*args)
+    return result
+
+def test_exchange_post_methods(exchange):
+    symbol = 'BTC/USD'
+    size = 1
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    print(exchange.name)
+
+    print("Market buy, post only = true.")
+    result = test_create_order(exchange, [
+        symbol,
+        'market',
+        'buy',
+        size,
+        None,
+        {
+            'stopPrice': None,
+            'timeInForce': 'PO', # GTC, PO
+            'reduceOnly': False,
+            'trigger': None,
+            'closeOnTrigger': None,
+            'basePrice': None
+        }
+    ])
+    # order = exchange.fetch_order(result['id'], symbol)
+    assert result['postOnly'] == True
+
+    print("Limit buy below last, reduce only = false and post only = false.")
+    result = test_create_order(exchange, [
+        symbol,
+        'limit',
+        'buy',
+        size,
+        last * 0.95,
+        {
+            'stopPrice': None,
+            'timeInForce': 'GTC',  # GTC, PO
+            'reduceOnly': False,
+            'trigger': None,
+            'closeOnTrigger': None,
+            'basePrice': None
+        }
+    ])
+    order = exchange.fetch_order(result['id'], symbol)
+    assert result['postOnly'] == True and result['reduceOnly']
+
+
 
 def main():
-    #test_exchange_methods(ftxExchange)
-    #test_exchange_methods(bitmexExchange)
-    test_exchange_methods(bybitExchange)
-    # test_exchange_methods(binanceExchange)
-    # test_exchange_methods(binanceExchange)
-    # test_exchange_methods(okexExchange)
+    # test_exchange_get_methods(ftxExchange)
+    # test_exchange_get_methods(bitmexExchange)
+    # test_exchange_get_methods(bybitExchange)
+    # test_exchange_get_methods(binanceExchange)
+    # test_exchange_get_methods(phemexExchange)
+    # test_exchange_get_methods(okexExchange)
+    # test_exchange_post_methods(ftxExchange)
+    # test_exchange_post_methods(bitmexExchange)
+    test_exchange_post_methods(bybitExchange)
+    # test_exchange_post_methods(binanceExchange)
+    # test_exchange_post_methods(phemexExchange)
+    # test_exchange_post_methods(okexExchange)
 
 if __name__ == "__main__":
     main()
