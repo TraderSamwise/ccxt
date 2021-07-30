@@ -382,7 +382,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'options': {
                 'x-phemex-request-expiry': 60,  # in seconds
                 'createOrderByQuoteRequiresPrice': True,
-            },
+            }
         })
 
     def parse_safe_number(self, value=None):
@@ -1777,27 +1777,34 @@ class phemex(Exchange, PhemexTealstreetMixin):
         self.load_markets()
         market = self.market(symbol)
         side = self.capitalize(side)
-        type = self.capitalize(type)
+        type = self.api_order_type(type)
+
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+
         request = {
             # common
             'symbol': market['id'],
             'side': side,  # Sell, Buy
             'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
-            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders
+            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders, handled below
             # 'priceEp': self.to_ep(price, market),  # required for limit orders
-            # 'timeInForce': 'GoodTillCancel',  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
+            'timeInForce': timeInForce,  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
             # ----------------------------------------------------------------
             # spot
             # 'qtyType': 'ByBase',  # ByBase, ByQuote
             # 'quoteQtyEv': self.to_ep(cost, market),
             # 'baseQtyEv': self.to_ev(amount, market),
-            # 'trigger': 'ByLastPrice',  # required for conditional orders
+            'triggerType': trigger,  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
-            # 'clOrdID': self.uuid(),  # max length 40
+            'clOrdID': self.uuid(),  # max length 40
             # 'orderQty': self.amount_to_precision(amount, symbol),
-            # 'reduceOnly': False,
-            # 'closeOnTrigger': False,  # implicit reduceOnly and cancel other orders in the same direction
+            'reduceOnly': reduceOnly,
+            'closeOnTrigger': closeOnTrigger,  # implicit reduceOnly and cancel other orders in the same direction
             # 'takeProfitEp': self.to_ep(takeProfit, market),
             # 'stopLossEp': self.to_ep(stopLossEp, market),
             # 'triggerType': 'ByMarkPrice',  # ByMarkPrice, ByLastPrice
@@ -1825,12 +1832,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 request['baseQtyEv'] = self.to_ev(amount, market)
         elif market['swap']:
             request['orderQty'] = int(amount)
-        if type == 'Limit':
+        if type in ['Limit', 'StopLimit', 'LimitIfTouched']:
             request['priceEp'] = self.to_ep(price, market)
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice is not None:
             request['stopPxEp'] = self.to_ep(stopPrice, market)
-        params = self.omit(params, ['stopPx', 'stopPrice'])
+        params = self.omit(params, ['stopPx', 'stopPrice', 'basePrice'])
         method = 'privatePostSpotOrders' if market['spot'] else 'privatePostOrders'
         response = getattr(self, method)(self.extend(request, params))
         #
@@ -1927,6 +1934,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         else:
             request['orderID'] = id
         method = 'privateDeleteSpotOrders' if market['spot'] else 'privateDeleteOrdersCancel'
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
@@ -1944,6 +1952,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             if not market['swap']:
                 raise NotSupported(self.id + ' cancelAllOrders() supports swap market type orders only')
             request['symbol'] = market['id']
+        params = self.omit(params, 'type')
         return self.privateDeleteOrdersAll(self.extend(request, params))
 
     def fetch_order(self, id, symbol=None, params={}):

@@ -151,6 +151,27 @@ class Exchange(object):
             'deposit': {},
         },
     }
+    # TEALSTREET
+    timeInForces = {
+        'GTC': 'GoodTillCancel',
+        'PO': 'PostOnly',
+        'IOC': 'ImmediateOrCancel',
+        'FOK': 'FillOrKill',
+    }
+    orderTypes = {
+        'market': 'Market',
+        'limit': 'Limit',
+        'stop': 'Stop',
+        'stoplimit': 'StopLimit',
+        'marketiftouched': 'MarketIfTouched',
+        'limitiftouched': 'LimitIfTouched',
+    }
+    triggerTypes = {
+        'Mark': 'ByMarkPrice',
+        'Last': 'ByLastPrice',
+        'Index': 'ByIndexPrice',
+    }
+
     ids = None
     urls = None
     api = None
@@ -2342,3 +2363,16 @@ class Exchange(object):
         if float(string_number) == 0:
             return None
         return string_number
+
+    # TEALSTREET: takes unified order type and translates to API's
+    def api_time_in_force(self, unifiedTimeInForce):
+        if unifiedTimeInForce:
+            return self.safe_string(self.timeInForces, unifiedTimeInForce, self.capitalize(unifiedTimeInForce))
+
+    def api_trigger_type(self, unifiedTrigger):
+        if unifiedTrigger:
+            return self.safe_string(self.triggerTypes, unifiedTrigger, self.capitalize(unifiedTrigger))
+
+    def api_order_type(self, unifiedOrderType):
+        if unifiedOrderType:
+            return self.safe_string(self.orderTypes, unifiedOrderType, self.capitalize(unifiedOrderType))

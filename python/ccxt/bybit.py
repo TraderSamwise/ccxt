@@ -368,6 +368,20 @@ class bybit(Exchange):
                     'deposit': {},
                 },
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Market',
+                'stoplimit': 'Limit',
+                'marketiftouched': 'MarketIfTouched',
+                'limitiftouched': 'LimitIfTouched',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            }
         })
 
     def nonce(self):
@@ -1291,6 +1305,13 @@ class bybit(Exchange):
         self.load_markets()
         market = self.market(symbol)
         qty = self.amount_to_precision(symbol, amount)
+
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+
         if market['inverse']:
             qty = int(qty)
         else:
@@ -1299,16 +1320,16 @@ class bybit(Exchange):
             # orders ---------------------------------------------------------
             'side': self.capitalize(side),
             'symbol': market['id'],
-            'order_type': self.capitalize(type),
+            'order_type': self.api_order_type(type),
             'qty': qty,  # order quantity in USD, integer only
             # 'price': float(self.price_to_precision(symbol, price)),  # required for limit orders
-            'time_in_force': 'GoodTillCancel',  # ImmediateOrCancel, FillOrKill, PostOnly
+            'time_in_force': timeInForce,  # ImmediateOrCancel, FillOrKill, PostOnly
             # 'take_profit': 123.45,  # take profit price, only take effect upon opening the position
             # 'stop_loss': 123.45,  # stop loss price, only take effect upon opening the position
-            # 'reduce_only': False,  # reduce only, required for linear orders
+            'reduce_only': reduceOnly,  # reduce only, required for linear orders
             # when creating a closing order, bybit recommends a True value for
             # close_on_trigger to avoid failing due to insufficient available margin
-            # 'close_on_trigger': False, required for linear orders
+            'close_on_trigger': closeOnTrigger, # required for linear orders
             # 'order_link_id': 'string',  # unique client order id, max 36 characters
             # conditional orders ---------------------------------------------
             # base_price is used to compare with the value of stop_px, to decide
@@ -1317,7 +1338,9 @@ class bybit(Exchange):
             # expected direction of the current conditional order
             # 'base_price': 123.45,  # required for conditional orders
             # 'stop_px': 123.45,  # trigger price, required for conditional orders
-            # 'trigger_by': 'LastPrice',  # IndexPrice, MarkPrice
+            # 'trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
+            # 'tp_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
+            # 'sl_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
         }
         priceIsRequired = False
         if type == 'limit':
@@ -1331,8 +1354,29 @@ class bybit(Exchange):
         if clientOrderId is not None:
             request['order_link_id'] = clientOrderId
             params = self.omit(params, ['order_link_id', 'clientOrderId'])
+        basePrice = self.safe_value(params, 'basePrice')
+        if basePrice == 0.0:
+            ticker = self.fetch_ticker(symbol)
+            basePrice = ticker['last']
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
-        basePrice = self.safe_value(params, 'base_price')
+        stopPx = None if stopPx == 0.0 else stopPx
+        if stopPx:
+            # TEALSTREET TODO: get current mark price and set to base price
+            if not basePrice:
+                # ticker = self.fetch_ticker(symbol)
+                # if side =='buy':
+                #     basePrice = self.safe_float(ticker, 'last')
+                # basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
+                basePrice = float(self.price_to_precision(symbol, self.safe_value(params, 'basePrice')))
+                if side == 'buy' and basePrice > stopPx:
+                    basePrice = stopPx * 0.99  # hacky, but works
+                elif side== 'sell' and basePrice < stopPx:
+                    basePrice = stopPx * 1.01  # hacky, but works
+                # basePrice = stopPx * (0.99 if side == 'sell' else 1.01)  # hacky, but works
+            params = self.omit(params, 'stopPrice')
+            request['trigger_by'] = trigger # IndexPrice, MarkPrice, LastPrice
+            request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+            request['sl_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
         method = None
         if market['swap']:
             if market['linear']:
@@ -1356,9 +1400,17 @@ class bybit(Exchange):
                     method = 'futuresPrivatePostStopOrderCreate'
                 request['stop_px'] = float(self.price_to_precision(symbol, stopPx))
                 request['base_price'] = float(self.price_to_precision(symbol, basePrice))
-                params = self.omit(params, ['stop_px', 'stopPrice', 'base_price'])
+                # request['take_profit'] = float(self.price_to_precision(symbol, stopPx))
+                # request['stop_loss'] = float(self.price_to_precision(symbol, stopPx))
+                if price:
+                    request['price'] = float(self.price_to_precision(symbol, price))
+                params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice'])
         elif basePrice is not None:
             raise ArgumentsRequired(self.id + ' createOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
+
+        # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
+        #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
+        params = self.omit(params, ['stopPrice', 'basePrice'])
         response = getattr(self, method)(self.extend(request, params))
         #
         #     {
@@ -1541,12 +1593,17 @@ class bybit(Exchange):
                 method = 'v2PrivatePostOrderCancel'
         elif market['futures']:
             method = 'futuresPrivatePostOrderCancel'
-        stopOrderId = self.safe_string(params, 'stop_order_id')
+        # stopOrderId = self.safe_string(params, 'stop_order_id')
+        order_type = self.safe_value(params, 'type')
+        stopOrderId = None
+        if order_type in ['stop', 'stoplimit', 'marketiftouched', 'limitiftouched']:
+            stopOrderId = id
         if stopOrderId is None:
             orderLinkId = self.safe_string(params, 'order_link_id')
             if orderLinkId is None:
                 request['order_id'] = id
         else:
+            request['stop_order_id'] = id
             if market['swap']:
                 if market['linear']:
                     method = 'privateLinearPostStopOrderCancel'
@@ -1554,6 +1611,7 @@ class bybit(Exchange):
                     method = 'v2PrivatePostStopOrderCancel'
             elif market['futures']:
                 method = 'futuresPrivatePostStopOrderCancel'
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         result = self.safe_value(response, 'result', {})
         return self.parse_order(result, market)
@@ -1568,14 +1626,25 @@ class bybit(Exchange):
         }
         options = self.safe_value(self.options, 'cancelAllOrders', {})
         defaultMethod = None
-        if market['swap']:
-            if market['linear']:
-                defaultMethod = 'privateLinearPostOrderCancelAll'
-            elif market['inverse']:
-                defaultMethod = 'v2PrivatePostOrderCancelAll'
-        elif market['futures']:
-            defaultMethod = 'futuresPrivatePostOrderCancelAll'
+        order_type = self.safe_string(params, 'type')
+        if order_type not in ['stop', 'stoplimit', 'marketiftouched', 'limitiftouched']:
+            if market['swap']:
+                if market['linear']:
+                    defaultMethod = 'privateLinearPostOrderCancelAll'
+                elif market['inverse']:
+                    defaultMethod = 'v2PrivatePostOrderCancelAll'
+            elif market['futures']:
+                defaultMethod = 'futuresPrivatePostOrderCancelAll'
+        else:
+            if market['swap']:
+                if market['linear']:
+                    defaultMethod = 'privateLinearPostStopOrderCancelAll'
+                elif market['inverse']:
+                    defaultMethod = 'v2PrivatePostStopOrderCancelAll'
+            elif market['futures']:
+                defaultMethod = 'futuresPrivatePostStopOrderCancelAll'
         method = self.safe_string(options, 'method', defaultMethod)
+        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         result = self.safe_value(response, 'result', [])
         return self.parse_orders(result, market)
