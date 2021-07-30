@@ -79,6 +79,7 @@ function createExchanges (ids) {
         return new (ccxt)[id] ()
     }
 
+    ids = ids.filter(id => ccxt[id])
     return ccxt.indexBy (ids.map (createExchange), 'id')
 }
 

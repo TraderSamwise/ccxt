@@ -391,7 +391,7 @@ module.exports = class phemex extends Exchange {
         const makerFeeRateEr = this.safeNumber (market, 'makerFeeRateEr');
         const takerFeeRateEr = this.safeNumber (market, 'takerFeeRateEr');
         if (makerFeeRateEr !== undefined) {
-            maker = this.fromEn (makerFeeRateEr, ratioScale, 0.00000001);
+            maker = this.fromEn (makerFeeRateEr, ratioScale, 0.00000002);
         }
         if (takerFeeRateEr !== undefined) {
             taker = this.fromEn (takerFeeRateEr, ratioScale, 0.00000001);
