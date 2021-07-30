@@ -1837,7 +1837,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice is not None:
             request['stopPxEp'] = self.to_ep(stopPrice, market)
-        params = self.omit(params, ['stopPx', 'stopPrice'])
+        params = self.omit(params, ['stopPx', 'stopPrice', 'basePrice'])
         method = 'privatePostSpotOrders' if market['spot'] else 'privatePostOrders'
         response = getattr(self, method)(self.extend(request, params))
         #

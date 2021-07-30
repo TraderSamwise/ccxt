@@ -1354,7 +1354,10 @@ class bybit(Exchange):
         if clientOrderId is not None:
             request['order_link_id'] = clientOrderId
             params = self.omit(params, ['order_link_id', 'clientOrderId'])
-        basePrice = self.safe_value(params, 'base_price')
+        basePrice = self.safe_value(params, 'basePrice')
+        if basePrice == 0.0:
+            ticker = self.fetch_ticker(symbol)
+            basePrice = ticker['last']
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
         stopPx = None if stopPx == 0.0 else stopPx
         if stopPx:
@@ -1363,7 +1366,13 @@ class bybit(Exchange):
                 # ticker = self.fetch_ticker(symbol)
                 # if side =='buy':
                 #     basePrice = self.safe_float(ticker, 'last')
-                basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
+                # basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
+                basePrice = float(self.price_to_precision(symbol, self.safe_value(params, 'basePrice')))
+                if side == 'buy' and basePrice > stopPx:
+                    basePrice = stopPx * 0.99  # hacky, but works
+                elif side== 'sell' and basePrice < stopPx:
+                    basePrice = stopPx * 1.01  # hacky, but works
+                # basePrice = stopPx * (0.99 if side == 'sell' else 1.01)  # hacky, but works
             params = self.omit(params, 'stopPrice')
             request['trigger_by'] = trigger # IndexPrice, MarkPrice, LastPrice
             request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
@@ -1391,15 +1400,17 @@ class bybit(Exchange):
                     method = 'futuresPrivatePostStopOrderCreate'
                 request['stop_px'] = float(self.price_to_precision(symbol, stopPx))
                 request['base_price'] = float(self.price_to_precision(symbol, basePrice))
+                # request['take_profit'] = float(self.price_to_precision(symbol, stopPx))
+                # request['stop_loss'] = float(self.price_to_precision(symbol, stopPx))
                 if price:
                     request['price'] = float(self.price_to_precision(symbol, price))
-                params = self.omit(params, ['stop_px', 'stopPrice', 'base_price'])
+                params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice'])
         elif basePrice is not None:
             raise ArgumentsRequired(self.id + ' createOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
 
         # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
         #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
-        params = self.omit(params, ['stopPrice'])
+        params = self.omit(params, ['stopPrice', 'basePrice'])
         response = getattr(self, method)(self.extend(request, params))
         #
         #     {
