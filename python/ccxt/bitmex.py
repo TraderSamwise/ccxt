@@ -1529,14 +1529,12 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             execInstValues.append('ParticipateDoNotInitiate')
             timeInForce = None
 
-
         if trigger is not None:
             execInstValues.append(trigger)
         if reduceOnly:
             execInstValues.append('ReduceOnly')
         if closeOnTrigger:
             execInstValues.append('Close')
-
 
         params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
         request = {
