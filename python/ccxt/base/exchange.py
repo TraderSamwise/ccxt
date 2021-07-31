@@ -157,6 +157,7 @@ class Exchange(object):
         'PO': 'PostOnly',
         'IOC': 'ImmediateOrCancel',
         'FOK': 'FillOrKill',
+        'D': 'Day',
     }
     orderTypes = {
         'market': 'Market',
