@@ -289,6 +289,18 @@ class ftx(Exchange):
                     'ftx.us': 'FTXUS',
                 },
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'market',
+                'limit': 'limit',
+                'stop': 'stop',
+                'stoplimit': 'stoplimit',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            },
         })
 
     def fetch_currencies(self, params={}):
@@ -1092,16 +1104,25 @@ class ftx(Exchange):
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        orderType = self.api_order_type(type)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        postOnly = timeInForce == 'PostOnly'
+        ioc = timeInForce == 'ImmediateOrCancel'
+
         request = {
             'market': market['id'],
             'side': side,  # "buy" or "sell"
             # 'price': 0.306525,  # send null for market orders
-            'type': type,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
+            'type': orderType,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
             'size': float(self.amount_to_precision(symbol, amount)),
-            # 'reduceOnly': False,  # optional, default is False
-            # 'ioc': False,  # optional, default is False, limit or market orders only
-            # 'postOnly': False,  # optional, default is False, limit or market orders only
+            'reduceOnly': reduceOnly,  # optional, default is False
+            'ioc': ioc,  # optional, default is False, limit or market orders only
+            'postOnly': postOnly,  # optional, default is False, limit or market orders only
             # 'clientId': 'abcdef0123456789',  # string, optional, client order id, limit or market orders only
+            # 'retryUntilFilled': False # whether or not to keep re-triggering until filled. optional, default true for market orders
         }
         clientOrderId = self.safe_string_2(params, 'clientId', 'clientOrderId')
         if clientOrderId is not None:
@@ -1118,17 +1139,23 @@ class ftx(Exchange):
             method = 'privatePostConditionalOrders'
             stopPrice = self.safe_number_2(params, 'stopPrice', 'triggerPrice')
             if stopPrice is None:
-                raise ArgumentsRequired(self.id + ' createOrder() requires a stopPrice parameter or a triggerPrice parameter for ' + type + ' orders')
+                raise ArgumentsRequired(
+                    self.id + ' createOrder() requires a stopPrice parameter or a triggerPrice parameter for ' + type + ' orders')
             else:
                 params = self.omit(params, ['stopPrice', 'triggerPrice'])
                 request['triggerPrice'] = float(self.price_to_precision(symbol, stopPrice))
             if price is not None:
-                request['orderPrice'] = float(self.price_to_precision(symbol, price))  # optional, order type is limit if self is specified, otherwise market
+                request['orderPrice'] = float(self.price_to_precision(symbol,
+                                                                      price))  # optional, order type is limit if self is specified, otherwise market
         elif type == 'trailingStop':
             method = 'privatePostConditionalOrders'
-            request['trailValue'] = float(self.price_to_precision(symbol, price))  # negative for "sell", positive for "buy"
+            request['trailValue'] = float(
+                self.price_to_precision(symbol, price))  # negative for "sell", positive for "buy"
         else:
-            raise InvalidOrder(self.id + ' createOrder() does not support order type ' + type + ', only limit, market, stop, trailingStop, or takeProfit orders are supported')
+            raise InvalidOrder(
+                self.id + ' createOrder() does not support order type ' + type + ', only limit, market, stop, trailingStop, or takeProfit orders are supported')
+
+        params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice', 'timeInForce', 'closeOnTrigger', 'trigger', 'reduceOnly'])
         response = getattr(self, method)(self.extend(request, params))
         #
         # orders

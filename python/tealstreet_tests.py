@@ -13,7 +13,7 @@ ftxExchange = ccxt.ftx({
     'headers': {
         'FTX-SUBACCOUNT': 'APITEST',
     },
-    'enableRateLimit': True,
+    'enableRateLimit': False,
 })
 
 bitmexExchange = ccxt.bitmex({
@@ -63,9 +63,9 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = bybitExchange
-symbol = 'BTC/USD'
-size = 1
+exchange = ftxExchange
+symbol = 'BTC-PERP'
+size = 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS

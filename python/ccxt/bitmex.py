@@ -1518,11 +1518,11 @@ class bitmex(Exchange, BitmexTealstreetMixin):
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
-        reduceOnly = self.safe_value(params, 'reduceOnly', False) # TODO
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
         orderType = self.api_order_type(type)
         timeInForce = self.api_time_in_force(params['timeInForce'])
-        trigger = self.api_trigger_type(params['trigger']) # TODO
-        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False) # TODO
+        trigger = self.api_trigger_type(params['trigger'])
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = self.capitalize(side)
 
         execInstValues = []
