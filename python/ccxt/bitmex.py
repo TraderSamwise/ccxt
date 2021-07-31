@@ -1523,6 +1523,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         timeInForce = self.api_time_in_force(params['timeInForce'])
         trigger = self.api_trigger_type(params['trigger']) # TODO
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False) # TODO
+        side = self.capitalize(side)
 
         execInstValues = []
         if timeInForce == 'ParticipateDoNotInitiate': # post only
@@ -1575,6 +1576,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
 
         request['orderType'] = orderType
 
+        params = self.omit(params, ['basePrice'])
         response = self.privatePostOrder(self.extend(request, params))
         return self.parse_order(response, market)
 

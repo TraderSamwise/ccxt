@@ -19,7 +19,7 @@ ftxExchange = ccxt.ftx({
 bitmexExchange = ccxt.bitmex({
     'apiKey': os.environ.get('bitmex_key'),
     'secret': os.environ.get('bitmex_secret'),
-    'enableRateLimit': True,
+    'enableRateLimit': False,
 })
 bitmexExchange.set_sandbox_mode(True)
 
@@ -101,7 +101,7 @@ def test_market_buy_not_post_only():
         symbol,
         'market',
         'buy',
-        size*2,
+        size*5,
         None,
         {
             'stopPrice': None,
@@ -241,7 +241,7 @@ def test_stop_market_sell_below_last_close_on_trigger():
     ])
     orders.append({'id': result['id'], 'type': 'limit'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_market_sell_below_last():
     print('Market sell stop below last. Close on trigger = false.')
@@ -262,9 +262,9 @@ def test_stop_market_sell_below_last():
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None)
 
-def test_stop_market_sell_above_last():
+def test_stop_market_sell_above_last(): # TODO: bitmex is filling on this
     print('Market sell stop above last. Close on trigger = false.')
     result = do_create_order([
         symbol,
@@ -283,7 +283,7 @@ def test_stop_market_sell_above_last():
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_market_buy_above_last_close_on_trigger():
     print('Market buy stop above last. Close on trigger = true.')
@@ -304,7 +304,7 @@ def test_stop_market_buy_above_last_close_on_trigger():
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_market_buy_above_last():
     print('Market buy stop above last. Close on trigger = false.')
@@ -325,9 +325,9 @@ def test_stop_market_buy_above_last():
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None)
 
-def test_stop_market_buy_below_last():
+def test_stop_market_buy_below_last(): # TODO: bitmex is filling on this
     print('Market buy stop below last. Close on trigger = false.')
     result = do_create_order([
        symbol,
@@ -346,7 +346,7 @@ def test_stop_market_buy_below_last():
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
     order = exchange.fetch_order(result['id'], symbol)
-    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    assert order['status'] == 'open' and (get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_limit_buy_above_last():
     print('Limit buy stop above last. Close on trigger = false. Trigger = Last.')
