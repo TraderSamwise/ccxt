@@ -62,15 +62,13 @@ okexExchange.set_sandbox_mode(True)
 
 # start test stuff
 
-exchange = bybitExchange
-
 # SETTINGS
+exchange = bitmexExchange
 symbol = 'BTC/USD'
-size = 1
+size = 100
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
-
 orders = []
 actions = []
 
@@ -82,7 +80,7 @@ def get_close_on_trigger_value(result):
     return None
 
 def get_info_trigger_value(result):
-    keys = ['trigger', 'trigger_by']
+    keys = ['trigger', 'trigger_by', 'execInst']
     for key in keys:
         if key in result:
             return exchange.safe_value(result, key)
@@ -91,37 +89,14 @@ def get_info_trigger_value(result):
 def do_create_order(args):
     print('create_order(', *args, ')')
     result = exchange.create_order(*args)
-    print("Result:")
+    print('Result:')
     pprint(result)
     print('༼ つ ◕_◕ ༽つ')
     return result
 
-def test_market_buy_post_only():
-    print(exchange.name)
-    test_size = size * 2
-    # action = 'Market buy {size*2} {symbol}. Post only. Position size '
-    # actions.append(action)
-    print("Market buy, post only = true.")
-    result = do_create_order([
-        symbol,
-        'market',
-        'buy',
-        test_size,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': 'PO', # GTC, PO
-            'reduceOnly': False,
-            'trigger': None,
-            'closeOnTrigger': None,
-            'basePrice': None
-        }
-    ])
-    assert result['postOnly'] == True or result['timeInForce'] in ['IOC', 'PO']
-
 def test_market_buy_not_post_only():
     print(exchange.name)
-    print("Market buy, post only = false.")
+    print('Market buy, post only = false.')
     result = do_create_order([
         symbol,
         'market',
@@ -137,31 +112,12 @@ def test_market_buy_not_post_only():
             'basePrice': None
         }
     ])
-    assert result['postOnly'] == False
-
-def test_market_sell_post_only():
-    print(exchange.name)
-    print("Market sell, post only = true.")
-    result = do_create_order([
-        symbol,
-        'market',
-        'sell',
-        size,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': 'PO', # GTC, PO
-            'reduceOnly': False,
-            'trigger': None,
-            'closeOnTrigger': None,
-            'basePrice': None
-        }
-    ])
-    assert result['postOnly'] == True or result['timeInForce'] in ['IOC', 'PO']
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'closed' and order['postOnly'] == False
 
 def test_market_sell_not_post_only():
     print(exchange.name)
-    print("Market sell, post only = false.")
+    print('Market sell, post only = false.')
     result = do_create_order([
         symbol,
         'market',
@@ -177,10 +133,11 @@ def test_market_sell_not_post_only():
             'basePrice': None
         }
     ])
-    assert result['postOnly'] == False
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'closed' and order['postOnly'] == False
 
 def test_limit_buy_below_last_post_only_reduce_only():
-    print("Limit buy below last, reduce only = true and post only = true. Should not post.")
+    print('Limit buy below last, reduce only = true and post only = true. Should not post.')
     try:
         result = do_create_order([
             symbol,
@@ -203,7 +160,7 @@ def test_limit_buy_below_last_post_only_reduce_only():
         assert True
 
 def test_limit_buy_below_last_not_post_only_not_reduce_only():
-    print("Limit buy below last, reduce only = false and post only = false.")
+    print('Limit buy below last, reduce only = false and post only = false.')
     result = do_create_order([
         symbol,
         'limit',
@@ -220,10 +177,11 @@ def test_limit_buy_below_last_not_post_only_not_reduce_only():
         }
     ])
     orders.append({'id': result['id'], 'type': 'limit'})
-    assert result['postOnly'] == False
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and order['postOnly'] == False
 
 def test_limit_sell_below_last_post_only_reduce_only():
-    print("Limit sell above last, reduce only = true and post only = true.")
+    print('Limit sell above last, reduce only = true and post only = true.')
     result = do_create_order([
         symbol,
         'limit',
@@ -240,10 +198,11 @@ def test_limit_sell_below_last_post_only_reduce_only():
         }
     ])
     orders.append({'id': result['id'], 'type': 'limit'})
-    assert result['postOnly'] == True # TODO: reduce only
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and order['postOnly'] == True # TODO: reduce only
 
 def test_limit_sell_above_last_not_post_only_not_reduce_only():
-    print("Limit sell above last, reduce only = false and post only = false.")
+    print('Limit sell above last, reduce only = false and post only = false.')
     result = do_create_order([
         symbol,
         'limit',
@@ -260,10 +219,11 @@ def test_limit_sell_above_last_not_post_only_not_reduce_only():
         }
     ])
     orders.append({'id': result['id'], 'type': 'limit'})
-    assert result['postOnly'] == False
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  order['postOnly'] == False
 
 def test_stop_market_sell_below_last_close_on_trigger():
-    print("Market sell stop below last. Close on trigger = true.")
+    print('Market sell stop below last. Close on trigger = true.')
     result = do_create_order([
        symbol,
        'stop',
@@ -280,10 +240,11 @@ def test_stop_market_sell_below_last_close_on_trigger():
        }
     ])
     orders.append({'id': result['id'], 'type': 'limit'})
-    assert get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_sell_below_last():
-    print("Market sell stop below last. Close on trigger = false.")
+    print('Market sell stop below last. Close on trigger = false.')
     result = do_create_order([
         symbol,
         'stop',
@@ -300,10 +261,11 @@ def test_stop_market_sell_below_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_sell_above_last():
-    print("Market sell stop above last. Close on trigger = false.")
+    print('Market sell stop above last. Close on trigger = false.')
     result = do_create_order([
         symbol,
         'stop',
@@ -320,10 +282,11 @@ def test_stop_market_sell_above_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_above_last_close_on_trigger():
-    print("Market buy stop above last. Close on trigger = true.")
+    print('Market buy stop above last. Close on trigger = true.')
     result = do_create_order([
        symbol,
        'stop',
@@ -340,10 +303,11 @@ def test_stop_market_buy_above_last_close_on_trigger():
        }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_above_last():
-    print("Market buy stop above last. Close on trigger = false.")
+    print('Market buy stop above last. Close on trigger = false.')
     result = do_create_order([
         symbol,
         'stop',
@@ -360,10 +324,11 @@ def test_stop_market_buy_above_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_below_last():
-    print("Market buy stop below last. Close on trigger = false.")
+    print('Market buy stop below last. Close on trigger = false.')
     result = do_create_order([
        symbol,
         'stop',
@@ -380,10 +345,11 @@ def test_stop_market_buy_below_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and  get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_limit_buy_above_last():
-    print("Limit buy stop above last. Close on trigger = false. Trigger = 'Last'.")
+    print('Limit buy stop above last. Close on trigger = false. Trigger = Last.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -400,11 +366,11 @@ def test_stop_limit_buy_above_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert 'Last' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and 'Last' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_limit_buy_above_mark():
-    print("Limit buy stop above last. Close on trigger = true. Trigger = 'Mark'.")
+    print('Limit buy stop above last. Close on trigger = true. Trigger = Mark.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -421,11 +387,11 @@ def test_stop_limit_buy_above_mark():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert 'Mark' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert (order['status'] == 'open') and 'Mark' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_limit_buy_above_index():
-    print("Limit buy stop above last. Close on trigger = true. Trigger = 'Index'.")
+    print('Limit buy stop above last. Close on trigger = true. Trigger = Index.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -442,11 +408,11 @@ def test_stop_limit_buy_above_index():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert 'Index' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and 'Index' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_limit_sell_below_last():
-    print("Limit sell stop below last. Close on trigger = false. Trigger = 'Last'.")
+    print('Limit sell stop below last. Close on trigger = false. Trigger = Last.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -463,15 +429,16 @@ def test_stop_limit_sell_below_last():
         }
     ])
     orders.append({'id': result['id'], 'type': 'stop'})
-    assert 'Last' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and 'Last' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_cancel_order():
-    print("Cancel a few limit orders.")
+    print('Cancel a few limit orders.')
     asserts = []
     results = []
     orders_to_cancel = [x for x in orders if x['type'] == 'limit']
-    for i in range(2):
+    r = 2 if len(orders_to_cancel) >= 2 else orders_to_cancel
+    for i in range(r):
         id = orders_to_cancel.pop()['id']
         try:
             order = exchange.fetch_order(id, symbol)
@@ -486,15 +453,16 @@ def test_cancel_order():
     assert any(asserts)
 
 def test_cancel_stop_order():
-    print("Cancel a few stop orders.")
+    print('Cancel a few stop orders.')
     asserts = []
     results = []
     orders_to_cancel = [x for x in orders if x['type'] == 'stop']
-    for i in range(5):
+    r = 5 if len(orders_to_cancel) >= 5 else orders_to_cancel
+    for i in range(r):
         id = orders_to_cancel.pop()['id']
         try:
             order = exchange.fetch_order(id, symbol)
-            if (order):
+            if (order and order['status'] == 'open'):
                 result = exchange.cancel_order(id, symbol, params={'type': 'stop'})
                 results.append(result)
                 asserts.append(result['id'] == id)
@@ -505,7 +473,7 @@ def test_cancel_stop_order():
     assert any(asserts)
 
 def test_stop_limit_sell_below_mark():
-    print("Limit sell stop below mark. Close on trigger = true. Trigger = 'Mark'.")
+    print('Limit sell stop below mark. Close on trigger = true. Trigger = Mark.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -521,11 +489,11 @@ def test_stop_limit_sell_below_mark():
             'basePrice': last
         }
     ])
-    assert 'Mark' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and 'Mark' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_stop_limit_sell_below_index():
-    print("Limit sell stop below last. Close on trigger = true. Trigger = 'Index'.")
+    print('Limit sell stop below last. Close on trigger = true. Trigger = Index.')
     result = do_create_order([
         symbol,
         'stoplimit',
@@ -541,11 +509,11 @@ def test_stop_limit_sell_below_index():
             'basePrice': last
         }
     ])
-    assert 'Index' in get_info_trigger_value(result['info']) \
-           and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+    order = exchange.fetch_order(result['id'], symbol)
+    assert order['status'] == 'open' and 'Index' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
 def test_cancel_all_orders():
-    print("Cancel all orders.")
+    print('Cancel all orders.')
     results = []
     results.append(exchange.cancel_all_orders(symbol))
     results.append(exchange.cancel_all_orders(symbol, params={'type': 'stop'}))
@@ -556,7 +524,7 @@ def test_cancel_all_orders():
 
 def test_close_position():
     print(exchange.name)
-    print("Close position")
+    print('Close position')
     result = do_create_order([
         symbol,
         'market',
