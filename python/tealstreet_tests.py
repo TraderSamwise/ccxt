@@ -147,7 +147,7 @@ def test_market_buy_not_post_only():
 
 def test_market_sell_post_only():
     print(exchange.name)
-    print("Market buy, post only = true.")
+    print("Market sell, post only = true.")
     result = do_create_order([
         symbol,
         'market',
@@ -167,7 +167,7 @@ def test_market_sell_post_only():
 
 def test_market_sell_not_post_only():
     print(exchange.name)
-    print("Market buy, post only = false.")
+    print("Market sell, post only = false.")
     result = do_create_order([
         symbol,
         'market',
@@ -203,6 +203,7 @@ def test_limit_buy_below_last_post_only_reduce_only():
                 'basePrice': None
             }
         ])
+        orders.append({'id': result['id'], 'type': 'limit'})
         assert False
     except:
         assert True
@@ -224,6 +225,7 @@ def test_limit_buy_below_last_not_post_only_not_reduce_only():
             'basePrice': None
         }
     ])
+    orders.append({'id': result['id'], 'type': 'limit'})
     assert result['postOnly'] == False
 
 def test_limit_sell_below_last_post_only_reduce_only():
@@ -243,6 +245,7 @@ def test_limit_sell_below_last_post_only_reduce_only():
             'basePrice': None
         }
     ])
+    orders.append({'id': result['id'], 'type': 'limit'})
     assert result['postOnly'] == True # TODO: reduce only
 
 def test_limit_sell_above_last_not_post_only_not_reduce_only():
@@ -262,6 +265,7 @@ def test_limit_sell_above_last_not_post_only_not_reduce_only():
             'basePrice': None
         }
     ])
+    orders.append({'id': result['id'], 'type': 'limit'})
     assert result['postOnly'] == False
 
 def test_stop_market_sell_below_last_close_on_trigger():
@@ -281,6 +285,7 @@ def test_stop_market_sell_below_last_close_on_trigger():
           'basePrice': last
        }
     ])
+    orders.append({'id': result['id'], 'type': 'limit'})
     assert get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_sell_below_last():
@@ -300,6 +305,7 @@ def test_stop_market_sell_below_last():
             'basePrice':  last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_sell_above_last():
@@ -319,6 +325,7 @@ def test_stop_market_sell_above_last():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_above_last_close_on_trigger():
@@ -338,6 +345,7 @@ def test_stop_market_buy_above_last_close_on_trigger():
           'basePrice': last
        }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_above_last():
@@ -357,6 +365,7 @@ def test_stop_market_buy_above_last():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 def test_stop_market_buy_below_last():
@@ -376,6 +385,7 @@ def test_stop_market_buy_below_last():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
 
@@ -403,6 +413,7 @@ def test_stop_limit_buy_above_last():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert 'Last' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
@@ -423,6 +434,7 @@ def test_stop_limit_buy_above_mark():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert 'Mark' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
@@ -443,8 +455,12 @@ def test_stop_limit_buy_above_index():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert 'Index' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+
+
+
 
 
 
@@ -467,8 +483,47 @@ def test_stop_limit_sell_below_last():
             'basePrice': last
         }
     ])
+    orders.append({'id': result['id'], 'type': 'stop'})
     assert 'Last' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+
+def test_cancel_order():
+    print("Cancel a few limit orders.")
+    asserts = []
+    results = []
+    orders_to_cancel = [x for x in orders if x['type'] == 'limit']
+    for i in range(2):
+        id = orders_to_cancel.pop()['id']
+        try:
+            order = exchange.fetch_order(id, symbol)
+            if (order):
+                result = exchange.cancel_order(id, symbol, params={'type': 'limit'})
+                results.append(result)
+                asserts.append(result['id'] == id)
+        except:
+            assert False
+    pprint(results)
+    print('༼ つ ◕_◕ ༽つ')
+    assert any(asserts)
+
+def test_cancel_stop_order():
+    print("Cancel a few stop orders.")
+    asserts = []
+    results = []
+    orders_to_cancel = [x for x in orders if x['type'] == 'stop']
+    for i in range(5):
+        id = orders_to_cancel.pop()['id']
+        try:
+            order = exchange.fetch_order(id, symbol)
+            if (order):
+                result = exchange.cancel_order(id, symbol, params={'type': 'stop'})
+                results.append(result)
+                asserts.append(result['id'] == id)
+        except:
+            assert False
+    pprint(results)
+    print('༼ つ ◕_◕ ༽つ')
+    assert any(asserts)
 
 def test_stop_limit_sell_below_mark():
     print("Limit sell stop below mark. Close on trigger = true. Trigger = 'Mark'.")
@@ -509,3 +564,33 @@ def test_stop_limit_sell_below_index():
     ])
     assert 'Index' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
+
+def test_cancel_all_orders():
+    print("Cancel all orders.")
+    results = []
+    results.append(exchange.cancel_all_orders(symbol))
+    results.append(exchange.cancel_all_orders(symbol, params={'type': 'stop'}))
+    pprint(results)
+    print('༼ つ ◕_◕ ༽つ')
+    open_orders = exchange.fetch_open_orders(symbol)
+    assert not open_orders
+
+def test_close_position():
+    print(exchange.name)
+    print("Close position")
+    result = do_create_order([
+        symbol,
+        'market',
+        'sell',
+        size*4,
+        None,
+        {
+            'stopPrice': None,
+            'timeInForce': 'GTC',  # GTC, PO
+            'reduceOnly': True,
+            'trigger': None,
+            'closeOnTrigger': None,
+            'basePrice': None
+        }
+    ])
+    assert result
