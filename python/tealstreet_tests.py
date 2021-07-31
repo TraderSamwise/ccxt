@@ -19,14 +19,14 @@ ftxExchange = ccxt.ftx({
 bitmexExchange = ccxt.bitmex({
     'apiKey': os.environ.get('bitmex_key'),
     'secret': os.environ.get('bitmex_secret'),
-    'enableRateLimit': False,
+    'enableRateLimit': True,
 })
 bitmexExchange.set_sandbox_mode(True)
 
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
-    'enableRateLimit': True
+    'enableRateLimit': True,
 })
 bybitExchange.set_sandbox_mode(True)
 
@@ -63,9 +63,9 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = bitmexExchange
+exchange = bybitExchange
 symbol = 'BTC/USD'
-size = 100
+size = 1
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
@@ -520,6 +520,7 @@ def test_cancel_all_orders():
     pprint(results)
     print('༼ つ ◕_◕ ༽つ')
     open_orders = exchange.fetch_open_orders(symbol)
+    open_orders = [x for x in open_orders if x['status'] != 'open']
     assert not open_orders
 
 def test_close_position():
