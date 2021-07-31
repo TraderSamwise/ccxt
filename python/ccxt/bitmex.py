@@ -401,6 +401,26 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'api-expires': 5,  # in seconds
                 'fetchOHLCVOpenTimestamp': True,
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Stop',
+                'stoplimit': 'StopLimit',
+                'marketiftouched': 'MarketIfTouched',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            },
+            'timeInForces': {
+                'GTC': 'GoodTillCancel',
+                'PO': 'ParticipateDoNotInitiate',
+                'IOC': 'ImmediateOrCancel',
+                'FOK': 'FillOrKill',
+                'D': 'Day',
+            }
         })
 
     def fetch_markets(self, params={}):
@@ -1426,7 +1446,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
         stopPrice = self.safe_number(order, 'stopPx')
         execInst = self.safe_string(order, 'execInst')
-        postOnly = (execInst == 'ParticipateDoNotInitiate')
+        postOnly = ('ParticipateDoNotInitiate' in execInst)
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1498,13 +1518,36 @@ class bitmex(Exchange, BitmexTealstreetMixin):
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
-        orderType = self.capitalize(type)
+        reduceOnly = self.safe_value(params, 'reduceOnly', False) # TODO
+        orderType = self.api_order_type(type)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger']) # TODO
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False) # TODO
+
+        execInstValues = []
+        if timeInForce == 'ParticipateDoNotInitiate': # post only
+            execInstValues.append('ParticipateDoNotInitiate')
+            timeInForce = None
+
+
+        if trigger is not None:
+            execInstValues.append(trigger)
+        if reduceOnly:
+            execInstValues.append('ReduceOnly')
+        if closeOnTrigger:
+            execInstValues.append('Close')
+
+
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
         request = {
             'symbol': market['id'],
             'side': self.capitalize(side),
             'orderQty': float(self.amount_to_precision(symbol, amount)),
-            'ordType': orderType,
+            'timeInForce': timeInForce,
         }
+
+        request['execInst'] = ','.join(execInstValues)
+
         if (orderType == 'Stop') or (orderType == 'StopLimit') or (orderType == 'MarketIfTouched') or (orderType == 'LimitIfTouched'):
             stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
             if stopPrice is None:
@@ -1512,12 +1555,28 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             else:
                 request['stopPx'] = float(self.price_to_precision(symbol, stopPrice))
                 params = self.omit(params, ['stopPx', 'stopPrice'])
+
+            basePrice = self.safe_value(params, 'basePrice')
+            if basePrice == 0.0:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
+
+            if (side == "Buy" and stopPrice < basePrice) or (side == "Sell" and stopPrice > basePrice):
+                if orderType == "Stop":
+                    orderType = "MarketIfTouched"
+                elif orderType == "StopLimit":
+                    orderType = "LimitIfTouched"
+
         if (orderType == 'Limit') or (orderType == 'StopLimit') or (orderType == 'LimitIfTouched'):
             request['price'] = float(self.price_to_precision(symbol, price))
+
         clientOrderId = self.safe_string_2(params, 'clOrdID', 'clientOrderId')
         if clientOrderId is not None:
             request['clOrdID'] = clientOrderId
             params = self.omit(params, ['clOrdID', 'clientOrderId'])
+
+        request['orderType'] = orderType
+
         response = self.privatePostOrder(self.extend(request, params))
         return self.parse_order(response, market)
 

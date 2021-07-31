@@ -381,7 +381,7 @@ class bybit(Exchange):
                 'Mark': 'MarkPrice',
                 'Last': 'LastPrice',
                 'Index': 'IndexPrice',
-            }
+            },
         })
 
     def nonce(self):
