@@ -561,7 +561,7 @@ def test_close_position():
         symbol,
         'market',
         'sell',
-        size*4,
+        size*10,
         None,
         {
             'stopPrice': None,
