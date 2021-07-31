@@ -1,12 +1,11 @@
 import os
 from pprint import pprint
-
 import ccxt
+import pytest
+
+__test__ = True
 
 # exchanges
-
-# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-import pytest
 
 ftxExchange = ccxt.ftx({
     'apiKey': os.environ.get('ftx_key'),
@@ -17,16 +16,13 @@ ftxExchange = ccxt.ftx({
     'enableRateLimit': True,
 })
 
-# fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
 bitmexExchange = ccxt.bitmex({
     'apiKey': os.environ.get('bitmex_key'),
     'secret': os.environ.get('bitmex_secret'),
     'enableRateLimit': True,
 })
-# for bitmex testnet https://github.com/ccxt/ccxt/issues/5717
-bitmexExchange.urls['api'] = bitmexExchange.urls['test']
+bitmexExchange.set_sandbox_mode(True)
 
-# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
@@ -34,7 +30,6 @@ bybitExchange = ccxt.bybit({
 })
 bybitExchange.set_sandbox_mode(True)
 
-# fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
 binanceExchange = ccxt.binanceusdm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
@@ -47,7 +42,6 @@ binanceExchange = ccxt.binanceusdm({
     # },
 })
 
-# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),
@@ -66,16 +60,16 @@ okexExchange = ccxt.okex({
 })
 okexExchange.set_sandbox_mode(True)
 
-__test__ = True
-
 # start test stuff
 
 exchange = bybitExchange
 
+# SETTINGS
 symbol = 'BTC/USD'
 size = 1
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
+# /SETTINGS
 
 orders = []
 actions = []
@@ -388,14 +382,6 @@ def test_stop_market_buy_below_last():
     orders.append({'id': result['id'], 'type': 'stop'})
     assert get_close_on_trigger_value(result['info']) == False or get_close_on_trigger_value(result['info']) == None
 
-
-
-
-
-
-
-
-
 def test_stop_limit_buy_above_last():
     print("Limit buy stop above last. Close on trigger = false. Trigger = 'Last'.")
     result = do_create_order([
@@ -458,13 +444,6 @@ def test_stop_limit_buy_above_index():
     orders.append({'id': result['id'], 'type': 'stop'})
     assert 'Index' in get_info_trigger_value(result['info']) \
            and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
-
-
-
-
-
-
-
 
 def test_stop_limit_sell_below_last():
     print("Limit sell stop below last. Close on trigger = false. Trigger = 'Last'.")
