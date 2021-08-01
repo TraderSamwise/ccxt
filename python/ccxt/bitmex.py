@@ -1560,11 +1560,11 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 ticker = self.fetch_ticker(symbol)
                 basePrice = ticker['last']
 
-            if (side == "Buy" and stopPrice < basePrice) or (side == "Sell" and stopPrice > basePrice):
-                if orderType == "Stop":
-                    orderType = "MarketIfTouched"
-                elif orderType == "StopLimit":
-                    orderType = "LimitIfTouched"
+            if (side == 'Buy' and stopPrice < basePrice) or (side == 'Sell' and stopPrice > basePrice):
+                if orderType == 'Stop':
+                    orderType = 'MarketIfTouched'
+                elif orderType == 'StopLimit':
+                    orderType = 'LimitIfTouched'
 
         if (orderType == 'Limit') or (orderType == 'StopLimit') or (orderType == 'LimitIfTouched'):
             request['price'] = float(self.price_to_precision(symbol, price))

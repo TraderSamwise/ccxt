@@ -294,7 +294,7 @@ class ftx(Exchange):
                 'market': 'market',
                 'limit': 'limit',
                 'stop': 'stop',
-                'stoplimit': 'stoplimit',
+                'stoplimit': 'stop',
             },
             'triggerTypes': {
                 'Mark': 'MarkPrice',
@@ -1105,7 +1105,7 @@ class ftx(Exchange):
         self.load_markets()
         market = self.market(symbol)
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        orderType = self.api_order_type(type)
+        type = self.api_order_type(type)
         timeInForce = self.api_time_in_force(params['timeInForce'])
         trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
@@ -1116,7 +1116,7 @@ class ftx(Exchange):
             'market': market['id'],
             'side': side,  # "buy" or "sell"
             # 'price': 0.306525,  # send null for market orders
-            'type': orderType,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
+            'type': type,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
             'size': float(self.amount_to_precision(symbol, amount)),
             'reduceOnly': reduceOnly,  # optional, default is False
             'ioc': ioc,  # optional, default is False, limit or market orders only
@@ -1142,11 +1142,17 @@ class ftx(Exchange):
                 raise ArgumentsRequired(
                     self.id + ' createOrder() requires a stopPrice parameter or a triggerPrice parameter for ' + type + ' orders')
             else:
+                basePrice = self.safe_value(params, 'basePrice')
+                if basePrice == 0.0:
+                    ticker = self.fetch_ticker(symbol)
+                    basePrice = ticker['last']
+                if (side == 'buy' and stopPrice < basePrice) or (side == 'sell' and stopPrice > basePrice):
+                        request['type'] = 'takeProfit'
                 params = self.omit(params, ['stopPrice', 'triggerPrice'])
                 request['triggerPrice'] = float(self.price_to_precision(symbol, stopPrice))
             if price is not None:
-                request['orderPrice'] = float(self.price_to_precision(symbol,
-                                                                      price))  # optional, order type is limit if self is specified, otherwise market
+                request['orderPrice'] = float(self.price_to_precision(symbol, price))  # optional, order type is limit if self is specified, otherwise market
+            request = self.omit(request, ['ioc', 'postOnly'])
         elif type == 'trailingStop':
             method = 'privatePostConditionalOrders'
             request['trailValue'] = float(
