@@ -666,6 +666,25 @@ class binance(Exchange):
                 '-3041': InsufficientFunds,  # {"code":-3041,"msg":"Balance is not enough"}
                 '-5013': InsufficientFunds,  # Asset transfer failed: insufficient balance"
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'MARKET',
+                'limit': 'LIMIT',
+                'stop': 'STOP_MARKET',
+                'stoplimit': 'STOP',
+                'marketiftouched': 'TAKE_PROFIT_MARKET',
+                'limitiftouched': 'TAKE_PROFIT',
+            },
+            'triggerTypes': {
+                'Mark': 'MARK_PRICE',
+                'Last': 'CONTRACT_PRICE'
+            },
+            'timeInForces': {
+                'GTC': 'GTC',
+                'PO': 'GTC', # god till crossing
+                'IOC': 'IOC',
+                'FOK': 'FOK',
+            }
         })
 
     def currency_to_precision(self, currency, fee):
@@ -1879,15 +1898,23 @@ class binance(Exchange):
         self.load_markets()
         market = self.market(symbol)
         defaultType = self.safe_string_2(self.options, 'createOrder', 'defaultType', 'spot')
-        orderType = self.safe_string(params, 'type', defaultType)
+        marketType = self.safe_string(params, 'type', defaultType)
+
+        # TEALSTREET
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        orderType = self.api_order_type(type)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+
         clientOrderId = self.safe_string_2(params, 'newClientOrderId', 'clientOrderId')
         params = self.omit(params, ['type', 'newClientOrderId', 'clientOrderId'])
         method = 'privatePostOrder'
-        if orderType == 'future':
+        if marketType == 'future':
             method = 'fapiPrivatePostOrder'
-        elif orderType == 'delivery':
+        elif marketType == 'delivery':
             method = 'dapiPrivatePostOrder'
-        elif orderType == 'margin':
+        elif marketType == 'margin':
             method = 'sapiPostMarginOrder'
         # the next 5 lines are added to support for testing orders
         if market['spot']:
@@ -1895,10 +1922,10 @@ class binance(Exchange):
             if test:
                 method += 'Test'
             params = self.omit(params, 'test')
-        uppercaseType = type.upper()
+        uppercaseType = orderType.upper()
         validOrderTypes = self.safe_value(market['info'], 'orderTypes')
         if not self.in_array(uppercaseType, validOrderTypes):
-            raise InvalidOrder(self.id + ' ' + type + ' is not a valid order type in market ' + symbol)
+            raise InvalidOrder(self.id + ' ' + orderType + ' is not a valid order type in market ' + symbol)
         request = {
             'symbol': market['id'],
             'type': uppercaseType,
@@ -1907,12 +1934,12 @@ class binance(Exchange):
         if clientOrderId is None:
             broker = self.safe_value(self.options, 'broker')
             if broker:
-                brokerId = self.safe_string(broker, orderType)
+                brokerId = self.safe_string(broker, marketType)
                 if brokerId is not None:
                     request['newClientOrderId'] = brokerId + self.uuid22()
         else:
             request['newClientOrderId'] = clientOrderId
-        if (orderType == 'spot') or (orderType == 'margin'):
+        if (marketType == 'spot') or (marketType == 'margin'):
             request['newOrderRespType'] = self.safe_value(self.options['newOrderRespType'], type, 'RESULT')  # 'ACK' for order id, 'RESULT' for full order or 'FULL' for order with fills
         else:
             # delivery and future
