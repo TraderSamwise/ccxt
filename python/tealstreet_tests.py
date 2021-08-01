@@ -30,15 +30,15 @@ bybitExchange = ccxt.bybit({
 })
 bybitExchange.set_sandbox_mode(True)
 
-binanceExchange = ccxt.binanceusdm({
+binanceExchange = ccxt.binancecoinm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
     'enableRateLimit': True,
     # 'options': {
-    #      'defaultType': 'future', # USD-M
-    #     #'defaultType': 'delivery', # COIN-M
-    #     #'defaultType': 'spot', # COIN-M
-    #     'leverageBrackets': None,
+        # 'defaultType': 'future', # USD-M
+        # 'defaultType': 'delivery', # COIN-M
+        # 'defaultType': 'spot', # COIN-M
+       #  'leverageBrackets': None,
     # },
 })
 

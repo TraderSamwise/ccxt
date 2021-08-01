@@ -1518,6 +1518,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
+
+        # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
         orderType = self.api_order_type(type)
         timeInForce = self.api_time_in_force(params['timeInForce'])

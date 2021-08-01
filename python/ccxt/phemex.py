@@ -1779,6 +1779,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         side = self.capitalize(side)
         type = self.api_order_type(type)
 
+        # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
         timeInForce = self.api_time_in_force(params['timeInForce'])
         trigger = self.api_trigger_type(params['trigger'])
