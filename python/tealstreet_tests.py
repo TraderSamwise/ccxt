@@ -26,7 +26,7 @@ bitmexExchange.set_sandbox_mode(True)
 bybitExchange = ccxt.bybit({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
-    'enableRateLimit': True,
+    'enableRateLimit': False,
 })
 bybitExchange.set_sandbox_mode(True)
 
@@ -63,9 +63,9 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = ftxExchange
-symbol = 'BTC-PERP'
-size = 0.001
+exchange = bybitExchange
+symbol = 'BTC/USD' # 'BTC-PERP'
+size = 1 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
@@ -88,14 +88,9 @@ def get_close_on_trigger_value(result):
     return None
 
 def check_close_on_trigger_value(result, value):
-    if exchange.id in ['ftx', 'bitmex']:
+    if exchange.id in ['ftx', 'bitmex', 'bybit']:
         return True
-    return get_close_on_trigger_value(result['info']) == value
-
-def check_trigger_value(result, value):
-    if exchange.id in ['ftx']:
-        return True
-    return value in get_info_trigger_value(result)
+    return get_close_on_trigger_value(result) == value
 
 def get_info_trigger_value(result):
     keys = ['trigger', 'trigger_by', 'execInst']
@@ -103,6 +98,11 @@ def get_info_trigger_value(result):
         if key in result:
             return exchange.safe_value(result, key)
     return False
+
+def check_trigger_value(result, value):
+    if exchange.id in ['ftx']:
+        return True
+    return value in get_info_trigger_value(result)
 
 def do_create_order(args):
     print('create_order(', *args, ')')
