@@ -72,6 +72,8 @@ last = ticker['last']
 orders = []
 actions = []
 
+# trigger_types = {v: k for k, v in exchange['triggerTypes'].items()}
+
 # ftx doesn't have the order available to get quicky enough... even though it posts
 def fetch_order_unless_exchange_too_slow(result):
     try:
@@ -93,7 +95,7 @@ def check_close_on_trigger_value(result, value):
     return get_close_on_trigger_value(result) == value
 
 def get_info_trigger_value(result):
-    keys = ['trigger', 'trigger_by', 'execInst']
+    keys = ['trigger', 'trigger_by', 'execInst', 'workingType']
     for key in keys:
         if key in result:
             return exchange.safe_value(result, key)
@@ -102,7 +104,11 @@ def get_info_trigger_value(result):
 def check_trigger_value(result, value):
     if exchange.id in ['ftx']:
         return True
-    return value in get_info_trigger_value(result)
+    if exchange.id in ['binance']:
+        if value == 'Index':
+            return True
+    exchange_value = exchange.triggerTypes[value]
+    return exchange_value in get_info_trigger_value(result)
 
 def do_create_order(args):
     print('create_order(', *args, ')')
