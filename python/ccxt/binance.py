@@ -1930,6 +1930,7 @@ class binance(Exchange):
             'symbol': market['id'],
             'type': uppercaseType,
             'side': side.upper(),
+            'reduceOnly': reduceOnly,
         }
         if clientOrderId is None:
             broker = self.safe_value(self.options, 'broker')
@@ -2021,9 +2022,11 @@ class binance(Exchange):
                 raise InvalidOrder(self.id + ' createOrder() requires a price argument for a ' + type + ' order')
             request['price'] = self.price_to_precision(symbol, price)
         if timeInForceIsRequired:
-            request['timeInForce'] = self.options['defaultTimeInForce']  # 'GTC' = Good To Cancel(default), 'IOC' = Immediate Or Cancel
+            request['timeInForce'] = timeInForce # self.options['defaultTimeInForce']  # 'GTC' = Good To Cancel(default), 'IOC' = Immediate Or Cancel
         if stopPriceIsRequired:
             stopPrice = self.safe_number(params, 'stopPrice')
+            request['workingType'] = workingType
+            request['closePosition'] = closeOnTrigger
             if stopPrice is None:
                 raise InvalidOrder(self.id + ' createOrder() requires a stopPrice extra param for a ' + type + ' order')
             else:
