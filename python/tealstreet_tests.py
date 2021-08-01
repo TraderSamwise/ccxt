@@ -63,7 +63,7 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = bybitExchange
+exchange = binanceExchange
 symbol = 'BTC/USD' # 'BTC-PERP'
 size = 1 # 0.001
 ticker = exchange.fetch_ticker(symbol)
@@ -119,7 +119,7 @@ def test_market_buy_not_post_only():
         symbol,
         'market',
         'buy',
-        size*5,
+        size*3,
         None,
         {
             'stopPrice': None,
