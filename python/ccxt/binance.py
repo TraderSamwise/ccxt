@@ -677,7 +677,7 @@ class binance(Exchange):
             },
             'triggerTypes': {
                 'Mark': 'MARK_PRICE',
-                'Last': 'CONTRACT_PRICE'
+                'Last': 'CONTRACT_PRICE',
             },
             'timeInForces': {
                 'GTC': 'GTC',
@@ -2194,6 +2194,8 @@ class binance(Exchange):
         market = self.market(symbol)
         defaultType = self.safe_string_2(self.options, 'fetchOpenOrders', 'defaultType', 'spot')
         type = self.safe_string(params, 'type', defaultType)
+        if type not in ['future', 'delivery', 'margin']:
+            type = defaultType
         # https://github.com/ccxt/ccxt/issues/6507
         origClientOrderId = self.safe_value_2(params, 'origClientOrderId', 'clientOrderId')
         request = {
@@ -2201,6 +2203,7 @@ class binance(Exchange):
             # 'orderId': id,
             # 'origClientOrderId': id,
         }
+        id = int(id)
         if origClientOrderId is None:
             request['orderId'] = id
         else:
@@ -2226,6 +2229,8 @@ class binance(Exchange):
         }
         defaultType = self.safe_string_2(self.options, 'cancelAllOrders', 'defaultType', 'spot')
         type = self.safe_string(params, 'type', defaultType)
+        if type not in ['future', 'delivery', 'margin']:
+            type = defaultType
         query = self.omit(params, 'type')
         method = 'privateDeleteOpenOrders'
         if type == 'margin':

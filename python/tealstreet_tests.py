@@ -1,6 +1,7 @@
 import os
 from pprint import pprint
 import ccxt
+import time
 import pytest
 
 __test__ = True
@@ -33,7 +34,7 @@ bybitExchange.set_sandbox_mode(True)
 binanceExchange = ccxt.binancecoinm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
-    'enableRateLimit': True,
+    'enableRateLimit': False,
     # 'options': {
         # 'defaultType': 'future', # USD-M
         # 'defaultType': 'delivery', # COIN-M
@@ -204,7 +205,7 @@ def test_limit_buy_below_last_not_post_only_not_reduce_only():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and order['postOnly'] == False
 
-def test_limit_sell_below_last_post_only_reduce_only():
+def test_limit_sell_above_last_post_only_reduce_only():
     print('Limit sell above last, reduce only = true and post only = true.')
     result = do_create_order([
         symbol,
@@ -394,7 +395,7 @@ def test_stop_limit_buy_above_last():
     assert order['status'] == 'open' and check_trigger_value(result['info'], 'Last') and check_close_on_trigger_value(result['info'], False)
     # assert order['status'] == 'open' and 'Last' in get_info_trigger_value(result['info']) and (get_close_on_trigger_value(result['info']) == True or get_close_on_trigger_value(result['info']) == None)
 
-def test_stop_limit_buy_above_mark():
+def test_stop_limit_buy_above_mark(): # TODO binance fails if true
     print('Limit buy stop above last. Close on trigger = true. Trigger = Mark.')
     result = do_create_order([
         symbol,
@@ -470,8 +471,9 @@ def test_cancel_order():
             if exchange.id != 'ftx':
                 order = exchange.fetch_order(id, symbol)
             if order: # wtf ftx
-                result = exchange.cancel_order(id, symbol, params={'type': 'limit'})
-                results.append(result)
+                if order['status'] == 'open':
+                    result = exchange.cancel_order(id, symbol, params={'type': 'limit'})
+                    results.append(result)
                 if exchange.id == 'ftx':
                     asserts.append(result in ['Order cancelled', 'Order queued for cancellation'])
                 else:
@@ -495,7 +497,10 @@ def test_cancel_stop_order():
             if exchange.id != 'ftx':
                 order = exchange.fetch_order(id, symbol)
             if (order and order['status'] == 'open'):
-                result = exchange.cancel_order(id, symbol, params={'type': 'stop'})
+                try:
+                    result = exchange.cancel_order(id, symbol, params={'type': 'stop'})
+                except:
+                    result = exchange.fetch_order(id, symbol)
                 results.append(result)
                 if exchange.id == 'ftx':
                     asserts.append(result in ['Order cancelled', 'Order queued for cancellation'])
