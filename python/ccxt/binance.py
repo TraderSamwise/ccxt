@@ -681,7 +681,7 @@ class binance(Exchange):
             },
             'timeInForces': {
                 'GTC': 'GTC',
-                'PO': 'GTC', # god till crossing
+                'PO': 'GTX', # good till crossing
                 'IOC': 'IOC',
                 'FOK': 'FOK',
             }
@@ -1906,6 +1906,7 @@ class binance(Exchange):
         timeInForce = self.api_time_in_force(params['timeInForce'])
         workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        side = side.upper()
 
         clientOrderId = self.safe_string_2(params, 'newClientOrderId', 'clientOrderId')
         params = self.omit(params, ['type', 'newClientOrderId', 'clientOrderId'])
@@ -1929,7 +1930,7 @@ class binance(Exchange):
         request = {
             'symbol': market['id'],
             'type': uppercaseType,
-            'side': side.upper(),
+            'side': side,
             'reduceOnly': reduceOnly,
         }
         if clientOrderId is None:
@@ -2029,14 +2030,30 @@ class binance(Exchange):
             stopPrice = self.safe_number(params, 'stopPrice')
             request['workingType'] = workingType
             request['closePosition'] = closeOnTrigger
+            if closeOnTrigger:
+                request = self.omit(request, 'reduceOnly') # binance yells about it not being necessary
             if stopPrice is None:
                 raise InvalidOrder(self.id + ' createOrder() requires a stopPrice extra param for a ' + type + ' order')
             else:
                 params = self.omit(params, 'stopPrice')
                 request['stopPrice'] = self.price_to_precision(symbol, stopPrice)
+
+            # TEALSTREET
+            basePrice = self.safe_value(params, 'basePrice')
+            if basePrice == 0.0:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
+
+            if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
+                if uppercaseType == 'STOP_MARKET':
+                    uppercaseType = 'TAKE_PROFIT_MARKET'
+                elif uppercaseType == 'STOP':
+                    uppercaseType = 'TAKE_PROFIT'
+                request['type'] = uppercaseType
+
         else:
             params = self.omit(params, 'stopPrice')
-        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger'])
+        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger', 'timeInForce', 'reduceOnly'])
         response = getattr(self, method)(self.extend(request, params))
         return self.parse_order(response, market)
 

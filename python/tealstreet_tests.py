@@ -81,7 +81,7 @@ def fetch_order_unless_exchange_too_slow(result):
     return order
 
 def get_close_on_trigger_value(result):
-    keys = ['close_on_trigger']
+    keys = ['close_on_trigger', 'closePosition']
     for key in keys:
         if key in result:
             return exchange.safe_value(result, key)
@@ -282,7 +282,7 @@ def test_stop_market_sell_below_last():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and check_close_on_trigger_value(result['info'], False)
 
-def test_stop_market_sell_above_last(): # TODO: bitmex is filling on this
+def test_stop_market_sell_above_last(): # should be take profit, TODO: bitmex is filling on this
     print('Market sell stop above last. Close on trigger = false.')
     result = do_create_order([
         symbol,
@@ -345,7 +345,7 @@ def test_stop_market_buy_above_last():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and check_close_on_trigger_value(result['info'], False)
 
-def test_stop_market_buy_below_last(): # TODO: bitmex is filling on this
+def test_stop_market_buy_below_last(): # should be take profit, TODO: bitmex is filling on this
     print('Market buy stop below last. Close on trigger = false.')
     result = do_create_order([
        symbol,
