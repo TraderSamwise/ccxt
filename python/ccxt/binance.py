@@ -2023,6 +2023,8 @@ class binance(Exchange):
             request['price'] = self.price_to_precision(symbol, price)
         if timeInForceIsRequired:
             request['timeInForce'] = timeInForce # self.options['defaultTimeInForce']  # 'GTC' = Good To Cancel(default), 'IOC' = Immediate Or Cancel
+        else:
+            params = self.omit(params, ['timeInForce'])
         if stopPriceIsRequired:
             stopPrice = self.safe_number(params, 'stopPrice')
             request['workingType'] = workingType
@@ -2032,6 +2034,9 @@ class binance(Exchange):
             else:
                 params = self.omit(params, 'stopPrice')
                 request['stopPrice'] = self.price_to_precision(symbol, stopPrice)
+        else:
+            params = self.omit(params, 'stopPrice')
+        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger'])
         response = getattr(self, method)(self.extend(request, params))
         return self.parse_order(response, market)
 
