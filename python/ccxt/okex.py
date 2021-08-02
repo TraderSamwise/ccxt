@@ -535,6 +535,24 @@ class okex(Exchange, OkexTealstreetMixin):
                 'YOYO': 'YOYOW',
                 'WIN': 'WinToken',  # https://github.com/ccxt/ccxt/issues/5701
             },
+            'orderTypes': {
+                'market': 'market',
+                'limit': 'limit',
+                'PO': 'post_only',
+                'FOK': 'fok',
+                'IOC': 'ioc',
+                'optimal_limit_ioc': 'optimal_limit_ioc',
+            },
+            'triggerTypes': {
+                'Mark': 'MARK_PRICE',
+                'Last': 'CONTRACT_PRICE',
+            },
+            'timeInForces': {
+                'GTC': 'GTC',
+                'PO': 'GTX',  # good till crossing
+                'IOC': 'IOC',
+                'FOK': 'FOK',
+            }
         })
 
     def fetch_status(self, params={}):
@@ -1289,6 +1307,20 @@ class okex(Exchange, OkexTealstreetMixin):
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
+
+        # TEALSTREET
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        orderType = self.api_order_type(type)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        side = side.lower()
+
+        basePrice = self.safe_value(params, 'basePrice')
+        if basePrice == 0.0:
+            ticker = self.fetch_ticker(symbol)
+            basePrice = ticker['last']
+
         request = {
             'instId': market['id'],
             #
@@ -1308,7 +1340,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #     - Cross FUTURES/SWAP/OPTION: cross
             #     - Isolated FUTURES/SWAP/OPTION: isolated
             #
-            'tdMode': 'cash',  # cash, cross, isolated
+            'tdMode': 'cross',  # cash, cross, isolated
             # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
             # 'clOrdId': clientOrderId,  # up to 32 characters, must be unique
             # 'tag': tag,  # up to 8 characters
@@ -1331,7 +1363,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #
             # 'sz': self.amount_to_precision(symbol, amount),
             # 'px': self.price_to_precision(symbol, price),  # limit orders only
-            # 'reduceOnly': False,  # MARGIN orders only
+            'reduceOnly': reduceOnly,  # MARGIN orders only
         }
         clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
         if clientOrderId is None:
@@ -1341,28 +1373,30 @@ class okex(Exchange, OkexTealstreetMixin):
         else:
             request['clOrdId'] = clientOrderId
             params = self.omit(params, ['clOrdId', 'clientOrderId'])
-        if type == 'market':
-            # for market buy it requires the amount of quote currency to spend
-            if side == 'buy':
-                notional = self.safe_number(params, 'sz')
-                createMarketBuyOrderRequiresPrice = self.safe_value(self.options, 'createMarketBuyOrderRequiresPrice',
-                                                                    True)
-                if createMarketBuyOrderRequiresPrice:
-                    if price is not None:
-                        if notional is None:
-                            notional = amount * price
-                    elif notional is None:
-                        raise InvalidOrder(
-                            self.id + " createOrder() requires the price argument with market buy orders to calculate total order cost(amount to spend), where cost = amount * price. Supply a price argument to createOrder() call if you want the cost to be calculated for you from price and amount, or, alternatively, add .options['createMarketBuyOrderRequiresPrice'] = False and supply the total cost value in the 'amount' argument or in the 'sz' extra parameter(the exchange-specific behaviour)")
-                else:
-                    notional = amount if (notional is None) else notional
-                precision = market['precision']['price']
-                request['sz'] = self.decimal_to_precision(notional, TRUNCATE, precision, self.precisionMode)
-            else:
-                request['sz'] = self.amount_to_precision(symbol, amount)
-        else:
+        # if type == 'market':
+        #     # for market buy it requires the amount of quote currency to spend
+        #     price = basePrice
+        #     if side == 'buy':
+        #         notional = self.safe_number(params, 'sz')
+        #         createMarketBuyOrderRequiresPrice = self.safe_value(self.options, 'createMarketBuyOrderRequiresPrice', True)
+        #         if createMarketBuyOrderRequiresPrice:
+        #             if price is not None:
+        #                 if notional is None:
+        #                     notional = amount * price
+        #             elif notional is None:
+        #                 raise InvalidOrder(
+        #                     self.id + " createOrder() requires the price argument with market buy orders to calculate total order cost(amount to spend), where cost = amount * price. Supply a price argument to createOrder() call if you want the cost to be calculated for you from price and amount, or, alternatively, add .options['createMarketBuyOrderRequiresPrice'] = False and supply the total cost value in the 'amount' argument or in the 'sz' extra parameter(the exchange-specific behaviour)")
+        #         else:
+        #             notional = amount if (notional is None) else notional
+        #         precision = market['precision']['amount']
+        #         request['sz'] = self.decimal_to_precision(notional, TRUNCATE, precision, self.precisionMode)
+        #     else:
+        #         request['sz'] = self.amount_to_precision(symbol, amount)
+        # else:
+        if orderType != 'market':
             request['px'] = self.price_to_precision(symbol, price)
-            request['sz'] = self.amount_to_precision(symbol, amount)
+        request['sz'] = self.amount_to_precision(symbol, amount)
+        params = []
         response = self.privatePostTradeOrder(self.extend(request, params))
         #
         #     {

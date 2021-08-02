@@ -65,8 +65,8 @@ okexExchange.set_sandbox_mode(True)
 
 # SETTINGS
 exchange = okexExchange
-symbol = 'BTC/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
-size = 100 # 0.001
+symbol = 'BTC-USD-SWAP' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
+size = 1 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
@@ -134,7 +134,7 @@ def test_market_buy_not_post_only():
             'reduceOnly': False,
             'trigger': None,
             'closeOnTrigger': None,
-            'basePrice': None
+            'basePrice': last if exchange.id == 'okex' else None
         }
     ])
     order = fetch_order_unless_exchange_too_slow(result)
@@ -155,7 +155,7 @@ def test_market_sell_not_post_only():
             'reduceOnly': False,
             'trigger': None,
             'closeOnTrigger': None,
-            'basePrice': None
+            'basePrice':  last if exchange.id == 'okex' else None
         }
     ])
     order = fetch_order_unless_exchange_too_slow(result)
