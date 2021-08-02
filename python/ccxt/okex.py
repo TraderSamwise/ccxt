@@ -538,6 +538,8 @@ class okex(Exchange, OkexTealstreetMixin):
             'orderTypes': {
                 'market': 'market',
                 'limit': 'limit',
+                'stop': 'conditional',
+                'stoplimit': 'trigger',
                 'PO': 'post_only',
                 'FOK': 'fok',
                 'IOC': 'ioc',
@@ -549,9 +551,9 @@ class okex(Exchange, OkexTealstreetMixin):
             },
             'timeInForces': {
                 'GTC': 'GTC',
-                'PO': 'GTX',  # good till crossing
-                'IOC': 'IOC',
-                'FOK': 'FOK',
+                'PO': 'post_only',  # good till crossing
+                'IOC': 'ioc',
+                'FOK': 'fok',
             }
         })
 
@@ -1310,9 +1312,12 @@ class okex(Exchange, OkexTealstreetMixin):
 
         # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        orderType = self.api_order_type(type)
         timeInForce = self.api_time_in_force(params['timeInForce'])
-        workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
+        if timeInForce in ['post_only', 'fok', 'ioc']:
+            orderType = timeInForce
+        else:
+            orderType = self.api_order_type(type)
+        # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = side.lower()
 
@@ -1354,7 +1359,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #
             'side': side,
             # 'posSide': 'long',  # long, short,  # required in the long/short mode, and can only be long or short
-            'ordType': type,  # market, limit, post_only, fok, ioc
+            'ordType': orderType,  # market, limit, post_only, fok, ioc
             #
             #     for SPOT/MARGIN bought and sold at a limit price, sz refers to the amount of trading currency
             #     for SPOT/MARGIN bought at a market price, sz refers to the amount of quoted currency
