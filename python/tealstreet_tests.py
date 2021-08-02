@@ -568,11 +568,14 @@ def test_cancel_all_orders():
 def test_close_position():
     print(exchange.name)
     print('Close position')
+    position = exchange.fetch_position(symbol)
+    close_size = position['contracts'] or position['size']
+    side = 'buy' if position['side'] == 'sell' else 'sell'
     result = do_create_order([
         symbol,
         'market',
-        'sell',
-        size*10,
+        side,
+        abs(close_size),
         None,
         {
             'stopPrice': None,

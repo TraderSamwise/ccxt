@@ -28,7 +28,7 @@ from ccxt.base.precise import Precise
 
 class OkexTealstreetMixin(object):
     # TEALSTREET: this may work to cancel all without giving a order id
-    def cancel_all_orders(self, symbol=None, params={}):
+    def cancel_all_orders(self: 'okex', symbol=None, params={}):
         if symbol is None:
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         self.load_markets()
@@ -43,6 +43,38 @@ class OkexTealstreetMixin(object):
         # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
         data = self.safe_value(response, 'data', [])
         return self.parse_orders(data, market)
+
+    def batch_cancel_orders(self: 'okex', type, symbol, order_ids, results=[], params={}):
+        if order_ids:
+            market = self.market(symbol)
+            if type in ['conditional', 'oco', 'trigger', 'stop', 'stoplimit']:
+                method = 'privatePostTradeCancelAlgos'
+                batchSize = 10
+                idKey = 'algoId'
+            else:
+                method = 'privatePostTradeCancelBatchOrders'
+                batchSize = 20
+                idKey = 'ordId'
+
+            batch = order_ids[:batchSize]  # take max allowed at a time
+            request = [{'instId': symbol, idKey: x} for x in batch]
+
+            # TODO: implement client order ids
+            response = getattr(self, method)(request)
+            # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
+            data = self.safe_value(response, 'data', [])
+            orders = self.parse_orders(data, market)
+
+            for order in orders:
+                if order['status'] is None:
+                    sCode = self.safe_string(order['info'], 'sCode')
+                    order['status'] = 'cancelled' if sCode == '0' else None
+
+            results.append(orders)
+            order_ids = [x for x in order_ids if
+                         x not in batch]  # remove orders we just cancelled from orders pending cancellation
+            return self.batch_cancel_orders(type, symbol, order_ids, results)  # recursively call to cancel more orders, if any
+        return results
 
 class okex(Exchange, OkexTealstreetMixin):
 
@@ -1509,36 +1541,16 @@ class okex(Exchange, OkexTealstreetMixin):
         if symbol is None:
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         self.load_markets()
-        market = self.market(symbol)
-        request = {
-            'instId': market['id'],
-            # 'ordId': id,  # either ordId or clOrdId is required
-            # 'clOrdId': clientOrderId,
-        }
-        clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
-        if clientOrderId is not None:
-            request['clOrdId'] = clientOrderId
-        else:
-            request['clOrdId'] = 'tealstreet'
-
         type = self.safe_string(params, 'type')
+        orderIds = self.safe_value(params, 'orders')
 
-        method = 'privatePostTradeCancelOrder'
-        if type == 'stop':
-            method = 'privatePostTradeCancelAlgos'
+        if orderIds is None:
+            openOrders = self.fetch_open_orders(symbol, params={ 'type': type} )
+            orderIds = [x['id'] for x in openOrders]
 
-        query = self.omit(params, ['clOrdId', 'clientOrderId'])
-        response = getattr(self, method)(self.extend(request, query))
-        # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
-        data = self.safe_value(response, 'data', [])
-        order = self.safe_value(data, 0)
-        parsed_order = self.parse_order(order, market)
+        orders = self.batch_cancel_orders(type, symbol, orderIds)
 
-        if parsed_order['status'] is None:  # algo order, # TEALSTREET
-            sCode = self.safe_string(order, 'sCode')
-            parsed_order['status'] = 'cancelled' if sCode == '0' else None
-
-        return parsed_order
+        return orders
 
     def parse_order_status(self, status):
         statuses = {
@@ -1818,7 +1830,8 @@ class okex(Exchange, OkexTealstreetMixin):
             request['limit'] = limit  # default 100, max 100
         type = self.safe_value(params, 'type')
         # TEALSTREET TODO: make sure OCO is parsed correctly
-        if type in ['conditional', 'oco', 'trigger']:
+        if type in ['conditional', 'oco', 'trigger', 'stop', 'stoplimit']:
+            type = 'conditional' if type in ['stop', 'stoplimit'] else type
             request['ordType'] = type
             response = self.privateGetTradeOrdersAlgoPending(self.extend(request, params))
         else:
