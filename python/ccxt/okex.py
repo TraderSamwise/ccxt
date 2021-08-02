@@ -1313,18 +1313,17 @@ class okex(Exchange, OkexTealstreetMixin):
         # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
         timeInForce = self.api_time_in_force(params['timeInForce'])
-        if timeInForce in ['post_only', 'fok', 'ioc']:
-            orderType = timeInForce
-        else:
-            orderType = self.api_order_type(type)
+        orderType = self.api_order_type(type)
+        if orderType not in ['conditional', 'trigger']: # no stop post only
+            if timeInForce in ['post_only', 'fok', 'ioc']:
+                orderType = timeInForce
         # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = side.lower()
 
-        basePrice = self.safe_value(params, 'basePrice')
-        if basePrice == 0.0:
-            ticker = self.fetch_ticker(symbol)
-            basePrice = ticker['last']
+        method = 'privatePostTradeOrder'
+        if type in ['stop', 'stoplimit']:
+            method = 'privatePostTradeOrderAlgo'
 
         request = {
             'instId': market['id'],
@@ -1398,11 +1397,51 @@ class okex(Exchange, OkexTealstreetMixin):
         #     else:
         #         request['sz'] = self.amount_to_precision(symbol, amount)
         # else:
-        if orderType != 'market':
+        if price is not None:
             request['px'] = self.price_to_precision(symbol, price)
         request['sz'] = self.amount_to_precision(symbol, amount)
+
+        if orderType in ['conditional', 'trigger']:
+            # request = self.omit(request, 'px')
+            stopPrice = self.safe_number(params, 'stopPrice')
+
+            if price is None: # market
+                price = -1
+            else: # if there's a price, they say conditional
+                orderType = 'conditional'
+                request['ordType'] = orderType
+
+            basePrice = self.safe_value(params, 'basePrice')
+            if basePrice == 0.0:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
+
+            # if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
+            #     if type == 'STOP_MARKET':
+            #         uppercaseType = 'TAKE_PROFIT_MARKET'
+            #     elif uppercaseType == 'STOP':
+            #         uppercaseType = 'TAKE_PROFIT'
+            # if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
+            if side == 'sell':
+                if stopPrice > basePrice:
+                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
+                else:
+                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['slOrdPx'] = self.price_to_precision(symbol, price)
+            else:
+                if stopPrice < basePrice:
+                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
+                else:
+                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['slOrdPx'] = self.price_to_precision(symbol, price)
+
+            request['triggerPx'] = self.price_to_precision(symbol, stopPrice)
+            request['orderPx'] =  self.price_to_precision(symbol, price)
+
         params = []
-        response = self.privatePostTradeOrder(self.extend(request, params))
+        response = getattr(self, method)(self.extend(request, params))
         #
         #     {
         #         "code": "0",
@@ -1421,6 +1460,11 @@ class okex(Exchange, OkexTealstreetMixin):
         data = self.safe_value(response, 'data', [])
         first = self.safe_value(data, 0)
         order = self.parse_order(first, market)
+
+        if order['status'] is None: # TEALSTREET
+            sCode = self.safe_string(first, 'sCode')
+            order['status'] = 'open' if sCode == '0' else None
+
         return self.extend(order, {
             'type': type,
             'side': side,
@@ -1441,12 +1485,60 @@ class okex(Exchange, OkexTealstreetMixin):
             request['clOrdId'] = clientOrderId
         else:
             request['ordId'] = id
+
+        type = self.safe_string(params, 'type')
+
+        method = 'privatePostTradeCancelOrder'
+        if type == 'stop':
+            method = 'privatePostTradeCancelAlgos'
+
         query = self.omit(params, ['clOrdId', 'clientOrderId'])
-        response = self.privatePostTradeCancelOrder(self.extend(request, query))
+        response = getattr(self, method)(self.extend(request, query))
         # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
         data = self.safe_value(response, 'data', [])
         order = self.safe_value(data, 0)
-        return self.parse_order(order, market)
+        parsed_order = self.parse_order(order, market)
+
+        if parsed_order['status'] is None: # algo order, # TEALSTREET
+            sCode = self.safe_string(order, 'sCode')
+            parsed_order['status'] = 'cancelled' if sCode == '0' else None
+
+        return parsed_order
+
+    def cancel_all_orders(self, symbol=None, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
+        self.load_markets()
+        market = self.market(symbol)
+        request = {
+            'instId': market['id'],
+            # 'ordId': id,  # either ordId or clOrdId is required
+            # 'clOrdId': clientOrderId,
+        }
+        clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
+        if clientOrderId is not None:
+            request['clOrdId'] = clientOrderId
+        else:
+            request['clOrdId'] = 'tealstreet'
+
+        type = self.safe_string(params, 'type')
+
+        method = 'privatePostTradeCancelOrder'
+        if type == 'stop':
+            method = 'privatePostTradeCancelAlgos'
+
+        query = self.omit(params, ['clOrdId', 'clientOrderId'])
+        response = getattr(self, method)(self.extend(request, query))
+        # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
+        data = self.safe_value(response, 'data', [])
+        order = self.safe_value(data, 0)
+        parsed_order = self.parse_order(order, market)
+
+        if parsed_order['status'] is None:  # algo order, # TEALSTREET
+            sCode = self.safe_string(order, 'sCode')
+            parsed_order['status'] = 'cancelled' if sCode == '0' else None
+
+        return parsed_order
 
     def parse_order_status(self, status):
         statuses = {
@@ -1649,8 +1741,17 @@ class okex(Exchange, OkexTealstreetMixin):
             request['clOrdId'] = clientOrderId
         else:
             request['ordId'] = id
-        query = self.omit(params, ['clOrdId', 'clientOrderId'])
-        response = self.privateGetTradeOrder(self.extend(request, query))
+        query = self.omit(params, ['clOrdId', 'clientOrderId', 'type'])
+
+        method = 'privateGetTradeOrder'
+        type = self.safe_value(params, 'type')
+        if type in ['conditional', 'oco', 'trigger', 'stop', 'stoplimit']:
+            method = 'privateGetTradeOrdersAlgoPending'
+            request['algoId'] = id
+            # request = self.omit(request, 'ordId')
+            request['ordType'] = 'conditional'
+
+        response = getattr(self, method)(self.extend(request, query))
         #
         #     {
         #         "code":"0",

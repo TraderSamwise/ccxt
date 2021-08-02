@@ -66,9 +66,23 @@ okexExchange.set_sandbox_mode(True)
 
 def test_exchange_get_methods(exchange):
     print(exchange.name)
+    result = exchange.create_order(
+             'BTC-USD-SWAP',
+        'stoplimit',
+        'buy',
+        1,
+        35000,
+        {
+            'stopPrice': 48000,
+            'timeInForce': 'PO',
+            'reduceOnly': None,
+            'trigger': 'Index',
+            'closeOnTrigger': True,
+            'basePrice': 23890
+        })
 
-
-    exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
+    # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
+    exchange.fetch_order('342273454577688576', 'BTC-USD-SWAP', params={'type': 'stop'})
 
     orders = [{'id': '18747457675', 'type': 'stop'}, {'id': '18747460710', 'type': 'stop'}, {'id': '18747461436', 'type': 'stop'}, {'id': '18747462096', 'type': 'stop'}, {'id': '18747462701', 'type': 'stop'}, {'id': '18747463265', 'type': 'stop'}, {'id': '18747463947', 'type': 'stop'}, {'id': '18747468725', 'type': 'stop'}]
 
@@ -133,9 +147,9 @@ def main():
     # test_exchange_get_methods(ftxExchange)
     # test_exchange_get_methods(bitmexExchange)
     # test_exchange_get_methods(bybitExchange)
-    test_exchange_get_methods(binanceExchange)
+    # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
-    # test_exchange_get_methods(okexExchange)
+    test_exchange_get_methods(okexExchange)
 
 if __name__ == "__main__":
     main()
