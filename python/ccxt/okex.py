@@ -1567,6 +1567,7 @@ class okex(Exchange, OkexTealstreetMixin):
         postOnly = None
         timeInForce = None
         price = self.safe_number_2(order, 'px', 'slOrdPx')
+        postOnly = False
         if type == 'post_only':
             postOnly = True
             type = 'limit'
