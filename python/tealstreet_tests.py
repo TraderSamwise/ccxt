@@ -31,7 +31,7 @@ bybitExchange = ccxt.bybit({
 })
 bybitExchange.set_sandbox_mode(True)
 
-binanceExchange = ccxt.binancecoinm({
+binanceExchange = ccxt.binanceusdm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
     'enableRateLimit': False,
@@ -64,9 +64,9 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = binanceExchange
-symbol = 'BTC/USD' # 'BTC-PERP'
-size = 1 # 0.001
+exchange = okexExchange
+symbol = 'BTC/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
+size = 100 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
