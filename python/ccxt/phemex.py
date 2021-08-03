@@ -37,7 +37,7 @@ class PhemexTealstreetMixin(object):
         isolated = False  # don't have isolated
         hedged = False  # trading in opposite direction will close the position
         side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
-        id = symbol + ':' + side
+        id = symbol # + ':' + side
         contracts = self.safe_integer(position, 'size')
         price = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
         markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
