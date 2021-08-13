@@ -9,11 +9,13 @@ import ccxt
 ftxExchange = ccxt.ftx({
     'apiKey': os.environ.get('ftx_key'),
     'secret': os.environ.get('ftx_secret'),
-    'headers': {
-        'FTX-SUBACCOUNT': 'APITEST',
-    },
+    # 'headers': {
+    #     'FTX-SUBACCOUNT': 'APITEST',
+    # },
     'enableRateLimit': True,
 })
+
+ftxExchange.fetch_currencies()
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
 bitmexExchange = ccxt.bitmex({

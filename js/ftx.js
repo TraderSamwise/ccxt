@@ -310,6 +310,24 @@ module.exports = class ftx extends Exchange {
         return result;
     }
 
+    setMarkets (markets, currencies = undefined) {
+        const toReturn = super.setMarkets (markets, currencies);
+        for (let i = 0; i < markets.length; i++) {
+            const market = markets[i];
+            const type = this.safeValue (market, 'type');
+            if (type === 'future') {
+                const base = this.safeValue (market, 'base');
+                if (currencies[base]) {
+                    const precision = this.safeValue (market, 'precision');
+                    const amount = this.safeValue (precision, 'amount');
+                    currencies[base].precision = amount;
+                }
+            }
+        }
+        this.currencies = currencies;
+        return toReturn;
+    }
+
     async fetchMarkets (params = {}) {
         const response = await this.publicGetMarkets (params);
         //

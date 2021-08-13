@@ -339,6 +339,19 @@ class ftx(Exchange):
             }
         return result
 
+    def set_markets(self, markets, currencies=None):
+        to_return = super(ftx, self).set_markets(markets, currencies)
+        for market in markets:
+            type = self.safe_value(market, 'type')
+            if type == 'future':
+                base = self.safe_value(market, 'base')
+                if base in currencies:
+                    precision = self.safe_value(market, 'precision')
+                    amount = self.safe_value(precision, 'amount')
+                    currencies[base]['precision'] = amount
+        self.currencies = currencies
+        return to_return
+
     def fetch_markets(self, params={}):
         response = self.publicGetMarkets(params)
         #
