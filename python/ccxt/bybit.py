@@ -2297,7 +2297,7 @@ class bybit(Exchange):
                 timestamp = self.parse8601(datetime)
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
-                side = self.safe_string(position, "side").lower()
+                side = 'long' if self.safe_string(position, "side").lower() == 'buy' else 'short'
                 id = symbol + ':' + side
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price') # average open price according to bybit doc
@@ -2363,7 +2363,7 @@ class bybit(Exchange):
                 timestamp = self.parse8601(datetime)
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
-                side = self.safe_string(position, "side").lower()
+                side = 'long' if self.safe_string(position, "side").lower() == 'buy' else 'short'
                 id = symbol + ':' + side
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
@@ -2429,7 +2429,7 @@ class bybit(Exchange):
                 timestamp = self.parse8601(datetime)
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
-                side = self.safe_string(position, "side").lower()
+                side = 'long' if self.safe_string(position, "side").lower() == 'buy' else 'short'
                 id = symbol + ':' + side
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
