@@ -8,7 +8,8 @@ const fs = require ('fs')
     const exchange = new ccxt.ftx ({ enableRateLimit: true });
     while (true) {
         await exchange.loadMarkets()
-        console.log(exchange.currencies)
+        console.log(exchange.currencies.USD)
+
     }
 }) ();
 
