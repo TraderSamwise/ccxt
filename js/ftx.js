@@ -307,6 +307,9 @@ module.exports = class ftx extends Exchange {
                 },
             };
         }
+        if (result['USD']) {
+            result['USD'].precision = 0.01;
+        }
         return result;
     }
 
