@@ -1334,7 +1334,7 @@ class Exchange(object):
         return len(parts[1]) if len(parts) > 1 else 0
 
     # TEALSTREET
-    def usdToPrecision(self, value):
+    def usd_tp_precision(self, value):
         return decimal_to_precision(value, TRUNCATE, 0.01, self.precisionMode, self.paddingMode)
 
     def cost_to_precision(self, symbol, cost):
