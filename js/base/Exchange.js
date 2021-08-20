@@ -1385,7 +1385,7 @@ module.exports = class Exchange {
     }
 
     costToPrecision (symbol, cost) {
-        return decimalToPrecision (cost, TRUNCATE, this.markets[symbol].precision.price, this.precisionMode, this.paddingMode)
+        return decimalToPrecision (cost, TRUNCATE, this.markets[symbol].precision.price, this.precisionMode, 6)
     }
 
     priceToPrecision (symbol, price) {

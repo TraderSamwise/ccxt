@@ -1335,7 +1335,7 @@ class Exchange(object):
 
     # TEALSTREET
     def usd_tp_precision(self, value):
-        return decimal_to_precision(value, TRUNCATE, 0.01, self.precisionMode, self.paddingMode)
+        return decimal_to_precision(value, TRUNCATE, 0.01, self.precisionMode, 6)
 
     def cost_to_precision(self, symbol, cost):
         return self.decimal_to_precision(cost, TRUNCATE, self.markets[symbol]['precision']['price'], self.precisionMode, self.paddingMode)
