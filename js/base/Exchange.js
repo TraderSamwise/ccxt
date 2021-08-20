@@ -1382,11 +1382,11 @@ module.exports = class Exchange {
 
     // TEALSTREET
     usdToPrecision (value) {
-      return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, this.paddingMode)
+      return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, 6)
     }
 
     costToPrecision (symbol, cost) {
-        return decimalToPrecision (cost, TRUNCATE, this.markets[symbol].precision.price, this.precisionMode, 6)
+        return decimalToPrecision (cost, TRUNCATE, this.markets[symbol].precision.price, this.precisionMode, this.paddingMode)
     }
 
     priceToPrecision (symbol, price) {
