@@ -351,7 +351,7 @@ class ftx(Exchange):
                     amount = self.safe_value(precision, 'amount')
                     currencies[base]['precision'] = amount
         if 'USD' in currencies:
-            currencies['USD']['precision'] = 0.5
+            currencies['USD']['precision'] = 0.01
         self.currencies = currencies
         return to_return
 

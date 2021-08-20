@@ -325,7 +325,7 @@ module.exports = class ftx extends Exchange {
             }
         }
         if (currencies['USD']) {
-            currencies['USD'].precision = 0.5;
+            currencies['USD'].precision = 0.01;
         }
         this.currencies = currencies;
         return toReturn;

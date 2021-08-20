@@ -19,7 +19,7 @@
     "docker": "docker-compose run --rm ccxt",
     "build": "npm run pre-transpile",
     "force-build": "npm run pre-transpile && npm run force-transpile && npm run post-transpile && npm run update-badges",
-    "pre-transpile": "npm run export-exchanges && npm run vss && npm run copy-python-files && npm run check-js-syntax && npm run browserify",
+    "pre-transpile": "npm run export-exchanges && npm run vss && npm run browserify",
     "post-transpile": "npm run check-python-syntax && npm run check-php-syntax",
     "test": "npm run build && node run-tests",
     "test2": "node run-tests2",

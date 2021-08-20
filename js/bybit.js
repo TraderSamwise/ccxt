@@ -7,6 +7,7 @@ const { TICK_SIZE } = require ('./base/functions/number');
 const { AuthenticationError, ExchangeError, ArgumentsRequired, PermissionDenied, InvalidOrder, OrderNotFound, InsufficientFunds, BadRequest, RateLimitExceeded, InvalidNonce } = require ('./base/errors');
 const Precise = require ('./base/Precise');
 const functions = require ('./base/functions');
+
 const {
     deepExtend,
     flatten,
@@ -39,8 +40,8 @@ module.exports = class bybit extends Exchange {
                     'precision': market.precision ? (market.precision.base || market.precision.amount) : 8,
                 }));
             let quoteCurrencies = [
-                { 'id': 'USD', 'numericId': null, 'code': 'USD', 'precision': 0.5 },
-                { 'id': 'USDT', 'numericId': null, 'code': 'USDT', 'precision': 0.5 },
+                { 'id': 'USD', 'numericId': null, 'code': 'USD', 'precision': 0.01 },
+                { 'id': 'USDT', 'numericId': null, 'code': 'USDT', 'precision': 0.01 },
             ];
             baseCurrencies = sortBy (baseCurrencies, 'code');
             quoteCurrencies = sortBy (quoteCurrencies, 'code');

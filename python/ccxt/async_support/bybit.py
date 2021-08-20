@@ -50,8 +50,8 @@ class bybit(Exchange):
             base_currencies = self.sort_by(base_currencies, 'code')
             self.base_currencies = self.index_by(base_currencies, 'code')
             quote_currencies = [
-                {'id': 'USD', 'numericId': None, 'code': 'USD', 'precision': 0.5},
-                {'id': 'USDT', 'numericId': None, 'code': 'USDT', 'precision': 0.5}
+                {'id': 'USD', 'numericId': None, 'code': 'USD', 'precision': 0.01},
+                {'id': 'USDT', 'numericId': None, 'code': 'USDT', 'precision': 0.01}
             ]
             self.quote_currencies = self.index_by(quote_currencies, 'code')
             currencies = self.sort_by(base_currencies + quote_currencies, 'code')
