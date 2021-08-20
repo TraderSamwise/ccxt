@@ -339,6 +339,7 @@ class ftx(Exchange):
             }
         return result
 
+    # TEALSTREET
     def set_markets(self, markets, currencies=None):
         to_return = super(ftx, self).set_markets(markets, currencies)
         for market in markets:

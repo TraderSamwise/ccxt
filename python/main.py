@@ -67,60 +67,62 @@ okexExchange = ccxt.okex({
 okexExchange.set_sandbox_mode(True)
 
 def test_exchange_get_methods(exchange):
-    print(exchange.name)
-    result = exchange.create_order(
-             'BTC-USD-SWAP',
-        'stoplimit',
-        'buy',
-        1,
-        35000,
-        {
-            'stopPrice': 48000,
-            'timeInForce': 'PO',
-            'reduceOnly': None,
-            'trigger': 'Index',
-            'closeOnTrigger': True,
-            'basePrice': 23890
-        })
+    exchange.load_markets()
 
-    # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
-    exchange.fetch_order('342273454577688576', 'BTC-USD-SWAP', params={'type': 'stop'})
-
-    orders = [{'id': '18747457675', 'type': 'stop'}, {'id': '18747460710', 'type': 'stop'}, {'id': '18747461436', 'type': 'stop'}, {'id': '18747462096', 'type': 'stop'}, {'id': '18747462701', 'type': 'stop'}, {'id': '18747463265', 'type': 'stop'}, {'id': '18747463947', 'type': 'stop'}, {'id': '18747468725', 'type': 'stop'}]
-
-    for order in orders:
-
-        order_before = exchange.fetch_order(order['id'], 'BTC/USD')
-        print('ORDER BEFORE')
-        pprint(order_before)
-        print('ORDER BEFORE')
-
-        # result = exchange.create_order(
-        #     'BTC/USD',
-        #     'limit',
-        #     'buy',
-        #     1,
-        #     40000,
-        #     {
-        #         'stopPrice': None,
-        #         'timeInForce': 'GTC',  # GTC, PO
-        #         'reduceOnly': False,
-        #         'trigger': None,
-        #         'closeOnTrigger': None,
-        #         'basePrice': None
-        #     })
-
-        cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
-        print('CANCEL RESULT')
-        pprint(cancel_result)
-        print('CANCEL RESULT')
-
-        order_after = exchange.fetch_order(order['id'], 'BTC/USD')
-        print('ORDER AFTER')
-        pprint(order_after)
-        print('ORDER AFTER')
-
-        hi = True
+    # print(exchange.name)
+    # result = exchange.create_order(
+    #          'BTC-USD-SWAP',
+    #     'stoplimit',
+    #     'buy',
+    #     1,
+    #     35000,
+    #     {
+    #         'stopPrice': 48000,
+    #         'timeInForce': 'PO',
+    #         'reduceOnly': None,
+    #         'trigger': 'Index',
+    #         'closeOnTrigger': True,
+    #         'basePrice': 23890
+    #     })
+    #
+    # # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
+    # exchange.fetch_order('342273454577688576', 'BTC-USD-SWAP', params={'type': 'stop'})
+    #
+    # orders = [{'id': '18747457675', 'type': 'stop'}, {'id': '18747460710', 'type': 'stop'}, {'id': '18747461436', 'type': 'stop'}, {'id': '18747462096', 'type': 'stop'}, {'id': '18747462701', 'type': 'stop'}, {'id': '18747463265', 'type': 'stop'}, {'id': '18747463947', 'type': 'stop'}, {'id': '18747468725', 'type': 'stop'}]
+    #
+    # for order in orders:
+    #
+    #     order_before = exchange.fetch_order(order['id'], 'BTC/USD')
+    #     print('ORDER BEFORE')
+    #     pprint(order_before)
+    #     print('ORDER BEFORE')
+    #
+    #     # result = exchange.create_order(
+    #     #     'BTC/USD',
+    #     #     'limit',
+    #     #     'buy',
+    #     #     1,
+    #     #     40000,
+    #     #     {
+    #     #         'stopPrice': None,
+    #     #         'timeInForce': 'GTC',  # GTC, PO
+    #     #         'reduceOnly': False,
+    #     #         'trigger': None,
+    #     #         'closeOnTrigger': None,
+    #     #         'basePrice': None
+    #     #     })
+    #
+    #     cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
+    #     print('CANCEL RESULT')
+    #     pprint(cancel_result)
+    #     print('CANCEL RESULT')
+    #
+    #     order_after = exchange.fetch_order(order['id'], 'BTC/USD')
+    #     print('ORDER AFTER')
+    #     pprint(order_after)
+    #     print('ORDER AFTER')
+    #
+    #     hi = True
 
 
     #print('##########\nfetch_balance\n##########')
@@ -151,7 +153,7 @@ def main():
     # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
-    test_exchange_get_methods(okexExchange)
+    test_exchange_get_methods(bybitExchange)
 
 if __name__ == "__main__":
     main()

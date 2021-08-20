@@ -6,10 +6,58 @@ const Exchange = require ('./base/Exchange');
 const { TICK_SIZE } = require ('./base/functions/number');
 const { AuthenticationError, ExchangeError, ArgumentsRequired, PermissionDenied, InvalidOrder, OrderNotFound, InsufficientFunds, BadRequest, RateLimitExceeded, InvalidNonce } = require ('./base/errors');
 const Precise = require ('./base/Precise');
+const functions = require ('./base/functions');
+const {
+    deepExtend,
+    flatten,
+    indexBy,
+    sortBy,
+    groupBy,
+} = functions;
 
 //  ---------------------------------------------------------------------------
 
 module.exports = class bybit extends Exchange {
+    setMarkets (markets, currencies = undefined) {
+        const values = Object.values (markets).map ((market) => deepExtend ({
+            'limits': this.limits,
+            'precision': this.precision,
+        }, this.fees['trading'], market));
+        this.markets = indexBy (values, 'symbol');
+        this.marketsById = indexBy (markets, 'id');
+        this.markets_by_id = this.marketsById;
+        this.symbols = Object.keys (this.markets).sort ();
+        this.ids = Object.keys (this.markets_by_id).sort ();
+        if (currencies) {
+            this.currencies = deepExtend (currencies, this.currencies);
+        } else {
+            let baseCurrencies = values.filter ((market) => market['linear'])
+                .map ((market) => ({
+                    'id': market.baseId || market.base,
+                    'numericId': (market.baseNumericId !== undefined) ? market.baseNumericId : undefined,
+                    'code': market.base,
+                    'precision': market.precision ? (market.precision.base || market.precision.amount) : 8,
+                }));
+            let quoteCurrencies = [
+                { 'id': 'USD', 'numericId': null, 'code': 'USD', 'precision': 0.5 },
+                { 'id': 'USDT', 'numericId': null, 'code': 'USDT', 'precision': 0.5 },
+            ];
+            baseCurrencies = sortBy (baseCurrencies, 'code');
+            quoteCurrencies = sortBy (quoteCurrencies, 'code');
+            this.baseCurrencies = indexBy (baseCurrencies, 'code');
+            this.quoteCurrencies = indexBy (quoteCurrencies, 'code');
+            const allCurrencies = baseCurrencies.concat (quoteCurrencies);
+            const groupedCurrencies = groupBy (allCurrencies, 'code');
+            const currencies = Object.keys (groupedCurrencies).map ((code) =>
+                groupedCurrencies[code].reduce ((previous, current) => // eslint-disable-line implicit-arrow-linebreak
+                    ((previous.precision > current.precision) ? previous : current), groupedCurrencies[code][0])); // eslint-disable-line implicit-arrow-linebreak
+            const sortedCurrencies = sortBy (flatten (currencies), 'code');
+            this.currencies = deepExtend (indexBy (sortedCurrencies, 'code'), this.currencies);
+        }
+        this.currencies_by_id = indexBy (this.currencies, 'id');
+        return this.markets;
+    }
+
     describe () {
         return this.deepExtend (super.describe (), {
             'id': 'bybit',

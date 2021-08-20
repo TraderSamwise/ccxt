@@ -20,6 +20,45 @@ from ccxt.base.precise import Precise
 
 class bybit(Exchange):
 
+    # TEALSTREET
+    def set_markets(self, markets, currencies=None):
+        values = list(markets.values()) if type(markets) is dict else markets
+        for i in range(0, len(values)):
+            values[i] = self.extend(
+                self.fees['trading'],
+                {'precision': self.precision, 'limits': self.limits},
+                values[i]
+            )
+        self.markets = self.index_by(values, 'symbol')
+        self.markets_by_id = self.index_by(values, 'id')
+        self.marketsById = self.markets_by_id
+        self.symbols = sorted(self.markets.keys())
+        self.ids = sorted(self.markets_by_id.keys())
+        if currencies:
+            self.currencies = self.deep_extend(currencies, self.currencies)
+        else:
+            base_currencies = [{
+                'id': market['baseId'] if (('baseId' in market) and (market['baseId'] is not None)) else market['base'],
+                'numericId': market['baseNumericId'] if 'baseNumericId' in market else None,
+                'code': market['base'],
+                'precision': (
+                    market['precision']['base'] if 'base' in market['precision'] else (
+                        market['precision']['amount'] if 'amount' in market['precision'] else None
+                    )
+                ) if 'precision' in market else 8,
+            } for market in values if market['linear']]
+            base_currencies = self.sort_by(base_currencies, 'code')
+            self.base_currencies = self.index_by(base_currencies, 'code')
+            quote_currencies = [
+                {'id': 'USD', 'numericId': None, 'code': 'USD', 'precision': 0.5},
+                {'id': 'USDT', 'numericId': None, 'code': 'USDT', 'precision': 0.5}
+            ]
+            self.quote_currencies = self.index_by(quote_currencies, 'code')
+            currencies = self.sort_by(base_currencies + quote_currencies, 'code')
+            self.currencies = self.deep_extend(self.index_by(currencies, 'code'), self.currencies)
+        self.currencies_by_id = self.index_by(list(self.currencies.values()), 'id')
+        return self.markets
+
     def describe(self):
         return self.deep_extend(super(bybit, self).describe(), {
             'id': 'bybit',
