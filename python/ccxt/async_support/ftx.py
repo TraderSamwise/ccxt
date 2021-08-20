@@ -1634,8 +1634,7 @@ class ftx(Exchange):
             side = self.safe_string(position, 'side')
             id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
-            # TODO: ftx entryPrice goes away when position is closed
-            price = self.safe_float(position, 'entryPrice') or 0
+            price = self.safe_float(position, 'recentAverageOpenPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
             leverage = notional / collateral
@@ -1649,6 +1648,7 @@ class ftx(Exchange):
             liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
             status = 'liquidating' if liquidating else 'open'
             entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
+            breakevenPrice = self.safe_float(position, 'recentBreakEvenPrice')
             marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
             marginType = 'cross'
             percentage = unrealizedPnl / initialMargin
@@ -1677,6 +1677,7 @@ class ftx(Exchange):
                 'liquidationPrice': liquidationPrice,
                 'status': status,
                 'entryPrice': entryPrice,
+                'breakevenPrice': breakevenPrice,
                 'marginRatio': marginRatio,
                 'collateral': collateral,
                 'marginType': marginType,

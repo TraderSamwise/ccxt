@@ -67,9 +67,17 @@ okexExchange = ccxt.okex({
 okexExchange.set_sandbox_mode(True)
 
 def test_exchange_get_methods(exchange):
+    print(exchange.name)
     exchange.load_markets()
+    exchange.load_fees()
 
-    # print(exchange.name)
+    cost = exchange.price_to_precision('BTC/USD', 55555)
+    price = exchange.price_to_precision('BTC/USD', 55555)
+    amount = exchange.price_to_precision('BTC/USD', 55555)
+    fee = exchange.price_to_precision('BTC/USD', 55555)
+    currency = exchange.price_to_precision('BTC/USD', 55555)
+
+
     # result = exchange.create_order(
     #          'BTC-USD-SWAP',
     #     'stoplimit',
@@ -96,33 +104,33 @@ def test_exchange_get_methods(exchange):
     #     print('ORDER BEFORE')
     #     pprint(order_before)
     #     print('ORDER BEFORE')
-    #
-    #     # result = exchange.create_order(
-    #     #     'BTC/USD',
-    #     #     'limit',
-    #     #     'buy',
-    #     #     1,
-    #     #     40000,
-    #     #     {
-    #     #         'stopPrice': None,
-    #     #         'timeInForce': 'GTC',  # GTC, PO
-    #     #         'reduceOnly': False,
-    #     #         'trigger': None,
-    #     #         'closeOnTrigger': None,
-    #     #         'basePrice': None
-    #     #     })
-    #
-    #     cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
-    #     print('CANCEL RESULT')
-    #     pprint(cancel_result)
-    #     print('CANCEL RESULT')
-    #
-    #     order_after = exchange.fetch_order(order['id'], 'BTC/USD')
-    #     print('ORDER AFTER')
-    #     pprint(order_after)
-    #     print('ORDER AFTER')
-    #
-    #     hi = True
+
+        # result = exchange.create_order(
+        #     'BTC/USD',
+        #     'limit',
+        #     'buy',
+        #     1,
+        #     40000,
+        #     {
+        #         'stopPrice': None,
+        #         'timeInForce': 'GTC',  # GTC, PO
+        #         'reduceOnly': False,
+        #         'trigger': None,
+        #         'closeOnTrigger': None,
+        #         'basePrice': None
+        #     })
+
+        # cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
+        # print('CANCEL RESULT')
+        # pprint(cancel_result)
+        # print('CANCEL RESULT')
+        #
+        # order_after = exchange.fetch_order(order['id'], 'BTC/USD')
+        # print('ORDER AFTER')
+        # pprint(order_after)
+        # print('ORDER AFTER')
+        #
+        # hi = True
 
 
     #print('##########\nfetch_balance\n##########')

@@ -64,8 +64,8 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = okexExchange
-symbol = 'BTC-USD-SWAP' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
+exchange = phemexExchange
+symbol = 'BTC/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
 size = 1 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
