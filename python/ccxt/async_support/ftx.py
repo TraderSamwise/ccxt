@@ -1648,7 +1648,7 @@ class ftx(Exchange):
             liquidationPrice = self.safe_float(position, 'estimatedLiquidationPrice')
             status = 'liquidating' if liquidating else 'open'
             entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
-            breakevenPrice = self.safe_float(position, 'recentBreakEvenPrice')
+            breakEvenPrice = self.safe_float(position, 'recentBreakEvenPrice')
             marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
             marginType = 'cross'
             percentage = unrealizedPnl / initialMargin
@@ -1677,7 +1677,7 @@ class ftx(Exchange):
                 'liquidationPrice': liquidationPrice,
                 'status': status,
                 'entryPrice': entryPrice,
-                'breakevenPrice': breakevenPrice,
+                'breakEvenPrice': breakEvenPrice,
                 'marginRatio': marginRatio,
                 'collateral': collateral,
                 'marginType': marginType,
