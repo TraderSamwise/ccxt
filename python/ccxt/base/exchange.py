@@ -1333,6 +1333,10 @@ class Exchange(object):
         parts = re.sub(r'0+$', '', string).split('.')
         return len(parts[1]) if len(parts) > 1 else 0
 
+    # TEALSTREET
+    def usdToPrecision(self, value):
+        return decimal_to_precision(value, TRUNCATE, 0.01, self.precisionMode, self.paddingMode)
+
     def cost_to_precision(self, symbol, cost):
         return self.decimal_to_precision(cost, TRUNCATE, self.markets[symbol]['precision']['price'], self.precisionMode, self.paddingMode)
 

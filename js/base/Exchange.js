@@ -1380,6 +1380,10 @@ module.exports = class Exchange {
         return this.createOrder (symbol, 'market', 'sell', amount, undefined, params)
     }
 
+    usdToPrecision (value) {
+      return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, this.paddingMode)
+    }
+
     costToPrecision (symbol, cost) {
         return decimalToPrecision (cost, TRUNCATE, this.markets[symbol].precision.price, this.precisionMode, this.paddingMode)
     }
