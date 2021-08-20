@@ -1380,6 +1380,7 @@ module.exports = class Exchange {
         return this.createOrder (symbol, 'market', 'sell', amount, undefined, params)
     }
 
+    // TEALSTREET
     usdToPrecision (value) {
       return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, this.paddingMode)
     }
