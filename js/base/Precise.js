@@ -8,7 +8,7 @@ class Precise {
     constructor (number, decimals = undefined) {
         if (decimals === undefined) {
             let modifier = 0
-            number = number.toLowerCase ()
+            number = number.toString ().toLowerCase ()
             if (number.indexOf ('e') > -1) {
                 [ number, modifier ] = number.split ('e')
                 modifier = parseInt (modifier)
