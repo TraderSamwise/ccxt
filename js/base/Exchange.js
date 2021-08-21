@@ -942,6 +942,10 @@ module.exports = class Exchange {
         return this.market (symbol).symbol || symbol
     }
 
+    implodeHostname (url) {
+        return this.implodeParams (url, { 'hostname': this.hostname })
+    }
+
     url (path, params = {}) {
         let result = this.implodeParams (path, params);
         const query = this.omit (params, this.extractParams (path))
