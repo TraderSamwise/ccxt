@@ -1810,7 +1810,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             # common
             'symbol': market['id'],
             'side': side,  # Sell, Buy
-            'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
+            # 'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
             # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders, handled below
             # 'priceEp': self.to_ep(price, market),  # required for limit orders
             'timeInForce': timeInForce,  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
@@ -1855,9 +1855,20 @@ class phemex(Exchange, PhemexTealstreetMixin):
             request['orderQty'] = int(amount)
         if type in ['Limit', 'StopLimit', 'LimitIfTouched']:
             request['priceEp'] = self.to_ep(price, market)
+        basePrice = self.safe_value(params, 'basePrice')
+        if basePrice == 0.0:
+            ticker = self.fetch_ticker(symbol)
+            basePrice = ticker['last']
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice is not None:
             request['stopPxEp'] = self.to_ep(stopPrice, market)
+            # TEALSTREET TODO: get current mark price and set to base price
+            if (side == 'Buy' and stopPrice < basePrice) or (side == 'Sell' and stopPrice > basePrice):
+                if type == 'Stop':
+                    type = 'MarketIfTouched'
+                elif type == 'StopLimit':
+                    type = 'LimitIfTouched'
+        request['ordType'] = type
         params = self.omit(params, ['stopPx', 'stopPrice', 'basePrice'])
         method = 'privatePostSpotOrders' if market['spot'] else 'privatePostOrders'
         response = getattr(self, method)(self.extend(request, params))
@@ -1973,6 +1984,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
             if not market['swap']:
                 raise NotSupported(self.id + ' cancelAllOrders() supports swap market type orders only')
             request['symbol'] = market['id']
+
+        # TEALSTREET
+        type = self.safe_string(params, 'type')
+        if (type == 'stop'):
+            request['untriggered'] = True
+
         params = self.omit(params, 'type')
         return self.privateDeleteOrdersAll(self.extend(request, params))
 

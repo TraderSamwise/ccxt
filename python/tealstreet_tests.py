@@ -106,7 +106,7 @@ def get_info_trigger_value(result):
 def check_trigger_value(result, value):
     if exchange.id in ['ftx', 'okex']:
         return True
-    if exchange.id in ['binance']:
+    if exchange.id in ['binance', 'phemex']: # PHEMEX: TE_NO_INDEX_PRICE Cannot get valid index price to create conditional order
         if value == 'Index':
             return True
     info = result['info']
@@ -568,7 +568,7 @@ def test_cancel_all_orders():
 def test_close_position():
     print(exchange.name)
     print('Close position')
-    position = exchange.fetch_position(symbol)
+    position = exchange.fetch_positions(symbol)
     close_size = position['contracts'] or position['size']
     side = 'buy' if position['side'] == 'sell' else 'sell'
     result = do_create_order([
