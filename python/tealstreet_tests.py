@@ -46,7 +46,7 @@ binanceExchange = ccxt.binanceusdm({
 phemexExchange = ccxt.phemex({
     'apiKey': os.environ.get('phemex_key'),
     'secret': os.environ.get('phemex_secret'),
-    'enableRateLimit': True,
+    # 'enableRateLimit': True,
 })
 phemexExchange.urls['api'] = phemexExchange.urls['test']
 
@@ -84,14 +84,14 @@ def fetch_order_unless_exchange_too_slow(result):
     return order
 
 def get_close_on_trigger_value(result):
-    keys = ['close_on_trigger', 'closePosition']
+    keys = ['close_on_trigger', 'closePosition', 'closeOnTrigger']
     for key in keys:
         if key in result:
             return exchange.safe_value(result, key)
     return None
 
 def check_close_on_trigger_value(result, value):
-    if exchange.id in ['ftx', 'bitmex', 'bybit', 'okex']:
+    if exchange.id in ['ftx', 'bitmex', 'bybit', 'okex', 'phemex']:
         return True
     info = result['info']
     return get_close_on_trigger_value(info) == value

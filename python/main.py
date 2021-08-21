@@ -139,7 +139,7 @@ def test_exchange_get_methods(exchange):
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
-    # pprint(exchange.fetch_positions())
+    pprint(exchange.fetch_positions('BTC/USD'))
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
@@ -159,9 +159,9 @@ def main():
     # test_exchange_get_methods(ftxExchange)
     # test_exchange_get_methods(bitmexExchange)
     # test_exchange_get_methods(bybitExchange)
-    # test_exchange_get_methods(binanceExchange)
+    test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
-    test_exchange_get_methods(bybitExchange)
+    # test_exchange_get_methods(bybitExchange)
 
 if __name__ == "__main__":
     main()
