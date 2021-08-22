@@ -5,7 +5,7 @@ const fs = require ('fs')
 
 
 (async () => {
-    const exchange = new ccxt.bybit ({ enableRateLimit: true });
+    const exchange = new ccxt.phemex ({ enableRateLimit: true });
     while (true) {
         await exchange.loadMarkets()
         console.log(exchange.currencies.USD)
