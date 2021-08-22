@@ -8,7 +8,7 @@ const fs = require ('fs')
     const exchange = new ccxt.bybit ({ enableRateLimit: true });
     while (true) {
         await exchange.loadMarkets()
-        console.log(exchange.currencies.BTC)
+        console.log(exchange.currencies.USD)
 
     }
 }) ();
