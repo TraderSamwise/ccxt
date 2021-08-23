@@ -611,6 +611,8 @@ module.exports = class bybit extends Exchange {
             'open': open,
             'close': last,
             'last': last,
+            'mark': this.safeNumber (ticker, 'mark_price'),
+            'index': this.safeNumber (ticker, 'index_price'),
             'previousClose': undefined,
             'change': change,
             'percentage': percentage,
