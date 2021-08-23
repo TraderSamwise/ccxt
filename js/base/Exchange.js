@@ -252,6 +252,7 @@ module.exports = class Exchange {
         this.balance      = {}
         this.orderbooks   = {}
         this.tickers      = {}
+        this.marks        = {}
         this.orders       = undefined
         this.trades       = {}
         this.transactions = {}
