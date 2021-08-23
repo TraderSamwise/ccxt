@@ -432,6 +432,18 @@ module.exports = class ftx extends Exchange {
         return result;
     }
 
+    median (a, b, c) {
+        const x = Math.max (a, b, c);
+        if (x === a) {
+            return Math.max (b, c);
+        }
+        if (x === b) {
+            return Math.max (a, c);
+        } else {
+            return Math.max (a, b);
+        }
+    }
+
     parseTicker (ticker, market = undefined) {
         //
         //     {
@@ -474,6 +486,9 @@ module.exports = class ftx extends Exchange {
             symbol = market['symbol'];
         }
         const last = this.safeNumber (ticker, 'last');
+        const ask = this.safeNumber (ticker, 'ask');
+        const bid = this.safeNumber (ticker, 'bid');
+        const mark = this.median (last, bid, ask);
         const timestamp = this.safeTimestamp (ticker, 'time', this.milliseconds ());
         return {
             'symbol': symbol,
@@ -489,6 +504,7 @@ module.exports = class ftx extends Exchange {
             'open': undefined,
             'close': last,
             'last': last,
+            'mark': mark,
             'previousClose': undefined,
             'change': undefined,
             'percentage': this.safeNumber (ticker, 'change24h'),
