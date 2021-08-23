@@ -3135,6 +3135,7 @@ class binance(Exchange):
                     # since he has more collateral than the size of the position
                     truncatedLiquidationPrice = None
                 liquidationPrice = self.parse_number(truncatedLiquidationPrice)
+        price = entryPrice
         return {
             'info': position,
             'symbol': symbol,
@@ -3144,6 +3145,7 @@ class binance(Exchange):
             'initialMarginPercentage': self.parse_number(initialMarginPercentageString),
             'maintenanceMargin': maintenanceMargin,
             'maintenanceMarginPercentage': maintenanceMarginPercentage,
+            'price': price,
             'entryPrice': entryPrice,
             'notional': notional,
             'leverage': leverage,

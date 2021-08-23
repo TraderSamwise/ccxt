@@ -979,6 +979,7 @@ module.exports = class bitmex extends Exchange {
             'open': open,
             'close': last,
             'last': last,
+            'mark': this.safeNumber (ticker, 'lastPrice'),
             'previousClose': undefined,
             'change': change,
             'percentage': percentage,
