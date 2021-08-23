@@ -27,8 +27,26 @@ from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
+class FTXTealstreetMixin(object):
+    def bigger(self, a, b):  # Find the bigger of two numbers ...
+        if a > b:
+            return a
+        else:
+            return b
 
-class ftx(Exchange):
+    def biggest(self, a, b, c):  # Find the biggest of three numbers ...
+        return self.bigger(a, self.bigger(b, c))
+
+    def median(self, a, b, c):  # Just dance!
+        x = self.biggest(a, b, c)
+        if x == a:
+            return self.bigger(b, c)
+        if x == b:
+            return self.bigger(a, c)
+        else:
+            return self.bigger(a, b)
+
+class ftx(Exchange, FTXTealstreetMixin):
 
     def describe(self):
         return self.deep_extend(super(ftx, self).describe(), {
@@ -478,6 +496,9 @@ class ftx(Exchange):
         if (symbol is None) and (market is not None):
             symbol = market['symbol']
         last = self.safe_number(ticker, 'last')
+        bid = self.safe_number(ticker, 'bid')
+        ask = self.safe_number(ticker, 'ask')
+        mark = self.median(bid, ask, last)
         timestamp = self.safe_timestamp(ticker, 'time', self.milliseconds())
         return {
             'symbol': symbol,
@@ -493,6 +514,7 @@ class ftx(Exchange):
             'open': None,
             'close': last,
             'last': last,
+            'mark': mark,
             'previousClose': None,
             'change': None,
             'percentage': self.safe_number(ticker, 'change24h'),
