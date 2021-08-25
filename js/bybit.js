@@ -582,9 +582,9 @@ module.exports = class bybit extends Exchange {
         const timestamp = undefined;
         const marketId = this.safeString (ticker, 'symbol');
         const symbol = this.safeSymbol (marketId, market);
-        const last = this.safeNumber (ticker, 'last_price');
-        const open = this.safeNumber (ticker, 'prev_price_24h');
-        let percentage = this.safeNumber (ticker, 'price_24h_pcnt');
+        const last = this.safeNumber (ticker, 'last_price') || new Precise (this.safeString (ticker, 'last_price_e4'), '1e4');
+        const open = this.safeNumber (ticker, 'prev_price_24h') || new Precise (this.safeString (ticker, 'prev_price_24h_e4'), '1e4');
+        let percentage = this.safeNumber (ticker, 'price_24h_pcnt') || new Precise (this.safeString (ticker, 'price_24h_pcnt_e6'), '1e6');
         if (percentage !== undefined) {
             percentage *= 100;
         }
@@ -594,25 +594,25 @@ module.exports = class bybit extends Exchange {
             change = last - open;
             average = this.sum (open, last) / 2;
         }
-        const baseVolume = this.safeNumber (ticker, 'turnover_24h');
-        const quoteVolume = this.safeNumber (ticker, 'volume_24h');
+        const baseVolume = this.safeNumber (ticker, 'turnover_24h') || new Precise (this.safeString (ticker, 'turnover_24h_e8'), '1e8');
+        const quoteVolume = this.safeNumber (ticker, 'volume_24h') || new Precise (this.safeString (ticker, 'volume_24h_e8'), '1e8');
         const vwap = this.vwap (baseVolume, quoteVolume);
         return {
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
-            'high': this.safeNumber (ticker, 'high_price_24h'),
-            'low': this.safeNumber (ticker, 'low_price_24h'),
-            'bid': this.safeNumber (ticker, 'bid_price'),
+            'high': this.safeNumber (ticker, 'high_price_24h') || new Precise (this.safeString (ticker, 'high_price_24h_e4'), '1e4'),
+            'low': this.safeNumber (ticker, 'low_price_24h') || new Precise (this.safeString (ticker, 'low_price_24h_e4'), '1e4'),
+            'bid': this.safeNumber (ticker, 'bid_price') || new Precise (this.safeString (ticker, 'bid1_price_e4'), '1e4'),
             'bidVolume': undefined,
-            'ask': this.safeNumber (ticker, 'ask_price'),
+            'ask': this.safeNumber (ticker, 'ask_price') || new Precise (this.safeString (ticker, 'ask1_price_e4'), '1e4'),
             'askVolume': undefined,
             'vwap': vwap,
             'open': open,
             'close': last,
             'last': last,
-            'mark': this.safeNumber (ticker, 'mark_price'),
-            'index': this.safeNumber (ticker, 'index_price'),
+            'mark': this.safeNumber (ticker, 'mark_price') || new Precise (this.safeString (ticker, 'mark_price_e4'), '1e4'),
+            'index': this.safeNumber (ticker, 'index_price') || new Precise (this.safeString (ticker, 'index_price_e4'), '1e4'),
             'previousClose': undefined,
             'change': change,
             'percentage': percentage,
