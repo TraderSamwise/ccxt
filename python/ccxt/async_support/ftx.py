@@ -327,7 +327,6 @@ class ftx(Exchange, FTXTealstreetMixin):
 
     async def fetch_currencies(self, params={}):
         response = await self.publicGetCoins(params)
-        print(response)
         currencies = self.safe_value(response, 'result', [])
         #
         #     {

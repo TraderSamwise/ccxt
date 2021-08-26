@@ -1420,8 +1420,8 @@ class bybit(Exchange):
         if market['swap']:
             if market['linear']:
                 method = 'privateLinearPostOrderCreate'
-                request['reduce_only'] = False
-                request['close_on_trigger'] = False
+                request['reduce_only'] = reduceOnly or False
+                request['close_on_trigger'] = closeOnTrigger or False
             elif market['inverse']:
                 method = 'v2PrivatePostOrderCreate'
         elif market['futures']:
