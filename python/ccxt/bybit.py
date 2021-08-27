@@ -2454,7 +2454,7 @@ class bybit(Exchange):
                     'percentage': percentage,  # not important
                 })
 
-        if type == 'inverseFuture' or type == 'all':
+        if type == 'futures' or type == 'all':
             unfilteredResponse = self.futuresPrivateGetPositionList(self.extend(request, params))
             response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
 
