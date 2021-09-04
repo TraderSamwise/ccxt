@@ -1683,7 +1683,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             breakEvenPrice = self.safe_float(position, 'recentBreakEvenPrice')
             marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
             marginType = 'cross'
-            percentage = unrealizedPnl / initialMargin
+            percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
             # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
 
             unifiedResult.append({
