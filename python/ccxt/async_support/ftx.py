@@ -951,7 +951,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             balance = balances[i]
             code = self.safe_currency_code(self.safe_string(balance, 'coin'))
             account = self.account()
-            account['free'] = self.safe_string(balance, 'free')
+            account['free'] = self.safe_string_2(balance, 'availableWithoutBorrow', 'free')
             account['total'] = self.safe_string(balance, 'total')
             result[code] = account
 
@@ -960,7 +960,7 @@ class ftx(Exchange, FTXTealstreetMixin):
 
             usdTotalValue = self.safe_float(balance, 'usdValue')
             total = self.safe_float(balance, 'total')
-            freePercent = 0 if total == 0 else self.safe_float(balance, 'free') / total 
+            freePercent = 0 if total == 0 else self.safe_float_2(balance, 'availableWithoutBorrow', 'free') / total
             usdFreeValue = freePercent * usdTotalValue
             usdUsedValue = usdTotalValue - usdFreeValue
 
