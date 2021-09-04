@@ -326,7 +326,9 @@ class ftx(Exchange, FTXTealstreetMixin):
         return to_return
 
     async def fetch_currencies(self, params={}):
-        response = await self.publicGetCoins(params)
+        # TEALSTREET
+        # response = self.publicGetCoins(params)
+        response = self.privateGetWalletCoins(params)
         currencies = self.safe_value(response, 'result', [])
         #
         #     {
@@ -963,6 +965,13 @@ class ftx(Exchange, FTXTealstreetMixin):
             freePercent = 0 if total == 0 else self.safe_float_2(balance, 'availableWithoutBorrow', 'free') / total
             usdFreeValue = freePercent * usdTotalValue
             usdUsedValue = usdTotalValue - usdFreeValue
+
+            # TEALSTREET
+            if self.currencies:
+                currency = self.safe_value(self.currencies, code)
+                info = self.safe_value(currency, 'info')
+                collateralWeight = self.safe_float(info, 'collateralWeight')
+                usdFreeValue *= collateralWeight
 
             usdNotionalValue['free'] += usdFreeValue
             usdNotionalValue['used'] += usdUsedValue

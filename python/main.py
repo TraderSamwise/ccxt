@@ -68,15 +68,6 @@ okexExchange.set_sandbox_mode(True)
 
 def test_exchange_get_methods(exchange):
     print(exchange.name)
-    exchange.load_markets()
-    exchange.load_fees()
-
-    cost = exchange.price_to_precision('BTC/USD', 55555)
-    price = exchange.price_to_precision('BTC/USD', 55555)
-    amount = exchange.price_to_precision('BTC/USD', 55555)
-    fee = exchange.price_to_precision('BTC/USD', 55555)
-    currency = exchange.price_to_precision('BTC/USD', 55555)
-
 
     # result = exchange.create_order(
     #          'BTC-USD-SWAP',
@@ -135,11 +126,11 @@ def test_exchange_get_methods(exchange):
 
     #print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
-    # pprint(exchange.fetch_balance())
+    pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
-    pprint(exchange.fetch_positions('BTC/USD'))
+    # pprint(exchange.fetch_positions('BTC/USD'))
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
@@ -156,10 +147,10 @@ def test_exchange_get_methods(exchange):
 
 
 def main():
-    # test_exchange_get_methods(ftxExchange)
+    test_exchange_get_methods(ftxExchange)
     # test_exchange_get_methods(bitmexExchange)
     # test_exchange_get_methods(bybitExchange)
-    test_exchange_get_methods(binanceExchange)
+    # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
     # test_exchange_get_methods(bybitExchange)
 
