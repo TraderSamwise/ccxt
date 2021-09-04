@@ -1670,10 +1670,10 @@ class ftx(Exchange, FTXTealstreetMixin):
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
             leverage = notional / collateral
-            initialMargin = self.safe_float(position, 'initialMarginRequirement')
-            maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
-            initialMarginPercentage = initialMargin * notional
-            maintenanceMarginPercentage = maintenanceMargin * notional
+            initialMarginPercentage = self.safe_float(position, 'initialMarginRequirement')
+            maintenanceMarginPercentage = self.safe_float(position, 'maintenanceMarginRequirement')
+            initialMargin = initialMarginPercentage * notional
+            maintenanceMargin = maintenanceMarginPercentage * notional
             unrealizedPnl = self.safe_float(position, 'unrealizedPnl')
             realizedPnl = self.safe_float(position, 'realizedPnl')
             pnl = unrealizedPnl + realizedPnl
