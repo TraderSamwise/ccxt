@@ -243,6 +243,7 @@ module.exports = class bitmex extends Exchange {
                 'min': lotSize,
                 'max': this.safeNumber (market, 'maxOrderQty'),
             };
+            const inverse = market['isInverse']; // TEALSTREET
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -259,6 +260,7 @@ module.exports = class bitmex extends Exchange {
                 'spot': false,
                 'swap': swap,
                 'future': future,
+                'inverse': inverse,
                 'prediction': prediction,
                 'info': market,
             });
