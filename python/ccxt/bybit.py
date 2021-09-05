@@ -2344,7 +2344,7 @@ class bybit(Exchange):
                 markPrice = self.safe_float(ticker, 'last')
                 notional = contracts * price
                 leverage = self.safe_float(position, 'leverage') # notional / collateral # TODO calculate actual leverage
-                initialMargin = 0  # TODO
+                initialMargin = 0 # TODO
                 maintenanceMargin = self.safe_float(position, 'position_margin')
                 initialMarginPercentage = 0 # initialMargin * notional
                 maintenanceMarginPercentage = 0 # maintenanceMargin * notional

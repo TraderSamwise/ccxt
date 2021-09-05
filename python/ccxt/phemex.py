@@ -44,10 +44,10 @@ class PhemexTealstreetMixin(object):
         notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
         collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
         leverage = notional / collateral
-        initialMargin = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
-        maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
-        initialMarginPercentage = initialMargin * notional
-        maintenanceMarginPercentage = maintenanceMargin * notional
+        initialMarginPercentage = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
+        maintenanceMarginPercentage = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
+        initialMargin = initialMarginPercentage * notional
+        maintenanceMargin = float(Precise.string_div(self.safe_string(position, 'posCostEv'), evScale))
         unrealizedPnl = float(Precise.string_div(self.safe_string(position, 'unRealisedPnlEv') or self.safe_string(position, 'unrealisedPnlEv'), evScale))  # https://github.com/phemex/phemex-api-docs/blob/master/Public-Contract-API-en.md#querytradeaccount
         realizedPnl = float(Precise.string_div(self.safe_string(position, 'realisedPnlEv') or self.safe_string(position, 'curTermRealisedPnlEv'), evScale))
         pnl = unrealizedPnl + realizedPnl
