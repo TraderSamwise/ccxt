@@ -2731,10 +2731,10 @@ class okex(Exchange, OkexTealstreetMixin):
         markPrice = self.safe_float(position, 'last')
         notional = self.safe_float(position, 'notionalUsd')
         leverage = self.safe_float(position, 'lever')
-        initialMargin = 1 # TODO
+        initialMargin = self.safe_float(position, 'imr')
         maintenanceMargin = self.safe_float(position, 'mmr')
-        initialMarginPercentage = initialMargin * notional
-        maintenanceMarginPercentage = maintenanceMargin * notional
+        initialMarginPercentage = None # TODO
+        maintenanceMarginPercentage = None # TODO
         unrealizedPnl = self.safe_float(position, 'upl')
         realizedPnl = 0 # TODO
         pnl = unrealizedPnl + realizedPnl
