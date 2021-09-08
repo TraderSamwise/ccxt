@@ -973,7 +973,7 @@ class ftx(Exchange, FTXTealstreetMixin):
                 collateralWeight = self.safe_float(info, 'collateralWeight')
                 usdFreeValue *= collateralWeight
 
-            usdNotionalValue['free'] += usdFreeValue
+            usdNotionalValue['free'] += usdTotalValue if usdTotalValue < usdFreeValue else usdFreeValue
             usdNotionalValue['used'] += usdUsedValue
             usdNotionalValue['total'] += usdTotalValue
 

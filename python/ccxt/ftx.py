@@ -974,7 +974,7 @@ class ftx(Exchange, FTXTealstreetMixin):
 
             usdTotalValue = self.safe_float(balance, 'usdValue')
             total = self.safe_float(balance, 'total')
-            freePercent = 0 if total == 0 else self.safe_float_2(balance, 'availableWithoutBorrow', 'free') / total
+            freePercent = 0 if total == 0 else self.safe_float_2(balance, 'free', 'availableWithoutBorrow') / total
             usdFreeValue = freePercent * usdTotalValue
             usdUsedValue = usdTotalValue - usdFreeValue
 
@@ -985,7 +985,7 @@ class ftx(Exchange, FTXTealstreetMixin):
                 collateralWeight = self.safe_float(info, 'collateralWeight')
                 usdFreeValue *= collateralWeight
 
-            usdNotionalValue['free'] += usdFreeValue
+            usdNotionalValue['free'] += usdTotalValue if usdTotalValue < usdFreeValue else usdFreeValue
             usdNotionalValue['used'] += usdUsedValue
             usdNotionalValue['total'] += usdTotalValue
 
