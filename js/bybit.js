@@ -896,6 +896,9 @@ module.exports = class bybit extends Exchange {
         if (timestamp === undefined) {
             timestamp = this.safeInteger (trade, 'trade_time_ms');
         }
+        if (timestamp === undefined) {
+            timestamp = this.safeInteger (trade, 'exec_time');
+        }
         const side = this.safeStringLower (trade, 'side');
         const lastLiquidityInd = this.safeString (trade, 'last_liquidity_ind');
         const takerOrMaker = (lastLiquidityInd === 'AddedLiquidity') ? 'maker' : 'taker';
