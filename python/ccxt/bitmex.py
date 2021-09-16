@@ -39,10 +39,10 @@ class BitmexTealstreetMixin(object):
         # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
         notional = self.safe_float(position, 'homeNotional') # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
         leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
-        initialMargin = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
+        initialMarginPercentage = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
+        maintenanceMarginPercentage = self.safe_float(position, 'maintMarginReq') # TODO make maintenanceMargin * btcNotional?
         maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
-        initialMarginPercentage = initialMargin * notional # TODO make initialMargin * btcNotional?
-        maintenanceMarginPercentage = maintenanceMargin * notional # TODO make maintenanceMargin * btcNotional?
+        initialMargin = float(Precise.string_div(position.get('initMargin'), '1e8')) # TODO make initialMargin * btcNotional?
         unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
         realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
         pnl = unrealizedPnl + realizedPnl
@@ -51,7 +51,7 @@ class BitmexTealstreetMixin(object):
         entryPrice = self.safe_float(position, 'avgEntryPrice')
         marginRatio = maintenanceMargin / collateral if collateral else None  # not sure what this is, followed binance calc
         marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
-        percentage = unrealizedPnl / initialMargin
+        percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
 
         return ({
             'info': info,

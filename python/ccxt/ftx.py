@@ -322,7 +322,9 @@ class ftx(Exchange, FTXTealstreetMixin):
         })
 
     def fetch_currencies(self, params={}):
-        response = self.publicGetCoins(params)
+        # TEALSTREET
+        # response = self.publicGetCoins(params)
+        response = self.privateGetWalletCoins(params)
         currencies = self.safe_value(response, 'result', [])
         #
         #     {
@@ -957,13 +959,40 @@ class ftx(Exchange, FTXTealstreetMixin):
             'info': response,
         }
         balances = self.safe_value(response, 'result', [])
+
+        usdNotionalValue = {'free': 0.0, 'used': 0.0, 'total': 0.0}  # TEALSTREET
         for i in range(0, len(balances)):
             balance = balances[i]
             code = self.safe_currency_code(self.safe_string(balance, 'coin'))
             account = self.account()
-            account['free'] = self.safe_string(balance, 'free')
+            account['free'] = self.safe_string_2(balance, 'availableWithoutBorrow', 'free')
             account['total'] = self.safe_string(balance, 'total')
             result[code] = account
+
+            # TEALSTREET: get usd value for this currency
+            account['usdValue'] = self.safe_string(balance, 'usdValue')
+
+            usdTotalValue = self.safe_float(balance, 'usdValue')
+            total = self.safe_float(balance, 'total')
+            freePercent = 0 if total == 0 else self.safe_float_2(balance, 'free', 'availableWithoutBorrow') / total
+            usdFreeValue = freePercent * usdTotalValue
+            usdUsedValue = usdTotalValue - usdFreeValue
+
+            # TEALSTREET
+            if self.currencies:
+                currency = self.safe_value(self.currencies, code)
+                info = self.safe_value(currency, 'info')
+                collateralWeight = self.safe_float(info, 'collateralWeight')
+                usdFreeValue *= collateralWeight
+
+            usdNotionalValue['free'] += usdTotalValue if usdTotalValue < usdFreeValue else usdFreeValue
+            usdNotionalValue['used'] += usdUsedValue
+            usdNotionalValue['total'] += usdTotalValue
+
+        usdNotionalValue['free'] = self.safe_string(usdNotionalValue, 'free')
+        usdNotionalValue['used'] = self.safe_string(usdNotionalValue, 'used')
+        usdNotionalValue['total'] = self.safe_string(usdNotionalValue, 'total')
+        result['usdNotionalValue'] = usdNotionalValue
         return self.parse_balance(result, False)
 
     def parse_order_status(self, status):
@@ -1669,17 +1698,17 @@ class ftx(Exchange, FTXTealstreetMixin):
             datetime = None # do we need?
             isolated = False
             hedged = False # trading in opposite direction will close the position
-            side = self.safe_string(position, 'side')
+            side = 'long' if self.safe_string(position, 'side') == 'buy' else 'short'
             id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
             price = self.safe_float(position, 'recentAverageOpenPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = abs(contracts) * price
             leverage = notional / collateral
-            initialMargin = self.safe_float(position, 'initialMarginRequirement')
-            maintenanceMargin = self.safe_float(position, 'maintenanceMarginRequirement')
-            initialMarginPercentage = initialMargin * notional
-            maintenanceMarginPercentage = maintenanceMargin * notional
+            initialMarginPercentage = self.safe_float(position, 'initialMarginRequirement')
+            maintenanceMarginPercentage = self.safe_float(position, 'maintenanceMarginRequirement')
+            initialMargin = initialMarginPercentage * notional
+            maintenanceMargin = maintenanceMarginPercentage * notional
             unrealizedPnl = self.safe_float(position, 'unrealizedPnl')
             realizedPnl = self.safe_float(position, 'realizedPnl')
             pnl = unrealizedPnl + realizedPnl
@@ -1689,7 +1718,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             breakEvenPrice = self.safe_float(position, 'recentBreakEvenPrice')
             marginRatio = maintenanceMargin / collateral # not sure what this is, followed binance calc
             marginType = 'cross'
-            percentage = unrealizedPnl / initialMargin
+            percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
             # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
 
             unifiedResult.append({

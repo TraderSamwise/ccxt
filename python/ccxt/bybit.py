@@ -1420,8 +1420,8 @@ class bybit(Exchange):
         if market['swap']:
             if market['linear']:
                 method = 'privateLinearPostOrderCreate'
-                request['reduce_only'] = False
-                request['close_on_trigger'] = False
+                request['reduce_only'] = reduceOnly or False
+                request['close_on_trigger'] = closeOnTrigger or False
             elif market['inverse']:
                 method = 'v2PrivatePostOrderCreate'
         elif market['futures']:
@@ -2345,9 +2345,10 @@ class bybit(Exchange):
                 notional = contracts * price
                 leverage = self.safe_float(position, 'leverage') # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0 # TODO
-                maintenanceMargin = 0 # TODO
-                initialMarginPercentage = initialMargin * notional
-                maintenanceMarginPercentage = maintenanceMargin * notional
+                positionValue = self.safe_float(position, 'position_value')
+                maintenanceMargin = positionValue / leverage
+                initialMarginPercentage = 0 # initialMargin * notional
+                maintenanceMarginPercentage = 0 # maintenanceMargin * notional
                 unrealizedPnl = self.safe_float(position, 'unrealised_pnl')
                 realizedPnl = self.safe_float(position, 'realised_pnl')
                 pnl = unrealizedPnl + realizedPnl
@@ -2411,9 +2412,9 @@ class bybit(Exchange):
                 notional = contracts # because is usd already
                 leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
-                maintenanceMargin = 0  # TODO
-                initialMarginPercentage = initialMargin * notional
-                maintenanceMarginPercentage = maintenanceMargin * notional
+                maintenanceMargin = self.safe_float(position, 'position_margin')
+                initialMarginPercentage = 0 # initialMargin * notional
+                maintenanceMarginPercentage = 0 # maintenanceMargin * notional
                 unrealizedPnl = self.safe_float(position, 'unrealised_pnl') # currently USD
                 realizedPnl = self.safe_float(position, 'realised_pnl') # currently USD
                 pnl = unrealizedPnl + realizedPnl # currently USD
@@ -2454,7 +2455,7 @@ class bybit(Exchange):
                     'percentage': percentage,  # not important
                 })
 
-        if type == 'inverseFuture' or type == 'all':
+        if type == 'futures' or type == 'all':
             unfilteredResponse = self.futuresPrivateGetPositionList(self.extend(request, params))
             response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if d['size'] != '0']
 
@@ -2477,9 +2478,9 @@ class bybit(Exchange):
                 notional = contracts  # because is usd already
                 leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
-                maintenanceMargin = 0  # TODO
-                initialMarginPercentage = initialMargin * notional
-                maintenanceMarginPercentage = maintenanceMargin * notional
+                maintenanceMargin = self.safe_float(position, 'position_margin')
+                initialMarginPercentage = 0 # initialMargin * notional
+                maintenanceMarginPercentage = 0 # maintenanceMargin * notional
                 # TODO they are doing something weird here with swapping real and unrl and making unrl negative when it is positive
                 unrealizedPnl = self.safe_float(position, 'unrealised_pnl')  # currently BTC
                 realizedPnl = self.safe_float(position, 'realised_pnl')  # currently BTC
