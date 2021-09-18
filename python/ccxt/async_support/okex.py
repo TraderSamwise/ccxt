@@ -2224,7 +2224,7 @@ class okex(Exchange):
         }
         market = None
         if symbol is not None:
-            market = await self.market(symbol)
+            market = self.market(symbol)
             request['instId'] = market['id']
         if limit is not None:
             request['limit'] = limit  # default 100, max 100 # TODO: make sure
@@ -3070,15 +3070,15 @@ class okex(Exchange):
         contracts = self.safe_float(position, 'pos')
         side = 'long' if contracts > 0 else 'short'
         id = symbol + ":" + side
-        price = self.safe_float(position, 'avgPx') or 0 # TODO: do we need entry?
+        price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
         notional = self.safe_float(position, 'notionalUsd')
         leverage = self.safe_float(position, 'lever')
-        initialMargin = self.safe_float(position, 'imr')
-        maintenanceMargin = self.safe_float(position, 'mmr')
-        initialMarginPercentage = None # TODO
-        maintenanceMarginPercentage = None # TODO
-        unrealizedPnl = self.safe_float(position, 'upl')
+        initialMargin = self.safe_float(position, 'imr', 1)
+        maintenanceMargin = self.safe_float(position, 'mmr', 1)
+        initialMarginPercentage = 1 # TODO
+        maintenanceMarginPercentage = 1 # TODO
+        unrealizedPnl = self.safe_float(position, 'upl', 0)
         realizedPnl = 0 # TODO
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = self.safe_float(position, 'liqPx')

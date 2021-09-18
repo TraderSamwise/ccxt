@@ -9,9 +9,9 @@ import ccxt
 ftxExchange = ccxt.ftx({
     'apiKey': os.environ.get('ftx_key'),
     'secret': os.environ.get('ftx_secret'),
-    # 'headers': {
-    #     'FTX-SUBACCOUNT': 'APITEST',
-    # },
+    'headers': {
+        'FTX-SUBACCOUNT': 'APITEST',
+    },
     'enableRateLimit': True,
 })
 
@@ -126,11 +126,11 @@ def test_exchange_get_methods(exchange):
 
     #print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
-    # pprint(exchange.fetch_balance())
+    pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
-    pprint(exchange.fetch_positions('BTC/USDT'))
+    # pprint(exchange.fetch_positions('BTC/USDT'))
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
@@ -147,9 +147,9 @@ def test_exchange_get_methods(exchange):
 
 
 def main():
-    # test_exchange_get_methods(ftxExchange)
+    test_exchange_get_methods(ftxExchange)
     # test_exchange_get_methods(bitmexExchange)
-    test_exchange_get_methods(bybitExchange)
+    # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
     # test_exchange_get_methods(okexExchange)

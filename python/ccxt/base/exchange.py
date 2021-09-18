@@ -1899,11 +1899,11 @@ class Exchange(object):
 
     def filter_by_value_since_limit(self, array, field, value=None, since=None, limit=None, key='timestamp', tail=False):
         array = self.to_array(array)
-        if value is not None:
+        if bool(value):
             array = [entry for entry in array if entry[field] == value]
-        if since is not None:
+        if bool(since):
             array = [entry for entry in array if entry[key] >= since]
-        if limit is not None:
+        if  bool(limit):
             array = array[-limit:] if tail else array[:limit]
         return array
 
