@@ -1187,7 +1187,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             # 'price': 0.306525,  # send null for market orders
             'type': type,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
             'size': float(self.amount_to_precision(symbol, amount)),
-            'reduceOnly': reduceOnly,  # optional, default is False
+            'reduceOnly': reduceOnly or closeOnTrigger,  # optional, default is False
             'ioc': ioc,  # optional, default is False, limit or market orders only
             'postOnly': postOnly,  # optional, default is False, limit or market orders only
             # 'clientId': 'abcdef0123456789',  # string, optional, client order id, limit or market orders only
