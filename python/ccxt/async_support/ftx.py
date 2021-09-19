@@ -1663,7 +1663,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             datetime = None  # do we need?
             isolated = False
             hedged = False  # trading in opposite direction will close the position
-            side = self.safe_string(position, 'side')
+            side = 'long' if self.safe_string(position, 'side') == 'buy' else 'short'
             id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
             price = self.safe_float(position, 'recentAverageOpenPrice') or 0
