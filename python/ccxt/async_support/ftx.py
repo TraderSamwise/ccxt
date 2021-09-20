@@ -949,11 +949,14 @@ class ftx(Exchange, FTXTealstreetMixin):
         balances = self.safe_value(response, 'result', [])
 
         # TEALSTREET
-        staking_response = await self.privateGetStakingBalances(params)
-        staking_result = {
-            'info': staking_response,
-        }
-        stakes = self.safe_value(staking_response, 'result', [])
+        try: # ccxt.base.errors.ExchangeError: ftx {"success":false,"error":"Not authorized for subaccount-specific access"}
+            staking_response = await self.privateGetStakingBalances(params)
+            staking_result = {
+                'info': staking_response,
+            }
+            stakes = self.safe_value(staking_response, 'result', [])
+        except:
+            stakes = []
 
         usdNotionalValue = { 'free': 0.0, 'used': 0.0, 'total': 0.0, 'staked': 0.0 } # TEALSTREET
         for i in range(0, len(balances)):
@@ -966,9 +969,10 @@ class ftx(Exchange, FTXTealstreetMixin):
 
             # TEALSTREET
             staked = 0
-            stake_balance = next(x for x in stakes if x['coin'] == 'FTT')
-            if stake_balance:
-                staked = self.safe_float(stake_balance, 'staked')
+            if stakes:
+                stake_balance = next(x for x in stakes if x['coin'] == 'FTT')
+                if stake_balance:
+                    staked = self.safe_float(stake_balance, 'staked')
 
             # TEALSTREET: get usd value for this currency
             account['usdValue'] = self.safe_string(balance, 'usdValue')
