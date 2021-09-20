@@ -960,7 +960,14 @@ class ftx(Exchange, FTXTealstreetMixin):
         }
         balances = self.safe_value(response, 'result', [])
 
-        usdNotionalValue = {'free': 0.0, 'used': 0.0, 'total': 0.0}  # TEALSTREET
+        # TEALSTREET
+        staking_response = self.privateGetStakingBalances(params)
+        staking_result = {
+            'info': staking_response,
+        }
+        stakes = self.safe_value(staking_response, 'result', [])
+
+        usdNotionalValue = { 'free': 0.0, 'used': 0.0, 'total': 0.0, 'staked': 0.0 } # TEALSTREET
         for i in range(0, len(balances)):
             balance = balances[i]
             code = self.safe_currency_code(self.safe_string(balance, 'coin'))
@@ -969,13 +976,21 @@ class ftx(Exchange, FTXTealstreetMixin):
             account['total'] = self.safe_string(balance, 'total')
             result[code] = account
 
+            # TEALSTREET
+            staked = 0
+            stake_balance = next(x for x in stakes if x['coin'] == 'FTT')
+            if stake_balance:
+                staked = self.safe_float(stake_balance, 'staked')
+
             # TEALSTREET: get usd value for this currency
             account['usdValue'] = self.safe_string(balance, 'usdValue')
 
             usdTotalValue = self.safe_float(balance, 'usdValue')
             total = self.safe_float(balance, 'total')
             freePercent = 0 if total == 0 else self.safe_float_2(balance, 'free', 'availableWithoutBorrow') / total
+            stakedPercent = 0 if total == 0 else staked / total
             usdFreeValue = freePercent * usdTotalValue
+            usdStakedValue = stakedPercent * usdTotalValue
             usdUsedValue = usdTotalValue - usdFreeValue
 
             # TEALSTREET
@@ -988,10 +1003,12 @@ class ftx(Exchange, FTXTealstreetMixin):
             usdNotionalValue['free'] += usdTotalValue if usdTotalValue < usdFreeValue else usdFreeValue
             usdNotionalValue['used'] += usdUsedValue
             usdNotionalValue['total'] += usdTotalValue
+            usdNotionalValue['staked'] += usdStakedValue
 
         usdNotionalValue['free'] = self.safe_string(usdNotionalValue, 'free')
         usdNotionalValue['used'] = self.safe_string(usdNotionalValue, 'used')
         usdNotionalValue['total'] = self.safe_string(usdNotionalValue, 'total')
+        usdNotionalValue['staked'] = self.safe_string(usdNotionalValue, 'staked')
         result['usdNotionalValue'] = usdNotionalValue
         return self.parse_balance(result, False)
 
