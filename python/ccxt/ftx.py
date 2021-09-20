@@ -961,7 +961,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         balances = self.safe_value(response, 'result', [])
 
         try: # ccxt.base.errors.ExchangeError: ftx {"success":false,"error":"Not authorized for subaccount-specific access"}
-            staking_response = await self.privateGetStakingBalances(params)
+            staking_response = self.privateGetStakingBalances(params)
             staking_result = {
                 'info': staking_response,
             }
