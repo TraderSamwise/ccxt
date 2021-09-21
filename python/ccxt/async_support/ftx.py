@@ -970,7 +970,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             # TEALSTREET
             staked = 0
             if stakes:
-                stake_balance = next(x for x in stakes if x['coin'] == 'FTT')
+                stake_balance = next((x for x in stakes if x['coin'] == code), None)
                 if stake_balance:
                     staked = self.safe_float(stake_balance, 'staked')
 
