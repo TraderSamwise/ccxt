@@ -1178,7 +1178,11 @@ class bybit(Exchange):
         feeCurrency = None
         timestamp = self.parse8601(self.safe_string(order, 'created_at'))
         id = self.safe_string_2(order, 'order_id', 'stop_order_id')
+        status = self.parse_order_status(self.safe_string_2(order, 'order_status', 'stop_order_status'))
         type = self.safe_string_lower(order, 'order_type')
+        rawOrderStatus = self.safe_string(order, 'order_status')
+        if type == 'limit' and (rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered'):
+            type = 'stop'
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
@@ -1197,7 +1201,6 @@ class bybit(Exchange):
         lastTradeTimestamp = self.safe_timestamp(order, 'last_exec_time')
         if lastTradeTimestamp == 0:
             lastTradeTimestamp = None
-        status = self.parse_order_status(self.safe_string_2(order, 'order_status', 'stop_order_status'))
         side = self.safe_string_lower(order, 'side')
         feeCost = self.safe_number(order, 'cum_exec_fee')
         fee = None
