@@ -1167,7 +1167,7 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp'))
+        timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp') or self.safe_string(order, 'created_time'))
         id = self.safe_string_2(order, 'order_id', 'stop_order_id')
         status = self.parse_order_status(self.safe_string_2(order, 'order_status', 'stop_order_status'))
         type = self.safe_string_lower(order, 'order_type')
