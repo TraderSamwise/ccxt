@@ -1186,7 +1186,7 @@ class bybit(Exchange):
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
-        average = self.safe_number(order, 'average_price')
+        average = self.safe_number_2(order, 'average_price', 'price')
         amount = self.safe_number(order, 'qty')
         cost = self.safe_number(order, 'cum_exec_value')
         filled = self.safe_number(order, 'cum_exec_qty')
