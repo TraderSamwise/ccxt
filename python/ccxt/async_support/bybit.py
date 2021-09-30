@@ -16,6 +16,7 @@ from ccxt.base.errors import RateLimitExceeded
 from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+import datetime
 
 # TEALSTREET: did the private api implementations
 class bybit(Exchange):
@@ -1167,7 +1168,7 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp') or self.safe_string(order, 'created_time'))
+        ftimestamp = self.parse8601(self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp', 'created_time') or self.iso8601(self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
         id = self.safe_string_2(order, 'stop_order_id', 'order_id')
         status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'))
         type = self.safe_string_lower_2(order, 'stop_order_type', 'order_type')
