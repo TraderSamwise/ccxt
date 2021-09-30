@@ -1177,12 +1177,12 @@ class bybit(Exchange):
         symbol = market['symbol']
         feeCurrency = None
         timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp') or self.safe_string(order, 'created_time'))
-        id = self.safe_string_2(order, 'order_id', 'stop_order_id')
-        status = self.parse_order_status(self.safe_string_2(order, 'order_status', 'stop_order_status'))
-        type = self.safe_string_lower(order, 'order_type')
-        rawOrderStatus = self.safe_string(order, 'order_status')
-        if type == 'limit' and (rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered'):
-            type = 'stop'
+        id = self.safe_string_2(order, 'stop_order_id', 'order_id')
+        status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'))
+        type = self.safe_string_lower_2(order, 'stop_order_type', 'order_type')
+        # rawOrderStatus = self.safe_string(order, 'order_status')
+        # if type == 'limit' and (rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered'):
+        #     type = 'stop'
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
