@@ -1212,6 +1212,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         stopPrice = self.safe_number(order, 'stopPx')
         execInst = self.safe_string(order, 'execInst')
         postOnly = (execInst == 'ParticipateDoNotInitiate')
+        reduce = ('ReduceOnly' in execInst)
+        close = ('Close' in execInst)
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1234,6 +1236,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             'status': status,
             'fee': None,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         })
 
     async def fetch_trades(self, symbol, since=None, limit=None, params={}):
