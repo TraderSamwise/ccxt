@@ -1714,6 +1714,8 @@ class okex(Exchange, OkexTealstreetMixin):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
         stopPrice = self.safe_number(order, 'slTriggerPx')
+        reduce = self.safe_value(order, 'reduceOnly')
+        close = self.safe_value(order, 'closeOnTrigger')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1736,6 +1738,8 @@ class okex(Exchange, OkexTealstreetMixin):
             'status': status,
             'fee': fee,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         })
 
     def fetch_order(self, id, symbol=None, params={}):
