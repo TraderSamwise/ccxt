@@ -1680,6 +1680,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'), market)
         postOnly = (timeInForce == 'PO')
         fee = self.from_er(self.safe_number(order, 'feeRateEr'))
+        reduce = self.safe_value(order, 'reduceOnly')
+        close = self.safe_value(order, 'closeOnTrigger')
         return {
             'info': order,
             'id': id,
@@ -1702,6 +1704,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'status': status,
             'fee': fee,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         }
 
     def parse_order(self, order, market=None):
