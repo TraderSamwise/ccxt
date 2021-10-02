@@ -1153,6 +1153,8 @@ class ftx(Exchange, FTXTealstreetMixin):
         clientOrderId = self.safe_string(order, 'clientId')
         stopPrice = self.safe_number(order, 'triggerPrice')
         postOnly = self.safe_value(order, 'postOnly')
+        reduce = self.safe_value(order, 'reduceOnly')
+        close = self.safe_value(order, 'closeOnTrigger', False)
         return {
             'info': order,
             'id': id,
@@ -1175,6 +1177,8 @@ class ftx(Exchange, FTXTealstreetMixin):
             'status': status,
             'fee': None,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         }
 
     async def create_order(self, symbol, type, side, amount, price=None, params={}):
