@@ -1851,6 +1851,8 @@ class binance(Exchange):
         postOnly = (type == 'limit_maker') or (timeInForce == 'GTX')
         stopPriceString = self.safe_string(order, 'stopPrice')
         stopPrice = self.parse_number(self.omit_zero(stopPriceString))
+        reduce = self.safe_value(order, 'reduceOnly')
+        close = self.safe_value(order, 'closePosition')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1873,6 +1875,8 @@ class binance(Exchange):
             'status': status,
             'fee': None,
             'trades': trades,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         })
 
     async def create_order(self, symbol, type, side, amount, price=None, params={}):
