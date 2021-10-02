@@ -1154,7 +1154,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         stopPrice = self.safe_number(order, 'triggerPrice')
         postOnly = self.safe_value(order, 'postOnly')
         reduce = self.safe_value(order, 'reduceOnly')
-        close = self.safe_value(order, 'closeOnTrigger', False)
+        close = self.safe_value(order, 'closeOnTrigger')
         return {
             'info': order,
             'id': id,

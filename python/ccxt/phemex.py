@@ -1765,7 +1765,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         postOnly = (timeInForce == 'PO')
         fee = self.from_er(self.safe_number(order, 'feeRateEr'))
         reduce = self.safe_value(order, 'reduceOnly')
-        close = self.safe_value(order, 'closeOnTrigger', False)
+        close = self.safe_value(order, 'closeOnTrigger')
         return {
             'info': order,
             'id': id,
