@@ -1209,6 +1209,8 @@ class bybit(Exchange):
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'time_in_force'))
         stopPrice = self.safe_number(order, 'trigger_price') or self.safe_number(order, 'stop_px') or self.safe_number(order, 'stop_loss')
         postOnly = (timeInForce == 'PO')
+        reduce = self.safe_value(order, 'reduce_only')
+        close = self.safe_value(order, 'close_on_trigger')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1231,6 +1233,8 @@ class bybit(Exchange):
             'status': status,
             'fee': fee,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         })
 
     async def fetch_order(self, id, symbol=None, params={}):
