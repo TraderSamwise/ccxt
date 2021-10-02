@@ -1788,6 +1788,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'status': status,
             'fee': fee,
             'trades': None,
+            'reduce': reduce, # TEALSTREET
+            'close' : close, # TEALSTREET
         }
 
     def parse_order(self, order, market=None):
