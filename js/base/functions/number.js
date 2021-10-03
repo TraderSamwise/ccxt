@@ -92,9 +92,9 @@ function precisionFromString (string) {
 /*  ------------------------------------------------------------------------ */
 
 const decimalToPrecision = (x, roundingMode
-                             , numPrecisionDigits
-                             , countingMode       = DECIMAL_PLACES
-                             , paddingMode        = NO_PADDING) => {
+    , numPrecisionDigits
+    , countingMode       = DECIMAL_PLACES
+    , paddingMode        = NO_PADDING) => {
 
     if (countingMode === TICK_SIZE) {
         if (numPrecisionDigits <= 0) {
@@ -112,11 +112,16 @@ const decimalToPrecision = (x, roundingMode
         }
     }
 
-/*  handle tick size */
+    console.log ("========")
+
+    /*  handle tick size */
     if (countingMode === TICK_SIZE) {
         const precisionDigitsString = decimalToPrecision (numPrecisionDigits, ROUND, 22, DECIMAL_PLACES, NO_PADDING)
         const newNumPrecisionDigits = precisionFromString (precisionDigitsString)
         let missing = x % numPrecisionDigits
+        console.log (missing)
+        console.log (x)
+        console.log (numPrecisionDigits)
         // See: https://github.com/ccxt/ccxt/pull/6486
         missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
         const fpError = decimalToPrecision (missing / numPrecisionDigits, ROUND, Math.max (newNumPrecisionDigits, 8), DECIMAL_PLACES, NO_PADDING)
@@ -142,22 +147,24 @@ const decimalToPrecision = (x, roundingMode
         return decimalToPrecision (x, ROUND, newNumPrecisionDigits, DECIMAL_PLACES, paddingMode);
     }
 
-/*  Convert to a string (if needed), skip leading minus sign (if any)   */
+    /*  Convert to a string (if needed), skip leading minus sign (if any)   */
+
+    console.log (x)
 
     const str          = numberToString (x)
         , isNegative   = str[0] === '-'
         , strStart     = isNegative ? 1 : 0
         , strEnd       = str.length
 
-/*  Find the dot position in the source buffer   */
+    console.log (str)
 
-    for (var strDot = 0; strDot < strEnd; strDot++)
-        if (str[strDot] === '.')
-            break
+    /*  Find the dot position in the source buffer   */
+
+    for (var strDot = 0; strDot < strEnd; strDot++) if (str[strDot] === '.') break
 
     const hasDot = strDot < str.length
 
-/*  Char code constants         */
+    /*  Char code constants         */
 
     const MINUS =  45
         , DOT   =  46
@@ -166,16 +173,16 @@ const decimalToPrecision = (x, roundingMode
         , FIVE  = (ZERO + 5)
         , NINE  = (ZERO + 9)
 
-/*  For -123.4567 the `chars` array will hold 01234567 (leading zero is reserved for rounding cases when 099 → 100)    */
+    /*  For -123.4567 the `chars` array will hold 01234567 (leading zero is reserved for rounding cases when 099 → 100)    */
 
     const chars    = new Uint8Array ((strEnd - strStart) + (hasDot ? 0 : 1))
-          chars[0] = ZERO
+    chars[0] = ZERO
 
-/*  Validate & copy digits, determine certain locations in the resulting buffer  */
+    /*  Validate & copy digits, determine certain locations in the resulting buffer  */
 
     let afterDot    = chars.length
-      , digitsStart = -1                // significant digits
-      , digitsEnd   = -1
+        , digitsStart = -1                // significant digits
+        , digitsEnd   = -1
 
     for (var i = 1, j = strStart; j < strEnd; j++, i++) {
 
@@ -195,18 +202,18 @@ const decimalToPrecision = (x, roundingMode
 
     if (digitsStart < 0) digitsStart = 1
 
-/*  Determine the range to cut  */
+    /*  Determine the range to cut  */
 
     let precisionStart = (countingMode === DECIMAL_PLACES) ? afterDot      // 0.(0)001234567
-                                                           : digitsStart   // 0.00(1)234567
-      , precisionEnd = precisionStart +
+            : digitsStart   // 0.00(1)234567
+        , precisionEnd = precisionStart +
                        numPrecisionDigits
 
-/*  Reset the last significant digit index, as it will change during the rounding/truncation.   */
+    /*  Reset the last significant digit index, as it will change during the rounding/truncation.   */
 
     digitsEnd = -1
 
-/*  Perform rounding/truncation per digit, from digitsEnd to digitsStart, by using the following
+    /*  Perform rounding/truncation per digit, from digitsEnd to digitsStart, by using the following
     algorithm (rounding 999 → 1000, as an example):
 
         step  =          i=3      i=2      i=1      i=0
@@ -246,7 +253,7 @@ const decimalToPrecision = (x, roundingMode
         }
     }
 
-/*  Update the precision range, as `digitsStart` may have changed... & the need for a negative sign if it is only 0    */
+    /*  Update the precision range, as `digitsStart` may have changed... & the need for a negative sign if it is only 0    */
 
     if (countingMode === SIGNIFICANT_DIGITS) {
         precisionStart = digitsStart
@@ -257,27 +264,27 @@ const decimalToPrecision = (x, roundingMode
         signNeeded = false
     }
 
-/*  Determine the input character range     */
+    /*  Determine the input character range     */
 
     const readStart     = ((digitsStart >= afterDot) || allZeros) ? (afterDot - 1) : digitsStart // 0.000(1)234  ----> (0).0001234
-        , readEnd       = (digitsEnd    < afterDot) ? (afterDot    ) : digitsEnd   // 12(3)000     ----> 123000( )
+        , readEnd       = (digitsEnd    < afterDot) ? (afterDot) : digitsEnd   // 12(3)000     ----> 123000( )
 
-/*  Compute various sub-ranges       */
+    /*  Compute various sub-ranges       */
 
     const nSign         =          (signNeeded ? 1 : 0)                // (-)123.456
         , nBeforeDot    =          (nSign + (afterDot - readStart))    // (-123).456
         , nAfterDot     = Math.max (readEnd - afterDot, 0)             // -123.(456)
         , actualLength  =          (readEnd - readStart)               // -(123.456)
         , desiredLength =          (paddingMode === NO_PADDING)
-                                       ? (actualLength)                // -(123.456)
-                                       : (precisionEnd - readStart)    // -(123.456    )
+            ? (actualLength)                // -(123.456)
+            : (precisionEnd - readStart)    // -(123.456    )
 
         , pad           = Math.max (desiredLength - actualLength, 0)   //  -123.456(    )
         , padStart      =          (nBeforeDot + 1 + nAfterDot)        //  -123.456( )
         , padEnd        =          (padStart + pad)                    //  -123.456     ( )
         , isInteger     =          (nAfterDot + pad) === 0             //  -123
 
-/*  Fill the output buffer with characters    */
+    /*  Fill the output buffer with characters    */
 
     const out = new Uint8Array (nBeforeDot + (isInteger ? 0 : 1) + nAfterDot + pad)
     // ------------------------------------------------------------------------------------------ // ---------------------
@@ -287,7 +294,7 @@ const decimalToPrecision = (x, roundingMode
     for (i = nBeforeDot + 1, j = afterDot;  i < padStart;   i++, j++) out[i]          = chars[j]  // 456   after dot
     for (i = padStart;                      i < padEnd;     i++)      out[i]          = ZERO      // 000   padding
 
-/*  Build a string from the output buffer     */
+    /*  Build a string from the output buffer     */
 
     return String.fromCharCode (...out)
 }
