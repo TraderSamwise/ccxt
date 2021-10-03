@@ -117,14 +117,15 @@ const decimalToPrecision = (x, roundingMode
         const precisionDigitsString = decimalToPrecision (numPrecisionDigits, ROUND, 22, DECIMAL_PLACES, NO_PADDING)
         const newNumPrecisionDigits = precisionFromString (precisionDigitsString)
         let missing = x % numPrecisionDigits
+        missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
 
         // See: https://github.com/ccxt/ccxt/pull/6486
         //TEALSTREET: this was breaking iOS mobile for some reason...
-        try {
-            missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
-        } catch (e) {
-            missing = 0;
-        }
+        // try {
+        //     missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
+        // } catch (e) {
+        //     missing = 0;
+        // }
         const fpError = decimalToPrecision (missing / numPrecisionDigits, ROUND, Math.max (newNumPrecisionDigits, 8), DECIMAL_PLACES, NO_PADDING)
         if (precisionFromString (fpError) !== 0) {
             if (roundingMode === ROUND) {
