@@ -119,12 +119,10 @@ const decimalToPrecision = (x, roundingMode
         let missing = x % numPrecisionDigits
 
         // See: https://github.com/ccxt/ccxt/pull/6486
-
         try {
-
             missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
         } catch (e) {
-            throw Error (`missing: ${missing}, x: ${x}, numPrec: ${numPrecisionDigits}`)
+            missing = 0;
         }
         const fpError = decimalToPrecision (missing / numPrecisionDigits, ROUND, Math.max (newNumPrecisionDigits, 8), DECIMAL_PLACES, NO_PADDING)
         if (precisionFromString (fpError) !== 0) {
