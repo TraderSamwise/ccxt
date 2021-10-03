@@ -59,6 +59,175 @@ class bybit(Exchange):
         self.currencies_by_id = self.index_by(list(self.currencies.values()), 'id')
         return self.markets
 
+    def update_order(self, id, symbol, type, side, amount, price=None, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+        qty = self.amount_to_precision(symbol, amount)
+
+        trigger = self.api_trigger_type(params['trigger'])
+        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+
+        if market['inverse']:
+            qty = int(qty)
+        else:
+            qty = float(qty)
+        request = {
+            # orders ---------------------------------------------------------
+            'side': self.capitalize(side),
+            'symbol': market['id'],
+            'order_type': self.api_order_type(type),
+            'qty': qty,  # order quantity in USD, integer only
+        }
+        priceIsRequired = False
+        if type == 'limit':
+            priceIsRequired = True
+        if priceIsRequired:
+            if price is not None:
+                request['price'] = float(self.price_to_precision(symbol, price))
+            else:
+                raise ArgumentsRequired(self.id + ' createOrder() requires a price argument for a ' + type + ' order')
+        clientOrderId = self.safe_string_2(params, 'order_link_id', 'clientOrderId')
+        if clientOrderId is not None:
+            request['order_link_id'] = clientOrderId
+            params = self.omit(params, ['order_link_id', 'clientOrderId'])
+        basePrice = self.safe_value(params, 'basePrice')
+        if basePrice == 0.0:
+            ticker = self.fetch_ticker(symbol)
+            basePrice = ticker['last']
+        stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
+        stopPx = None if stopPx == 0.0 else stopPx
+        if stopPx:
+            # TEALSTREET TODO: get current mark price and set to base price
+            if not basePrice:
+                # ticker = self.fetch_ticker(symbol)
+                # if side =='buy':
+                #     basePrice = self.safe_float(ticker, 'last')
+                # basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
+                basePrice = float(self.price_to_precision(symbol, self.safe_value(params, 'basePrice')))
+                if side == 'buy' and basePrice > stopPx:
+                    basePrice = stopPx * 0.99  # hacky, but works
+                elif side == 'sell' and basePrice < stopPx:
+                    basePrice = stopPx * 1.01  # hacky, but works
+                # basePrice = stopPx * (0.99 if side == 'sell' else 1.01)  # hacky, but works
+            params = self.omit(params, 'stopPrice')
+            request['trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+            request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+            request['sl_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostOrderReplace'
+            elif market['inverse']:
+                method = 'v2PrivatePostOrderReplace'
+        elif market['futures']:
+            method = 'futuresPrivatePostOrderReplace'
+        if stopPx is not None:
+            if basePrice is None:
+                raise ArgumentsRequired(
+                    self.id + ' replaceOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
+            else:
+                if market['swap']:
+                    if market['linear']:
+                        method = 'privateLinearPostStopOrderReplace'
+                    elif market['inverse']:
+                        method = 'v2PrivatePostStopOrderReplace'
+                elif market['futures']:
+                    method = 'futuresPrivatePostStopOrderReplace'
+                request['stop_px'] = float(self.price_to_precision(symbol, stopPx))
+                request['base_price'] = float(self.price_to_precision(symbol, basePrice))
+                # request['take_profit'] = float(self.price_to_precision(symbol, stopPx))
+                # request['stop_loss'] = float(self.price_to_precision(symbol, stopPx))
+                if price:
+                    request['price'] = float(self.price_to_precision(symbol, price))
+                params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice'])
+        elif basePrice is not None:
+            raise ArgumentsRequired(
+                self.id + ' replaceOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
+
+        # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
+        #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
+        params = self.omit(params, ['stopPrice', 'basePrice'])
+        response = getattr(self, method)(self.extend(request, params))
+        #
+        #     {
+        #         "ret_code": 0,
+        #         "ret_msg": "OK",
+        #         "ext_code": "",
+        #         "ext_info": "",
+        #         "result": {
+        #             "user_id": 1,
+        #             "order_id": "335fd977-e5a5-4781-b6d0-c772d5bfb95b",
+        #             "symbol": "BTCUSD",
+        #             "side": "Buy",
+        #             "order_type": "Limit",
+        #             "price": 8800,
+        #             "qty": 1,
+        #             "time_in_force": "GoodTillCancel",
+        #             "order_status": "Created",
+        #             "last_exec_time": 0,
+        #             "last_exec_price": 0,
+        #             "leaves_qty": 1,
+        #             "cum_exec_qty": 0,
+        #             "cum_exec_value": 0,
+        #             "cum_exec_fee": 0,
+        #             "reject_reason": "",
+        #             "order_link_id": "",
+        #             "created_at": "2019-11-30T11:03:43.452Z",
+        #             "updated_at": "2019-11-30T11:03:43.455Z"
+        #         },
+        #         "time_now": "1575111823.458705",
+        #         "rate_limit_status": 98,
+        #         "rate_limit_reset_ms": 1580885703683,
+        #         "rate_limit": 100
+        #     }
+        #
+        # conditional orders
+        #
+        #     {
+        #         "ret_code": 0,
+        #         "ret_msg": "ok",
+        #         "ext_code": "",
+        #         "result": {
+        #             "user_id": 1,
+        #             "symbol": "BTCUSD",
+        #             "side": "Buy",
+        #             "order_type": "Limit",
+        #             "price": 8000,
+        #             "qty": 1,
+        #             "time_in_force": "GoodTillCancel",
+        #             "stop_order_type": "Stop",
+        #             "trigger_by": "LastPrice",
+        #             "base_price": 7000,
+        #             "order_status": "Untriggered",
+        #             "ext_fields": {
+        #                 "stop_order_type": "Stop",
+        #                 "trigger_by": "LastPrice",
+        #                 "base_price": 7000,
+        #                 "expected_direction": "Rising",
+        #                 "trigger_price": 7500,
+        #                 "op_from": "api",
+        #                 "remark": "127.0.01",
+        #                 "o_req_num": 0
+        #             },
+        #             "leaves_qty": 1,
+        #             "leaves_value": 0.00013333,
+        #             "reject_reason": null,
+        #             "cross_seq": -1,
+        #             "created_at": "2019-12-27T12:48:24.000Z",
+        #             "updated_at": "2019-12-27T12:48:24.000Z",
+        #             "stop_px": 7500,
+        #             "stop_order_id": "a85cd1c0-a9a4-49d3-a1bd-bab5ebe946d5"
+        #         },
+        #         "ext_info": null,
+        #         "time_now": "1577450904.327654",
+        #         "rate_limit_status": 99,
+        #         "rate_limit_reset_ms": 1577450904335,
+        #         "rate_limit": "100"
+        #     }
+        #
+        result = self.safe_value(response, 'result')
+        return self.parse_order(result, market)
+
     def describe(self):
         return self.deep_extend(super(bybit, self).describe(), {
             'id': 'bybit',
