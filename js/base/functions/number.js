@@ -119,6 +119,7 @@ const decimalToPrecision = (x, roundingMode
         let missing = x % numPrecisionDigits
 
         // See: https://github.com/ccxt/ccxt/pull/6486
+        //TEALSTREET: this was breaking iOS mobile for some reason...
         try {
             missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
         } catch (e) {
