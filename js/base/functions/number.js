@@ -112,18 +112,20 @@ const decimalToPrecision = (x, roundingMode
         }
     }
 
-    console.log ("========")
-
     /*  handle tick size */
     if (countingMode === TICK_SIZE) {
         const precisionDigitsString = decimalToPrecision (numPrecisionDigits, ROUND, 22, DECIMAL_PLACES, NO_PADDING)
         const newNumPrecisionDigits = precisionFromString (precisionDigitsString)
         let missing = x % numPrecisionDigits
-        console.log (missing)
-        console.log (x)
-        console.log (numPrecisionDigits)
+
         // See: https://github.com/ccxt/ccxt/pull/6486
-        missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
+
+        try {
+
+            missing = Number (decimalToPrecision (missing, ROUND, 8, DECIMAL_PLACES, NO_PADDING));
+        } catch (e) {
+            throw Error (`missing: ${missing}, x: ${x}, numPrec: ${numPrecisionDigits}`)
+        }
         const fpError = decimalToPrecision (missing / numPrecisionDigits, ROUND, Math.max (newNumPrecisionDigits, 8), DECIMAL_PLACES, NO_PADDING)
         if (precisionFromString (fpError) !== 0) {
             if (roundingMode === ROUND) {
@@ -149,14 +151,10 @@ const decimalToPrecision = (x, roundingMode
 
     /*  Convert to a string (if needed), skip leading minus sign (if any)   */
 
-    console.log (x)
-
     const str          = numberToString (x)
         , isNegative   = str[0] === '-'
         , strStart     = isNegative ? 1 : 0
         , strEnd       = str.length
-
-    console.log (str)
 
     /*  Find the dot position in the source buffer   */
 
