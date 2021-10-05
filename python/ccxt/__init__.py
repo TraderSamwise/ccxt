@@ -111,7 +111,6 @@ from ccxt.bw import bw                                      # noqa: F401
 from ccxt.bybit import bybit                                # noqa: F401
 from ccxt.bybitinverse import bybitinverse                  # noqa: F401
 from ccxt.bybitlinear import bybitlinear                    # noqa: F401
-from ccxt.bybitfutures import bybitfutures                  # noqa: F401
 from ccxt.bytetrade import bytetrade                        # noqa: F401
 from ccxt.cdax import cdax                                  # noqa: F401
 from ccxt.cex import cex                                    # noqa: F401
@@ -231,7 +230,6 @@ exchanges = [
     'bybit',
     'bybitlinear',
     'bybitinverse'
-    'bybitfutures',
     'bytetrade',
     'cdax',
     'cex',

@@ -209,8 +209,6 @@ exchanges = [
     'buda',
     'bw',
     'bybit',
-    'bybitlinear',
-    'bybitfutures',
     'bybitinverse',
     'bytetrade',
     'cdax',
@@ -295,3 +293,4 @@ base = [
 ]
 
 __all__ = base + errors.__all__ + exchanges
+print(__all__)

@@ -553,7 +553,7 @@ class bybit(Exchange):
                     'EOS/USD': 'inverse',
                     'XRP/USD': 'inverse',
                 },
-                'defaultType': 'linear',  # linear, inverse, futures
+                'defaultType': 'inverse',  # linear, inverse, futures
                 'code': 'BTC',
                 'cancelAllOrders': {
                     # 'method': 'v2PrivatePostOrderCancelAll',  # v2PrivatePostStopOrderCancelAll
@@ -618,44 +618,50 @@ class bybit(Exchange):
     def fetch_markets(self, params={}):
         if self.options['adjustForTimeDifference']:
             self.load_time_difference()
-        response = self.v2PublicGetSymbols(params)
-        #
-        #     {
-        #         "ret_code":0,
-        #         "ret_msg":"OK",
-        #         "ext_code":"",
-        #         "ext_info":"",
-        #         "result":[
-        #             {
-        #                 "name":"BTCUSD",
-        #                 "alias":"BTCUSD",
-        #                 "status":"Trading",
-        #                 "base_currency":"BTC",
-        #                 "quote_currency":"USD",
-        #                 "price_scale":2,
-        #                 "taker_fee":"0.00075",
-        #                 "maker_fee":"-0.00025",
-        #                 "leverage_filter":{"min_leverage":1,"max_leverage":100,"leverage_step":"0.01"},
-        #                 "price_filter":{"min_price":"0.5","max_price":"999999.5","tick_size":"0.5"},
-        #                 "lot_size_filter":{"max_trading_qty":1000000,"min_trading_qty":1,"qty_step":1}
-        #             },
-        #             {
-        #                 "name":"BTCUSDT",
-        #                 "alias":"BTCUSDT",
-        #                 "status":"Trading",
-        #                 "base_currency":"BTC",
-        #                 "quote_currency":"USDT",
-        #                 "price_scale":2,
-        #                 "taker_fee":"0.00075",
-        #                 "maker_fee":"-0.00025",
-        #                 "leverage_filter":{"min_leverage":1,"max_leverage":100,"leverage_step":"0.01"},
-        #                 "price_filter":{"min_price":"0.5","max_price":"999999.5","tick_size":"0.5"},
-        #                 "lot_size_filter":{"max_trading_qty":100,"min_trading_qty":0.001,"qty_step":0.001}
-        #             },
-        #         ],
-        #         "time_now":"1610539664.818033"
-        #     }
-        #
+        # TEALSTREET: workaround because bybit broke testnet linear markets
+        # is_testnet = 'apiBackup' in self.urls
+        # if is_testnet:
+        #     self.set_sandbox_mode(False)
+        # response = self.v2PublicGetSymbols(params)
+        # if is_testnet:
+        #     self.set_sandbox_mode(True)
+        # #
+        # #     {
+        # #         "ret_code":0,
+        # #         "ret_msg":"OK",
+        # #         "ext_code":"",
+        # #         "ext_info":"",
+        # #         "result":[
+        # #             {
+        # #                 "name":"BTCUSD",
+        # #                 "alias":"BTCUSD",
+        # #                 "status":"Trading",
+        # #                 "base_currency":"BTC",
+        # #                 "quote_currency":"USD",
+        # #                 "price_scale":2,
+        # #                 "taker_fee":"0.00075",
+        # #                 "maker_fee":"-0.00025",
+        # #                 "leverage_filter":{"min_leverage":1,"max_leverage":100,"leverage_step":"0.01"},
+        # #                 "price_filter":{"min_price":"0.5","max_price":"999999.5","tick_size":"0.5"},
+        # #                 "lot_size_filter":{"max_trading_qty":1000000,"min_trading_qty":1,"qty_step":1}
+        # #             },
+        # #             {
+        # #                 "name":"BTCUSDT",
+        # #                 "alias":"BTCUSDT",
+        # #                 "status":"Trading",
+        # #                 "base_currency":"BTC",
+        # #                 "quote_currency":"USDT",
+        # #                 "price_scale":2,
+        # #                 "taker_fee":"0.00075",
+        # #                 "maker_fee":"-0.00025",
+        # #                 "leverage_filter":{"min_leverage":1,"max_leverage":100,"leverage_step":"0.01"},
+        # #                 "price_filter":{"min_price":"0.5","max_price":"999999.5","tick_size":"0.5"},
+        # #                 "lot_size_filter":{"max_trading_qty":100,"min_trading_qty":0.001,"qty_step":0.001}
+        # #             },
+        # #         ],
+        # #         "time_now":"1610539664.818033"
+        # #     }
+        # #
         markets = self.safe_value(response, 'result', [])
         options = self.safe_value(self.options, 'fetchMarkets', {})
         linearQuoteCurrencies = self.safe_value(options, 'linear', {'USDT': True})

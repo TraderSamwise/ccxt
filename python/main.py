@@ -27,7 +27,7 @@ bitmexExchange = ccxt.bitmex({
 bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-bybitExchange = ccxt.bybitfutures({
+bybitExchange = ccxt.bybitlinear({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
     'enableRateLimit': True
