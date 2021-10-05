@@ -46,6 +46,128 @@ class FTXTealstreetMixin(object):
         else:
             return self.bigger(a, b)
 
+    def update_order(self: 'ftx', id, symbol, type, side, amount, price=None, params={}):
+        # cancel_res = self.cancel_order(id, symbol, params)
+        # return self.create_order(symbol, type, side, amount, price, params)
+        self.load_markets()
+        market = self.market(symbol)
+
+        # TEALSTREET
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        type = self.api_order_type(type)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        trigger = self.api_trigger_type(params['trigger'])
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        postOnly = timeInForce == 'PostOnly'
+        ioc = timeInForce == 'ImmediateOrCancel'
+
+        request = {
+            'market': market['id'],
+            'side': side,  # "buy" or "sell"
+            # 'price': 0.306525,  # send null for market orders
+            'type': type,  # "limit", "market", "stop", "trailingStop", or "takeProfit"
+            'size': float(self.amount_to_precision(symbol, amount)),
+            'reduceOnly': reduceOnly or closeOnTrigger,  # optional, default is False
+            'ioc': ioc,  # optional, default is False, limit or market orders only
+            'postOnly': postOnly,  # optional, default is False, limit or market orders only
+            # 'clientId': 'abcdef0123456789',  # string, optional, client order id, limit or market orders only
+            # 'retryUntilFilled': False # whether or not to keep re-triggering until filled. optional, default true for market orders
+        }
+        clientOrderId = self.safe_string_2(params, 'clientId', 'clientOrderId')
+        if clientOrderId is not None:
+            request['clientId'] = clientOrderId
+            params = self.omit(params, ['clientId', 'clientOrderId'])
+        method = None
+        if type == 'limit':
+            method = 'privatePostOrders'
+            request['price'] = float(self.price_to_precision(symbol, price))
+        elif type == 'market':
+            method = 'privatePostOrders'
+            request['price'] = None
+        elif (type == 'stop') or (type == 'takeProfit'):
+            method = 'privatePostConditionalOrders'
+            stopPrice = self.safe_number_2(params, 'stopPrice', 'triggerPrice')
+            if stopPrice is None:
+                raise ArgumentsRequired(
+                    self.id + ' createOrder() requires a stopPrice parameter or a triggerPrice parameter for ' + type + ' orders')
+            else:
+                basePrice = self.safe_value(params, 'basePrice')
+                if basePrice == 0.0:
+                    ticker = self.fetch_ticker(symbol)
+                    basePrice = ticker['last']
+                if (side == 'buy' and stopPrice < basePrice) or (side == 'sell' and stopPrice > basePrice):
+                    request['type'] = 'takeProfit'
+                params = self.omit(params, ['stopPrice', 'triggerPrice'])
+                request['triggerPrice'] = float(self.price_to_precision(symbol, stopPrice))
+            if price is not None:
+                request['orderPrice'] = float(self.price_to_precision(symbol,
+                                                                      price))  # optional, order type is limit if self is specified, otherwise market
+            request = self.omit(request, ['ioc', 'postOnly'])
+        elif type == 'trailingStop':
+            method = 'privatePostConditionalOrders'
+            request['trailValue'] = float(
+                self.price_to_precision(symbol, price))  # negative for "sell", positive for "buy"
+        else:
+            raise InvalidOrder(
+                self.id + ' createOrder() does not support order type ' + type + ', only limit, market, stop, trailingStop, or takeProfit orders are supported')
+
+        params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice', 'timeInForce', 'closeOnTrigger', 'trigger',
+                                    'reduceOnly'])
+        response = getattr(self, method)(self.extend(request, params))
+        #
+        # orders
+        #
+        #     {
+        #         "success": True,
+        #         "result": [
+        #             {
+        #                 "createdAt": "2019-03-05T09:56:55.728933+00:00",
+        #                 "filledSize": 0,
+        #                 "future": "XRP-PERP",
+        #                 "id": 9596912,
+        #                 "market": "XRP-PERP",
+        #                 "price": 0.306525,
+        #                 "remainingSize": 31431,
+        #                 "side": "sell",
+        #                 "size": 31431,
+        #                 "status": "open",
+        #                 "type": "limit",
+        #                 "reduceOnly": False,
+        #                 "ioc": False,
+        #                 "postOnly": False,
+        #                 "clientId": null,
+        #             }
+        #         ]
+        #     }
+        #
+        # conditional orders
+        #
+        #     {
+        #         "success": True,
+        #         "result": [
+        #             {
+        #                 "createdAt": "2019-03-05T09:56:55.728933+00:00",
+        #                 "future": "XRP-PERP",
+        #                 "id": 9596912,
+        #                 "market": "XRP-PERP",
+        #                 "triggerPrice": 0.306525,
+        #                 "orderId": null,
+        #                 "side": "sell",
+        #                 "size": 31431,
+        #                 "status": "open",
+        #                 "type": "stop",
+        #                 "orderPrice": null,
+        #                 "error": null,
+        #                 "triggeredAt": null,
+        #                 "reduceOnly": False
+        #             }
+        #         ]
+        #     }
+        #
+        #
+        result = self.safe_value(response, 'result', [])
+        return self.parse_order(result, market)
+
 class ftx(Exchange, FTXTealstreetMixin):
 
     def describe(self):

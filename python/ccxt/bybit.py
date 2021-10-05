@@ -72,18 +72,15 @@ class bybit(Exchange):
         else:
             qty = float(qty)
         request = {
-            # orders ---------------------------------------------------------
-            'side': self.capitalize(side),
             'symbol': market['id'],
-            'order_type': self.api_order_type(type),
-            'qty': qty,  # order quantity in USD, integer only
+            'p_r_qty': qty,  # order quantity in USD, integer only
         }
         priceIsRequired = False
         if type == 'limit':
             priceIsRequired = True
         if priceIsRequired:
             if price is not None:
-                request['price'] = float(self.price_to_precision(symbol, price))
+                request['p_r_price'] = float(self.price_to_precision(symbol, price))
             else:
                 raise ArgumentsRequired(self.id + ' createOrder() requires a price argument for a ' + type + ' order')
         clientOrderId = self.safe_string_2(params, 'order_link_id', 'clientOrderId')
@@ -96,23 +93,14 @@ class bybit(Exchange):
             basePrice = ticker['last']
         stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
         stopPx = None if stopPx == 0.0 else stopPx
-        if stopPx:
-            # TEALSTREET TODO: get current mark price and set to base price
-            if not basePrice:
-                # ticker = self.fetch_ticker(symbol)
-                # if side =='buy':
-                #     basePrice = self.safe_float(ticker, 'last')
-                # basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
-                basePrice = float(self.price_to_precision(symbol, self.safe_value(params, 'basePrice')))
-                if side == 'buy' and basePrice > stopPx:
-                    basePrice = stopPx * 0.99  # hacky, but works
-                elif side == 'sell' and basePrice < stopPx:
-                    basePrice = stopPx * 1.01  # hacky, but works
-                # basePrice = stopPx * (0.99 if side == 'sell' else 1.01)  # hacky, but works
-            params = self.omit(params, 'stopPrice')
-            request['trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+        params = self.omit(params, 'stopPrice')
+        # request['trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+        if stopPx is not None:
             request['tp_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
             request['sl_trigger_by'] = trigger  # IndexPrice, MarkPrice, LastPrice
+            request['stop_order_id'] = id
+        else:
+            request['order_id'] = id
         method = None
         if market['swap']:
             if market['linear']:
@@ -122,30 +110,39 @@ class bybit(Exchange):
         elif market['futures']:
             method = 'futuresPrivatePostOrderReplace'
         if stopPx is not None:
-            if basePrice is None:
-                raise ArgumentsRequired(
-                    self.id + ' replaceOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
-            else:
-                if market['swap']:
-                    if market['linear']:
-                        method = 'privateLinearPostStopOrderReplace'
-                    elif market['inverse']:
-                        method = 'v2PrivatePostStopOrderReplace'
-                elif market['futures']:
-                    method = 'futuresPrivatePostStopOrderReplace'
-                request['stop_px'] = float(self.price_to_precision(symbol, stopPx))
-                request['base_price'] = float(self.price_to_precision(symbol, basePrice))
-                # request['take_profit'] = float(self.price_to_precision(symbol, stopPx))
-                # request['stop_loss'] = float(self.price_to_precision(symbol, stopPx))
-                if price:
-                    request['price'] = float(self.price_to_precision(symbol, price))
-                params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice'])
+            # if basePrice is None:
+            #     raise ArgumentsRequired(
+            #         self.id + ' replaceOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
+            # else:
+            if market['swap']:
+                if market['linear']:
+                    method = 'privateLinearPostStopOrderReplace'
+                elif market['inverse']:
+                    method = 'v2PrivatePostStopOrderReplace'
+            elif market['futures']:
+                method = 'futuresPrivatePostStopOrderReplace'
+            request['p_r_trigger_price'] = float(self.price_to_precision(symbol, stopPx))
+            # request['base_price'] = float(self.price_to_precision(symbol, basePrice))
+            # request['take_profit'] = float(self.price_to_precision(symbol, stopPx))
+            # request['stop_loss'] = float(self.price_to_precision(symbol, stopPx))
+            if price:
+                request['p_r_price'] = float(self.price_to_precision(symbol, price))
+            params = self.omit(params, ['stop_px', 'stopPrice', 'basePrice'])
         elif basePrice is not None:
             raise ArgumentsRequired(
                 self.id + ' replaceOrder() requires both the stop_px and base_price params for a conditional ' + type + ' order')
 
         # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
         #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
+
+        updateQty = self.safe_value(params, 'updateAmount')
+        if not updateQty:
+            request = self.omit(request, 'p_r_qty')
+        updatePrice = self.safe_value(params, 'updatePrice')
+        if not updatePrice:
+            request = self.omit(request, 'p_r_price')
+        params = self.omit(params, ['updatePrice', 'updateQty'])
+
         params = self.omit(params, ['stopPrice', 'basePrice'])
         response = getattr(self, method)(self.extend(request, params))
         #
