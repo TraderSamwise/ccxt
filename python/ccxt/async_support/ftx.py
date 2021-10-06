@@ -1282,7 +1282,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         request = {}
         method = None
         clientOrderId = self.safe_string_2(params, 'client_order_id', 'clientOrderId')
-        triggerPrice = self.safe_number(params, 'triggerPrice')
+        triggerPrice = self.safe_number_2(params, 'triggerPrice', 'stopPrice')
         orderPrice = self.safe_number(params, 'orderPrice')
         trailValue = self.safe_number(params, 'trailValue')
         params = self.omit(params, ['client_order_id', 'clientOrderId', 'triggerPrice', 'orderPrice', 'trailValue'])
@@ -1312,6 +1312,8 @@ class ftx(Exchange, FTXTealstreetMixin):
                 request['price'] = float(self.price_to_precision(symbol, price))
         if amount is not None:
             request['size'] = float(self.amount_to_precision(symbol, amount))
+
+        params = self.omit(params, ['stopPrice', 'timeInForce', 'closeOnTrigger', 'trigger', 'reduceOnly'])
         response = await getattr(self, method)(self.extend(request, params))
         #
         # regular order
