@@ -1823,13 +1823,10 @@ class okex(Exchange):
 
     def parse_order_status(self, status):
         statuses = {
-            '-2': 'failed',
-            '-1': 'canceled',
-            '0': 'open',
-            '1': 'open',
-            '2': 'closed',
-            '3': 'open',
-            '4': 'canceled',
+            'canceled': 'canceled',
+            'live': 'open',
+            'partially_filled': 'open',
+            'filled': 'closed',
         }
         return self.safe_string(statuses, status, status)
 
