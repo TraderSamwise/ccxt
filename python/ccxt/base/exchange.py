@@ -2014,7 +2014,7 @@ class Exchange(object):
     def edit_order(self, id, symbol, *args):
         if not self.enableRateLimit:
             raise ExchangeError('edit_order() requires enableRateLimit = true')
-        self.cancel_order(id, symbol, { 'type': args[0] })
+        self.cancel_order(id, symbol)
         return self.create_order(symbol, *args)
 
     def create_limit_order(self, symbol, side, amount, price, params={}) -> dict:

@@ -1856,6 +1856,12 @@ class okex(Exchange):
             'side': side,
         })
 
+    async def edit_order(self, id, symbol, *args):
+        if not self.enableRateLimit:
+            raise ExchangeError('edit_order() requires enableRateLimit = true')
+        await self.cancel_order(id, symbol, { 'type': args[0] })
+        return await self.create_order(symbol, *args)
+
     async def cancel_order(self, id, symbol=None, params={}):
         if symbol is None:
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
