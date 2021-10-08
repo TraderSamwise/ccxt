@@ -319,8 +319,8 @@ class Exchange(BaseExchange, ExchangeTealstreetMixin):
 
     async def edit_order(self, id, symbol, *args):
         if not self.enableRateLimit:
-            raise ExchangeError('updateOrder() requires enableRateLimit = true')
-        await self.cancel_order(id, symbol)
+            raise ExchangeError('edit_order() requires enableRateLimit = true')
+        await self.cancel_order(id, symbol, { 'type': args[0] })
         return await self.create_order(symbol, *args)
 
     async def create_order(self, symbol, type, side, amount, price=None, params={}):

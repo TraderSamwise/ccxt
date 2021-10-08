@@ -1552,7 +1552,7 @@ class bybit(Exchange):
         request = {
             # 'order_id': id,  # only for non-conditional orders
             'symbol': market['id'],
-            # 'p_r_qty': self.amount_to_precision(symbol, amount),  # new order quantity, optional
+            # 'p_r_qty': self.amount_to_precision(symbol, amount),  # new order quantity, optionalQ
             # 'p_r_price' self.priceToprecision(symbol, price),  # new order price, optional
             # ----------------------------------------------------------------
             # conditional orders

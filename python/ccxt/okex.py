@@ -1444,7 +1444,7 @@ class okex(Exchange, OkexTealstreetMixin):
                 request['ordType'] = orderType
 
             basePrice = self.safe_value(params, 'basePrice')
-            if basePrice == 0.0:
+            if not basePrice:
                 ticker = self.fetch_ticker(symbol)
                 basePrice = ticker['last']
 
@@ -1512,20 +1512,26 @@ class okex(Exchange, OkexTealstreetMixin):
             # 'ordId': id,  # either ordId or clOrdId is required
             # 'clOrdId': clientOrderId,
         }
+        type = self.safe_string(params, 'type')
         clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
         if clientOrderId is not None:
             request['clOrdId'] = clientOrderId
         else:
-            request['ordId'] = id
-
-        type = self.safe_string(params, 'type')
+            if type == 'stop':
+                request['algoId'] = id
+            else:
+                request['ordId'] = id
 
         method = 'privatePostTradeCancelOrder'
         if type == 'stop':
             method = 'privatePostTradeCancelAlgos'
 
-        query = self.omit(params, ['clOrdId', 'clientOrderId'])
-        response = getattr(self, method)(self.extend(request, query))
+        query = self.omit(params, ['clOrdId', 'clientOrderId', 'type'])
+
+        if type == 'stop':
+            response = getattr(self, method)([self.extend(request, query)])
+        else:
+            response = getattr(self, method)(self.extend(request, query))
         # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
         data = self.safe_value(response, 'data', [])
         order = self.safe_value(data, 0)
@@ -1673,10 +1679,8 @@ class okex(Exchange, OkexTealstreetMixin):
         lastTradeTimestamp = self.safe_integer(order, 'fillTime')
         side = self.safe_string(order, 'side')
         type = self.safe_string(order, 'ordType')
-        postOnly = None
-        timeInForce = None
-        price = self.safe_number_2(order, 'px', 'slOrdPx')
         postOnly = False
+        timeInForce = None
         if type == 'post_only':
             postOnly = True
             type = 'limit'
@@ -1687,20 +1691,24 @@ class okex(Exchange, OkexTealstreetMixin):
             timeInForce = 'IOC'
             type = 'limit'
         elif type in ['conditional', 'oco', 'trigger']:
-            type = 'market' if price == -1 else 'limit'
+            # type = 'limit' if price else 'market'
+            type = 'stop'
+        price = self.safe_number(order, 'px') or self.safe_number(order, 'ordPx') or self.safe_number(order,
+                                                                                                      'tpOrdPx') or self.safe_number(
+            order, 'slOrdPx')
+        stopPrice = self.safe_number(order, 'triggerPx') or self.safe_number(order, 'tpTriggerPx') or self.safe_number(
+            order, 'slTriggerPx')
+        price = None if price == -1 else price
         marketId = self.safe_string(order, 'instId')
         symbol = self.safe_symbol(marketId, market, '-')
         filled = self.safe_number(order, 'accFillSz')
-        price = self.safe_number_2(order, 'px', 'slOrdPx')
         average = self.safe_number(order, 'avgPx')
         status = self.parse_order_status(self.safe_string(order, 'state'))
         feeCostString = self.safe_string(order, 'fee')
-        amount = None
+        amount = self.safe_number(order, 'sz')
         cost = None
         if side == 'buy' and type == 'market':
             cost = self.safe_number(order, 'sz')
-        else:
-            amount = self.safe_number(order, 'sz')
         fee = None
         if feeCostString is not None:
             feeCostSigned = Precise.string_neg(feeCostString)
@@ -1713,7 +1721,6 @@ class okex(Exchange, OkexTealstreetMixin):
         clientOrderId = self.safe_string(order, 'clOrdId')
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
-        stopPrice = self.safe_number(order, 'slTriggerPx')
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closeOnTrigger')
         return self.safe_order({
@@ -1738,8 +1745,8 @@ class okex(Exchange, OkexTealstreetMixin):
             'status': status,
             'fee': fee,
             'trades': None,
-            'reduce': reduce, # TEALSTREET
-            'close' : close, # TEALSTREET
+            'reduce': reduce,  # TEALSTREET
+            'close': close,  # TEALSTREET
         })
 
     def fetch_order(self, id, symbol=None, params={}):

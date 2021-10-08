@@ -1695,72 +1695,162 @@ class okex(Exchange):
     async def create_order(self, symbol, type, side, amount, price=None, params={}):
         await self.load_markets()
         market = self.market(symbol)
+
+        # TEALSTREET
+        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        timeInForce = self.api_time_in_force(params['timeInForce'])
+        orderType = self.api_order_type(type)
+        if orderType not in ['conditional', 'trigger']: # no stop post only
+            if timeInForce in ['post_only', 'fok', 'ioc']:
+                orderType = timeInForce
+        # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
+        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        side = side.lower()
+
+        method = 'privatePostTradeOrder'
+        if type in ['stop', 'stoplimit']:
+            method = 'privatePostTradeOrderAlgo'
+
         request = {
-            'instrument_id': market['id'],
-            # 'client_oid': 'abcdef1234567890',  # [a-z0-9]{1,32}
-            # 'order_type': '0',  # 0 = Normal limit order, 1 = Post only, 2 = Fill Or Kill, 3 = Immediatel Or Cancel, 4 = Market for futures only
+            'instId': market['id'],
+            #
+            #     Simple:
+            #     - SPOT and OPTION buyer: cash
+            #
+            #     Single-currency margin:
+            #     - Isolated MARGIN: isolated
+            #     - Cross MARGIN: cross
+            #     - Cross SPOT: cash
+            #     - Cross FUTURES/SWAP/OPTION: cross
+            #     - Isolated FUTURES/SWAP/OPTION: isolated
+            #
+            #     Multi-currency margin:
+            #     - Isolated MARGIN: isolated
+            #     - Cross SPOT: cross
+            #     - Cross FUTURES/SWAP/OPTION: cross
+            #     - Isolated FUTURES/SWAP/OPTION: isolated
+            #
+            'tdMode': 'cross',  # cash, cross, isolated
+            # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
+            # 'clOrdId': clientOrderId,  # up to 32 characters, must be unique
+            # 'tag': tag,  # up to 8 characters
+            #
+            #     In long/short mode, side and posSide need to be combined
+            #
+            #     buy with long means open long
+            #     sell with long means close long
+            #     sell with short means open short
+            #     buy with short means close short
+            #
+            'side': side,
+            # 'posSide': 'long',  # long, short,  # required in the long/short mode, and can only be long or short
+            'ordType': orderType,  # market, limit, post_only, fok, ioc
+            #
+            #     for SPOT/MARGIN bought and sold at a limit price, sz refers to the amount of trading currency
+            #     for SPOT/MARGIN bought at a market price, sz refers to the amount of quoted currency
+            #     for SPOT/MARGIN sold at a market price, sz refers to the amount of trading currency
+            #     for FUTURES/SWAP/OPTION buying and selling, sz refers to the number of contracts
+            #
+            # 'sz': self.amount_to_precision(symbol, amount),
+            # 'px': self.price_to_precision(symbol, price),  # limit orders only
+            'reduceOnly': reduceOnly,  # MARGIN orders only
         }
-        clientOrderId = self.safe_string_2(params, 'client_oid', 'clientOrderId')
-        if clientOrderId is not None:
-            request['client_oid'] = clientOrderId
-            params = self.omit(params, ['client_oid', 'clientOrderId'])
-        method = None
-        if market['futures'] or market['swap']:
-            size = self.number_to_string(amount) if market['futures'] else self.amount_to_precision(symbol, amount)
-            request = self.extend(request, {
-                'type': type,  # 1:open long 2:open short 3:close long 4:close short for futures
-                'size': size,
-                # 'match_price': '0',  # Order at best counter party price?(0:no 1:yes). The default is 0. If it is set as 1, the price parameter will be ignored. When posting orders at best bid price, order_type can only be 0(regular order).
-            })
-            orderType = self.safe_string(params, 'order_type')
-            # order_type == '4' means a market order
-            isMarketOrder = (type == 'market') or (orderType == '4')
-            if isMarketOrder:
-                request['order_type'] = '4'
-            else:
-                request['price'] = self.price_to_precision(symbol, price)
-            if market['futures']:
-                request['leverage'] = '10'  # or '20'
-            method = market['type'] + 'PostOrder'
+        clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
+        if clientOrderId is None:
+            brokerId = self.safe_string(self.options, 'brokerId')
+            if brokerId is not None:
+                request['clOrdId'] = brokerId + self.uuid16()
         else:
-            marginTrading = self.safe_string(params, 'margin_trading', '1')  # 1 = spot, 2 = margin
-            request = self.extend(request, {
-                'side': side,
-                'type': type,  # limit/market
-                'margin_trading': marginTrading,  # 1 = spot, 2 = margin
-            })
-            if type == 'limit':
-                request['price'] = self.price_to_precision(symbol, price)
-                request['size'] = self.amount_to_precision(symbol, amount)
-            elif type == 'market':
-                # for market buy it requires the amount of quote currency to spend
-                if side == 'buy':
-                    notional = self.safe_number(params, 'notional')
-                    createMarketBuyOrderRequiresPrice = self.safe_value(self.options, 'createMarketBuyOrderRequiresPrice', True)
-                    if createMarketBuyOrderRequiresPrice:
-                        if price is not None:
-                            if notional is None:
-                                notional = amount * price
-                        elif notional is None:
-                            raise InvalidOrder(self.id + " createOrder() requires the price argument with market buy orders to calculate total order cost(amount to spend), where cost = amount * price. Supply a price argument to createOrder() call if you want the cost to be calculated for you from price and amount, or, alternatively, add .options['createMarketBuyOrderRequiresPrice'] = False and supply the total cost value in the 'amount' argument or in the 'notional' extra parameter(the exchange-specific behaviour)")
-                    else:
-                        notional = amount if (notional is None) else notional
-                    precision = market['precision']['price']
-                    request['notional'] = self.decimal_to_precision(notional, TRUNCATE, precision, self.precisionMode)
+            request['clOrdId'] = clientOrderId
+            params = self.omit(params, ['clOrdId', 'clientOrderId'])
+        # if type == 'market':
+        #     # for market buy it requires the amount of quote currency to spend
+        #     price = basePrice
+        #     if side == 'buy':
+        #         notional = self.safe_number(params, 'sz')
+        #         createMarketBuyOrderRequiresPrice = self.safe_value(self.options, 'createMarketBuyOrderRequiresPrice', True)
+        #         if createMarketBuyOrderRequiresPrice:
+        #             if price is not None:
+        #                 if notional is None:
+        #                     notional = amount * price
+        #             elif notional is None:
+        #                 raise InvalidOrder(
+        #                     self.id + " createOrder() requires the price argument with market buy orders to calculate total order cost(amount to spend), where cost = amount * price. Supply a price argument to createOrder() call if you want the cost to be calculated for you from price and amount, or, alternatively, add .options['createMarketBuyOrderRequiresPrice'] = False and supply the total cost value in the 'amount' argument or in the 'sz' extra parameter(the exchange-specific behaviour)")
+        #         else:
+        #             notional = amount if (notional is None) else notional
+        #         precision = market['precision']['amount']
+        #         request['sz'] = self.decimal_to_precision(notional, TRUNCATE, precision, self.precisionMode)
+        #     else:
+        #         request['sz'] = self.amount_to_precision(symbol, amount)
+        # else:
+        if price is not None:
+            request['px'] = self.price_to_precision(symbol, price)
+        request['sz'] = self.amount_to_precision(symbol, amount)
+
+        if orderType in ['conditional', 'trigger']:
+            # request = self.omit(request, 'px')
+            stopPrice = self.safe_number(params, 'stopPrice')
+
+            if price is None: # market
+                price = -1
+            else: # if there's a price, they say conditional
+                orderType = 'conditional'
+                request['ordType'] = orderType
+
+            basePrice = self.safe_value(params, 'basePrice')
+            if not basePrice:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
+
+            # if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
+            #     if type == 'STOP_MARKET':
+            #         uppercaseType = 'TAKE_PROFIT_MARKET'
+            #     elif uppercaseType == 'STOP':
+            #         uppercaseType = 'TAKE_PROFIT'
+            # if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
+            if side == 'sell':
+                if stopPrice > basePrice:
+                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
                 else:
-                    request['size'] = self.amount_to_precision(symbol, amount)
-            method = 'marginPostOrders' if (marginTrading == '2') else 'spotPostOrders'
-        response = await getattr(self, method)(self.extend(request, params))
+                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['slOrdPx'] = self.price_to_precision(symbol, price)
+            else:
+                if stopPrice < basePrice:
+                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
+                else:
+                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                    request['slOrdPx'] = self.price_to_precision(symbol, price)
+
+            request['triggerPx'] = self.price_to_precision(symbol, stopPrice)
+            request['orderPx'] =  self.price_to_precision(symbol, price)
+
+        params = []
+        response = getattr(self, method)(self.extend(request, params))
         #
         #     {
-        #         "client_oid":"oktspot79",
-        #         "error_code":"",
-        #         "error_message":"",
-        #         "order_id":"2510789768709120",
-        #         "result":true
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
+        #             {
+        #                 "clOrdId": "oktswap6",
+        #                 "ordId": "312269865356374016",
+        #                 "tag": "",
+        #                 "sCode": "0",
+        #                 "sMsg": ""
+        #             }
+        #         ]
         #     }
         #
-        order = self.parse_order(response, market)
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0)
+        order = self.parse_order(first, market)
+
+        if order['status'] is None: # TEALSTREET
+            sCode = self.safe_string(first, 'sCode')
+            order['status'] = 'open' if sCode == '0' else None
+
         return self.extend(order, {
             'type': type,
             'side': side,
@@ -1771,55 +1861,41 @@ class okex(Exchange):
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        type = None
-        if market['futures'] or market['swap']:
-            type = market['type']
-        else:
-            defaultType = self.safe_string_2(self.options, 'cancelOrder', 'defaultType', market['type'])
-            type = self.safe_string(params, 'type', defaultType)
-        if type is None:
-            raise ArgumentsRequired(self.id + " cancelOrder() requires a type parameter(one of 'spot', 'margin', 'futures', 'swap').")
-        method = type + 'PostCancelOrder'
         request = {
-            'instrument_id': market['id'],
+            'instId': market['id'],
+            # 'ordId': id,  # either ordId or clOrdId is required
+            # 'clOrdId': clientOrderId,
         }
-        if market['futures'] or market['swap']:
-            method += 'InstrumentId'
-        else:
-            method += 's'
-        clientOrderId = self.safe_string_2(params, 'client_oid', 'clientOrderId')
+        type = self.safe_string(params, 'type')
+        clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
         if clientOrderId is not None:
-            method += 'ClientOid'
-            request['client_oid'] = clientOrderId
+            request['clOrdId'] = clientOrderId
         else:
-            method += 'OrderId'
-            request['order_id'] = id
-        query = self.omit(params, ['type', 'client_oid', 'clientOrderId'])
-        response = await getattr(self, method)(self.extend(request, query))
-        result = response if ('result' in response) else self.safe_value(response, market['id'], {})
-        #
-        # spot, margin
-        #
-        #     {
-        #         "btc-usdt": [
-        #             {
-        #                 "result":true,
-        #                 "client_oid":"a123",
-        #                 "order_id": "2510832677225473"
-        #             }
-        #         ]
-        #     }
-        #
-        # futures, swap
-        #
-        #     {
-        #         "result": True,
-        #         "client_oid": "oktfuture10",  # missing if requested by order_id
-        #         "order_id": "2517535534836736",
-        #         "instrument_id": "EOS-USD-190628"
-        #     }
-        #
-        return self.parse_order(result, market)
+            if type == 'stop':
+                request['algoId'] = id
+            else:
+                request['ordId'] = id
+
+        method = 'privatePostTradeCancelOrder'
+        if type == 'stop':
+            method = 'privatePostTradeCancelAlgos'
+
+        query = self.omit(params, ['clOrdId', 'clientOrderId', 'type'])
+
+        if type == 'stop':
+            response = getattr(self, method)([self.extend(request, query)])
+        else:
+            response = getattr(self, method)(self.extend(request, query))
+        # {"code":"0","data":[{"clOrdId":"","ordId":"317251910906576896","sCode":"0","sMsg":""}],"msg":""}
+        data = self.safe_value(response, 'data', [])
+        order = self.safe_value(data, 0)
+        parsed_order = self.parse_order(order, market)
+
+        if parsed_order['status'] is None: # algo order, # TEALSTREET
+            sCode = self.safe_string(order, 'sCode')
+            parsed_order['status'] = 'cancelled' if sCode == '0' else None
+
+        return parsed_order
 
     def parse_order_status(self, status):
         statuses = {
@@ -1951,9 +2027,8 @@ class okex(Exchange):
         lastTradeTimestamp = self.safe_integer(order, 'fillTime')
         side = self.safe_string(order, 'side')
         type = self.safe_string(order, 'ordType')
-        postOnly = None
+        postOnly = False
         timeInForce = None
-        price = self.safe_number_2(order, 'px', 'slOrdPx')
         if type == 'post_only':
             postOnly = True
             type = 'limit'
@@ -1964,20 +2039,21 @@ class okex(Exchange):
             timeInForce = 'IOC'
             type = 'limit'
         elif type in ['conditional', 'oco', 'trigger']:
-            type = 'market' if price == -1 else 'limit'
+            # type = 'limit' if price else 'market'
+            type = 'stop'
+        price = self.safe_number(order, 'px') or self.safe_number(order, 'ordPx') or self.safe_number(order, 'tpOrdPx') or self.safe_number(order, 'slOrdPx')
+        stopPrice = self.safe_number(order, 'triggerPx') or self.safe_number(order, 'tpTriggerPx') or self.safe_number(order, 'slTriggerPx')
+        price = None if price == -1 else price
         marketId = self.safe_string(order, 'instId')
         symbol = self.safe_symbol(marketId, market, '-')
         filled = self.safe_number(order, 'accFillSz')
-        price = self.safe_number_2(order, 'px', 'slOrdPx')
         average = self.safe_number(order, 'avgPx')
         status = self.parse_order_status(self.safe_string(order, 'state'))
         feeCostString = self.safe_string(order, 'fee')
-        amount = None
+        amount = self.safe_number(order, 'sz')
         cost = None
         if side == 'buy' and type == 'market':
             cost = self.safe_number(order, 'sz')
-        else:
-            amount = self.safe_number(order, 'sz')
         fee = None
         if feeCostString is not None:
             feeCostSigned = Precise.string_neg(feeCostString)
@@ -1990,7 +2066,6 @@ class okex(Exchange):
         clientOrderId = self.safe_string(order, 'clOrdId')
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
-        stopPrice = self.safe_number(order, 'slTriggerPx')
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closeOnTrigger')
         return self.safe_order({
