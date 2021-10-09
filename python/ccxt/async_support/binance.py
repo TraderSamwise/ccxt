@@ -3071,7 +3071,7 @@ class binance(Exchange):
             contractsRounded = int(round(notionalFloat * entryPriceFloat / market['contractSize']))
             contractsString = str(contractsRounded)
         contractsStringAbs = Precise.string_abs(contractsString)
-        contracts = self.parse_number(contractsStringAbs)
+        contracts = self.parse_number(contractsString)
         leverageBracket = self.options['leverageBrackets'][symbol]
         maintenanceMarginPercentageString = None
         for i in range(0, len(leverageBracket)):
