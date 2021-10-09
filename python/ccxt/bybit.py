@@ -1568,8 +1568,27 @@ class bybit(Exchange):
                 method = 'v2PrivatePostOrderReplace'
         elif market['futures']:
             method = 'futuresPrivatePostOrderReplace'
-        stopOrderId = self.safe_string(params, 'stop_order_id')
-        if stopOrderId is not None:
+        stopPx = self.safe_value_2(params, 'stop_px', 'stopPrice')
+        stopPx = None if stopPx == 0.0 else stopPx
+        if stopPx:
+            basePrice = self.safe_value(params, 'basePrice')
+            if not basePrice:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
+            # TEALSTREET TODO: get current mark price and set to base price
+            if not basePrice:
+                # ticker = self.fetch_ticker(symbol)
+                # if side =='buy':
+                #     basePrice = self.safe_float(ticker, 'last')
+                # basePrice = stopPx * (0.99 if side == 'buy' else 1.01) # hacky, but works
+                basePrice = float(self.price_to_precision(symbol, self.safe_value(params, 'basePrice')))
+                if side == 'buy' and basePrice > stopPx:
+                    basePrice = stopPx * 0.99  # hacky, but works
+                elif side== 'sell' and basePrice < stopPx:
+                    basePrice = stopPx * 1.01  # hacky, but works
+                # basePrice = stopPx * (0.99 if side == 'sell' else 1.01)  # hacky, but works
+            params = self.omit(params, 'stopPrice')
+            request['p_r_trigger_price'] = stopPx # IndexPrice, MarkPrice, LastPrice
             if market['swap']:
                 if market['linear']:
                     method = 'privateLinearPostStopOrderReplace'
@@ -1577,7 +1596,7 @@ class bybit(Exchange):
                     method = 'v2PrivatePostStopOrderReplace'
             elif market['futures']:
                 method = 'futuresPrivatePostStopOrderReplace'
-            request['stop_order_id'] = stopOrderId
+            request['stop_order_id'] = id
             params = self.omit(params, ['stop_order_id'])
         else:
             request['order_id'] = id
@@ -1590,6 +1609,8 @@ class bybit(Exchange):
             request['p_r_qty'] = qty
         if price is not None:
             request['p_r_price'] = float(self.price_to_precision(symbol, price))
+
+        params = self.omit(params, ['stopPrice', 'timeInForce', 'reduceOnly', 'trigger', 'closeOnTrigger'])
         response = getattr(self, method)(self.extend(request, params))
         #
         #     {
