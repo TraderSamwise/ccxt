@@ -678,6 +678,8 @@ class binance(Exchange):
             'triggerTypes': {
                 'MarkPrice': 'MARK_PRICE',
                 'LastPrice': 'CONTRACT_PRICE',
+                'Mark': 'MARK_PRICE',
+                'Last': 'CONTRACT_PRICE',
             },
             'timeInForces': {
                 'GTC': 'GTC',
@@ -1952,7 +1954,7 @@ class binance(Exchange):
             # delivery and future
             request['newOrderRespType'] = 'RESULT'  # "ACK", "RESULT", default "ACK"
         # additional required fields depending on the order type
-        timeInForceIsRequired = True
+        timeInForceIsRequired = False
         priceIsRequired = False
         stopPriceIsRequired = False
         quantityIsRequired = False
@@ -2045,7 +2047,7 @@ class binance(Exchange):
 
             # TEALSTREET
             basePrice = self.safe_value(params, 'basePrice')
-            if basePrice == 0.0:
+            if not basePrice:
                 ticker = self.fetch_ticker(symbol)
                 basePrice = ticker['last']
 
