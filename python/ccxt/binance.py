@@ -1952,7 +1952,7 @@ class binance(Exchange):
             # delivery and future
             request['newOrderRespType'] = 'RESULT'  # "ACK", "RESULT", default "ACK"
         # additional required fields depending on the order type
-        timeInForceIsRequired = False
+        timeInForceIsRequired = True
         priceIsRequired = False
         stopPriceIsRequired = False
         quantityIsRequired = False
@@ -2058,7 +2058,7 @@ class binance(Exchange):
 
         else:
             params = self.omit(params, 'stopPrice')
-        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger', 'reduceOnly'])
+        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'timeInForce', 'trigger', 'reduceOnly'])
         response = getattr(self, method)(self.extend(request, params))
         return self.parse_order(response, market)
 
