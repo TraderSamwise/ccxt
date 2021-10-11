@@ -2378,6 +2378,10 @@ class Exchange(object):
         if unifiedTimeInForce:
             return self.safe_string(self.timeInForces, unifiedTimeInForce, self.capitalize(unifiedTimeInForce))
 
+    def reverse_api_trigger_type(self, exchangeTrigger):
+        if exchangeTrigger:
+            return list(self.triggerTypes.keys())[list(self.triggerTypes.values()).index(exchangeTrigger)] or self.capitalize(exchangeTrigger)
+
     def api_trigger_type(self, unifiedTrigger):
         if unifiedTrigger:
             return self.safe_string(self.triggerTypes, unifiedTrigger, self.capitalize(unifiedTrigger))

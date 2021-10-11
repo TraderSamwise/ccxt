@@ -676,8 +676,6 @@ class binance(Exchange):
                 'limitiftouched': 'TAKE_PROFIT',
             },
             'triggerTypes': {
-                'MarkPrice': 'MARK_PRICE',
-                'LastPrice': 'CONTRACT_PRICE',
                 'Mark': 'MARK_PRICE',
                 'Last': 'CONTRACT_PRICE',
             },
@@ -1874,6 +1872,7 @@ class binance(Exchange):
         stopPrice = self.parse_number(self.omit_zero(stopPriceString))
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closePosition')
+        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'workingType'))
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1898,6 +1897,7 @@ class binance(Exchange):
             'trades': trades,
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
+            'trigger': trigger # TEALSTREET
         })
 
     def create_order(self, symbol, type, side, amount, price=None, params={}):

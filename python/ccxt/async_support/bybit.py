@@ -1211,6 +1211,7 @@ class bybit(Exchange):
         postOnly = (timeInForce == 'PO')
         reduce = self.safe_value(order, 'reduce_only')
         close = self.safe_value(order, 'close_on_trigger')
+        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger_by'))
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1235,6 +1236,7 @@ class bybit(Exchange):
             'trades': None,
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
+            'trigger': trigger # TEALSTREET
         })
 
     async def fetch_order(self, id, symbol=None, params={}):
