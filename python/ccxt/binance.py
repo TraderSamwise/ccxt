@@ -2058,7 +2058,7 @@ class binance(Exchange):
 
         else:
             params = self.omit(params, 'stopPrice')
-        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger', 'timeInForce', 'reduceOnly'])
+        params = self.omit(params, ['closeOnTrigger', 'basePrice', 'trigger', 'reduceOnly'])
         response = getattr(self, method)(self.extend(request, params))
         return self.parse_order(response, market)
 

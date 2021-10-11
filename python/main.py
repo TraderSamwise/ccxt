@@ -35,7 +35,7 @@ bybitExchange = ccxt.bybitlinear({
 bybitExchange.set_sandbox_mode(True)
 
 # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
-binanceExchange = ccxt.binancecoinm({
+binanceExchange = ccxt.binanceusdm({
     'apiKey': os.environ.get('binance_key'),
     'secret': os.environ.get('binance_secret'),
     'enableRateLimit': True,
@@ -127,10 +127,10 @@ def test_exchange_get_methods(exchange):
     #print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
     # pprint(exchange.fetch_balance())
-    pprint(exchange.fetch_open_orders())
+    # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
     #print('##########\nfetch_positions\n##########')
-    # pprint(exchange.fetch_orders('BTCUSDZ21'))
+    pprint(exchange.fetch_open_orders('BTC/USDT'))
     # pprint(exchange.cancel_order('61b45fad-0b82-4ea2-ac82-4649cfec6862', 'BTCUSDZ21', {'type': 'stop'}))
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
@@ -148,7 +148,7 @@ def test_exchange_get_methods(exchange):
 
 
 def main():
-    test_exchange_get_methods(bybitExchange)
+    test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(bitmexExchange)
     # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(binanceExchange)
