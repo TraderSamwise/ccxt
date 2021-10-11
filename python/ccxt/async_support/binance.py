@@ -666,6 +666,25 @@ class binance(Exchange):
                 '-3041': InsufficientFunds,  # {"code":-3041,"msg":"Balance is not enough"}
                 '-5013': InsufficientFunds,  # Asset transfer failed: insufficient balance"
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'MARKET',
+                'limit': 'LIMIT',
+                'stop': 'STOP_MARKET',
+                'stoplimit': 'STOP',
+                'marketiftouched': 'TAKE_PROFIT_MARKET',
+                'limitiftouched': 'TAKE_PROFIT',
+            },
+            'triggerTypes': {
+                'MarkPrice': 'MARK_PRICE',
+                'LastPrice': 'CONTRACT_PRICE',
+            },
+            'timeInForces': {
+                'GTC': 'GTC',
+                'PO': 'GTX',  # good till crossing
+                'IOC': 'IOC',
+                'FOK': 'FOK',
+            }
         })
 
     def currency_to_precision(self, currency, fee):

@@ -676,8 +676,8 @@ class binance(Exchange):
                 'limitiftouched': 'TAKE_PROFIT',
             },
             'triggerTypes': {
-                'Mark': 'MARK_PRICE',
-                'Last': 'CONTRACT_PRICE',
+                'MarkPrice': 'MARK_PRICE',
+                'LastPrice': 'CONTRACT_PRICE',
             },
             'timeInForces': {
                 'GTC': 'GTC',
@@ -1909,6 +1909,7 @@ class binance(Exchange):
         orderType = self.api_order_type(type)
         timeInForce = self.api_time_in_force(params['timeInForce'])
         workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
+
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = side.upper()
 
