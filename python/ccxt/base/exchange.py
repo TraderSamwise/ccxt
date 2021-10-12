@@ -2380,7 +2380,10 @@ class Exchange(object):
 
     def reverse_api_trigger_type(self, exchangeTrigger):
         if exchangeTrigger:
-            return list(self.triggerTypes.keys())[list(self.triggerTypes.values()).index(exchangeTrigger)] or self.capitalize(exchangeTrigger)
+            try:
+                return list(self.triggerTypes.keys())[list(self.triggerTypes.values()).index(exchangeTrigger)] or self.capitalize(exchangeTrigger)
+            except:
+                return self.capitalize(exchangeTrigger)
 
     def api_trigger_type(self, unifiedTrigger):
         if unifiedTrigger:

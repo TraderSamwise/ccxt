@@ -408,6 +408,20 @@ class bybit(Exchange):
                     'deposit': {},
                 },
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Market',
+                'stoplimit': 'Limit',
+                'marketiftouched': 'MarketIfTouched',
+                'limitiftouched': 'LimitIfTouched',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            },
         })
 
     def nonce(self):
@@ -1211,7 +1225,7 @@ class bybit(Exchange):
         postOnly = (timeInForce == 'PO')
         reduce = self.safe_value(order, 'reduce_only')
         close = self.safe_value(order, 'close_on_trigger')
-        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger_by'))
+        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger_by') or self.safe_string(order, 'sl_trigger_by') or self.safe_string(order, 'tp_trigger_by'))
         return self.safe_order({
             'info': order,
             'id': id,
