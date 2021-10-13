@@ -167,6 +167,15 @@ class Exchange(object):
         'marketiftouched': 'MarketIfTouched',
         'limitiftouched': 'LimitIfTouched',
     }
+    reverseOrderTypes = {
+        'market': 'Market',
+        'limit': 'Limit',
+        'stop_market': 'Stop',
+        'stoplimit': 'Stop',
+        'take_profit_market': 'Stop',
+        'take_profit': 'Stop',
+        'limit_maker': 'Limit',
+    }
     triggerTypes = {
         'Mark': 'ByMarkPrice',
         'Last': 'ByLastPrice',
@@ -2384,6 +2393,20 @@ class Exchange(object):
                 return list(self.triggerTypes.keys())[list(self.triggerTypes.values()).index(exchangeTrigger)] or self.capitalize(exchangeTrigger)
             except:
                 return self.capitalize(exchangeTrigger)
+
+    def reverse_api_order_type(self, exchangeOrderType):
+        if exchangeOrderType:
+            exchangeOrderType = exchangeOrderType.lower()
+            try:
+                type = self.safe_string(self.reverseOrderTypes, exchangeOrderType)
+                if type:
+                    return type
+                type = list(self.orderTypes.keys())[list(self.orderTypes.values()).index(exchangeOrderType)] or self.capitalize(exchangeOrderType)
+                if type:
+                    return type
+                return self.capitalize(exchangeOrderType)
+            except:
+                return self.capitalize(exchangeOrderType)
 
     def api_trigger_type(self, unifiedTrigger):
         if unifiedTrigger:
