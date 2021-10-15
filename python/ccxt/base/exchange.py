@@ -113,6 +113,7 @@ class Exchange(object):
     version = None
     certified = False
     pro = False
+    refCode = None # Tealstreet (VERY IMPORTANT)
 
     # rate limiter settings
     enableRateLimit = True

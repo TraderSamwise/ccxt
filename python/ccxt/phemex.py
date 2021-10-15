@@ -99,6 +99,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'certified': False,
             'pro': True,
             'hostname': 'api.phemex.com',
+            'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelAllOrders': True,  # swap contracts only
                 'cancelOrder': True,
@@ -1826,7 +1827,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'triggerType': trigger,  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
-            'clOrdID': self.uuid(),  # max length 40
+            'clOrdID': self.refCode + '_' + self.uuid22(),  # max length 40
             # 'orderQty': self.amount_to_precision(amount, symbol),
             'reduceOnly': reduceOnly,
             'closeOnTrigger': closeOnTrigger,  # implicit reduceOnly and cancel other orders in the same direction
