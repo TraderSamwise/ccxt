@@ -507,6 +507,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
         status = self.safe_string(market, 'status')
         active = status == 'Listed'
+        lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
+        contractSize = self.safe_number(market, 'contractSize', 1) # TEALSTREET
         return {
             'id': id,
             'symbol': symbol,
@@ -528,6 +530,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'ratioScale': ratioScale,
             'precision': precision,
             'limits': limits,
+            'contractSize': contractSize, # TEALSTREET
+            'lotSize': lotSize # TEALSTREET
         }
 
     def parse_spot_market(self, market):
