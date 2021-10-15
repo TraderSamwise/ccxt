@@ -457,7 +457,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'amount': None,
                 'price': None,
             }
-            lotSize = self.safe_number(market, 'lotSize')
+            lotSize = self.safe_number(market, 'lotSize') # TEALSTREET
+            contractSize = 1 # TEALSTREET
             tickSize = self.safe_number(market, 'tickSize')
             if lotSize is not None:
                 precision['amount'] = lotSize
@@ -500,6 +501,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'future': future,
                 'prediction': prediction,
                 'info': market,
+                'contractSize': contractSize, # TEALSTREET
+                'lotSize': lotSize # TEALSTREET
             })
         return result
 
