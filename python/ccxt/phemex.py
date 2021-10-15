@@ -465,17 +465,15 @@ class phemex(Exchange, PhemexTealstreetMixin):
         quoteId = self.safe_string(market, 'quoteCurrency')
         base = self.safe_currency_code(baseId)
         quote = self.safe_currency_code(quoteId)
-        symbol = base + '/' + quote
         type = self.safe_string_lower(market, 'type')
-        taker = None
-        maker = None
         inverse = False
         spot = False
         swap = True
-        settlementCurrencyId = self.safe_string(market, 'settlementCurrency')
+        settlementCurrencyId = self.safe_string(market, 'settleCurrency')
         if settlementCurrencyId != quoteId:
             inverse = True
         linear = not inverse
+        symbol = id if (inverse) else (base + '/' + quote)  # fix for uBTCUSD inverse
         precision = {
             'amount': self.safe_number(market, 'lotSize'),
             'price': self.safe_number(market, 'tickSize'),
@@ -483,26 +481,24 @@ class phemex(Exchange, PhemexTealstreetMixin):
         priceScale = self.safe_integer(market, 'priceScale')
         ratioScale = self.safe_integer(market, 'ratioScale')
         valueScale = self.safe_integer(market, 'valueScale')
-        minPriceEp = self.safe_number(market, 'minPriceEp')
-        maxPriceEp = self.safe_number(market, 'maxPriceEp')
-        makerFeeRateEr = self.safe_number(market, 'makerFeeRateEr')
-        takerFeeRateEr = self.safe_number(market, 'takerFeeRateEr')
-        if makerFeeRateEr is not None:
-            maker = self.from_en(makerFeeRateEr, ratioScale, 0.00000001)
-        if takerFeeRateEr is not None:
-            taker = self.from_en(takerFeeRateEr, ratioScale, 0.00000001)
+        minPriceEp = self.safe_string(market, 'minPriceEp')
+        maxPriceEp = self.safe_string(market, 'maxPriceEp')
+        makerFeeRateEr = self.safe_string(market, 'makerFeeRateEr')
+        takerFeeRateEr = self.safe_string(market, 'takerFeeRateEr')
+        maker = self.parse_number(self.from_en(makerFeeRateEr, ratioScale))
+        taker = self.parse_number(self.from_en(takerFeeRateEr, ratioScale))
         limits = {
             'amount': {
                 'min': precision['amount'],
                 'max': None,
             },
             'price': {
-                'min': self.from_en(minPriceEp, priceScale, precision['price']),
-                'max': self.from_en(maxPriceEp, priceScale, precision['price']),
+                'min': self.parse_number(self.from_en(minPriceEp, priceScale)),
+                'max': self.parse_number(self.from_en(maxPriceEp, priceScale)),
             },
             'cost': {
                 'min': None,
-                'max': self.parse_safe_number(self.safe_string(market, 'maxOrderQty')),
+                'max': self.parse_number(self.safe_string(market, 'maxOrderQty')),
             },
         }
         status = self.safe_string(market, 'status')
