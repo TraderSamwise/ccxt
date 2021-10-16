@@ -1440,6 +1440,8 @@ class okex(Exchange, OkexTealstreetMixin):
         if orderType in ['conditional', 'trigger']:
             # request = self.omit(request, 'px')
             stopPrice = self.safe_number(params, 'stopPrice')
+            request['reduceOnly'] = closeOnTrigger
+            params = self.omit(['reduceOnly'])
 
             if price is None: # market
                 price = -1
