@@ -608,6 +608,8 @@ class okex(Exchange):
             minCost = self.parse_number(Precise.string_mul(tickSize, minAmountString))
         active = True
         fees = self.safe_value_2(self.fees, type, 'trading', {})
+        contractSize = self.safe_number(market, 'ctVal', 1) # TEALSTREET
+        lotSize = self.safe_number(market, 'lotSz', 1) # TEALSTREET
         return self.extend(fees, {
             'id': id,
             'symbol': symbol,
@@ -637,6 +639,8 @@ class okex(Exchange):
                     'max': None,
                 },
             },
+            'contractSize': contractSize, # TEALSTREET
+            'lotSize': lotSize # TEALSTREET
         })
 
     async def fetch_markets_by_type(self, type, params={}):
@@ -3197,7 +3201,7 @@ class okex(Exchange):
             'marginRatio': marginRatio,
             'collateral': collateral,
             'marginType': marginType,
-            'percentage': percentage,  # not important
+            'percentage': percentage,
         }
 
     async def fetch_ledger(self, code=None, since=None, limit=None, params={}):

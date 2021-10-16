@@ -709,6 +709,8 @@ class okex(Exchange, OkexTealstreetMixin):
             minCost = self.parse_number(Precise.string_mul(tickSize, minAmountString))
         active = True
         fees = self.safe_value_2(self.fees, type, 'trading', {})
+        contractSize = self.safe_number(market, 'ctVal', 1) # TEALSTREET
+        lotSize = self.safe_number(market, 'lotSz', 1) # TEALSTREET
         return self.extend(fees, {
             'id': id,
             'symbol': symbol,
@@ -738,6 +740,8 @@ class okex(Exchange, OkexTealstreetMixin):
                     'max': None,
                 },
             },
+            'contractSize': contractSize, # TEALSTREET
+            'lotSize': lotSize # TEALSTREET
         })
 
     def fetch_markets_by_type(self, type, params={}):

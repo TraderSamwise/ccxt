@@ -38,6 +38,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'certified': False,
             'pro': True,
             'hostname': 'api.phemex.com',
+            'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelAllOrders': True,  # swap contracts only
                 'cancelOrder': True,
@@ -384,15 +385,15 @@ class phemex(Exchange, PhemexTealstreetMixin):
         quoteId = self.safe_string(market, 'quoteCurrency')
         base = self.safe_currency_code(baseId)
         quote = self.safe_currency_code(quoteId)
-        symbol = base + '/' + quote
         type = self.safe_string_lower(market, 'type')
         inverse = False
         spot = False
         swap = True
-        settlementCurrencyId = self.safe_string(market, 'settlementCurrency')
+        settlementCurrencyId = self.safe_string(market, 'settleCurrency')
         if settlementCurrencyId != quoteId:
             inverse = True
         linear = not inverse
+        symbol = id if (inverse) else (base + '/' + quote)  # fix for uBTCUSD inverse
         precision = {
             'amount': self.safe_number(market, 'lotSize'),
             'price': self.safe_number(market, 'tickSize'),
@@ -422,6 +423,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
         status = self.safe_string(market, 'status')
         active = status == 'Listed'
+        lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
+        contractSize = self.safe_number_strip_alpha(market, 'contractSize', 1) # TEALSTREET
         return {
             'id': id,
             'symbol': symbol,
@@ -443,6 +446,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'ratioScale': ratioScale,
             'precision': precision,
             'limits': limits,
+            'contractSize': contractSize, # TEALSTREET
+            'lotSize': lotSize # TEALSTREET
         }
 
     def parse_spot_market(self, market):
@@ -1734,7 +1739,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             # 'trigger': 'ByLastPrice',  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
-            # 'clOrdID': self.uuid(),  # max length 40
+            'clOrdID': self.refCode + '_' + self.uuid22(),  # max length 40
             # 'orderQty': self.amount_to_precision(amount, symbol),
             # 'reduceOnly': False,
             # 'closeOnTrigger': False,  # implicit reduceOnly and cancel other orders in the same direction

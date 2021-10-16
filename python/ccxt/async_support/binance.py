@@ -675,6 +675,15 @@ class binance(Exchange):
                 'marketiftouched': 'TAKE_PROFIT_MARKET',
                 'limitiftouched': 'TAKE_PROFIT',
             },
+            'reverseOrderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop_market': 'Stop',
+                'stoplimit': 'Stop',
+                'take_profit_market': 'Stop',
+                'take_profit': 'Stop',
+                'limit_maker': 'Limit',
+            },
             'triggerTypes': {
                 'Mark': 'MARK_PRICE',
                 'Last': 'CONTRACT_PRICE',
@@ -1859,9 +1868,7 @@ class binance(Exchange):
         #   Note self is not the actual cost, since Binance futures uses leverage to calculate margins.
         cost = self.safe_number_2(order, 'cummulativeQuoteQty', 'cumQuote')
         id = self.safe_string(order, 'orderId')
-        type = self.safe_string_lower(order, 'type')
-        if type == 'limit_maker':
-            type = 'limit'
+        type = self.reverse_api_order_type(self.safe_string_lower(order, 'type'))
         side = self.safe_string_lower(order, 'side')
         fills = self.safe_value(order, 'fills', [])
         trades = self.parse_trades(fills, market)
@@ -1904,7 +1911,7 @@ class binance(Exchange):
         await self.load_markets()
         market = self.market(symbol)
         defaultType = self.safe_string_2(self.options, 'createOrder', 'defaultType', 'spot')
-        orderType = self.safe_string(params, 'type', defaultType)
+        orderType = self.api_order_type(type.lower())
         clientOrderId = self.safe_string_2(params, 'newClientOrderId', 'clientOrderId')
         params = self.omit(params, ['type', 'newClientOrderId', 'clientOrderId'])
         method = 'privatePostOrder'

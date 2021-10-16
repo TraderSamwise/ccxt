@@ -670,10 +670,19 @@ class binance(Exchange):
             'orderTypes': {
                 'market': 'MARKET',
                 'limit': 'LIMIT',
-                'stop': 'STOP_MARKET',
+                'stop': 'STOP',
                 'stoplimit': 'STOP',
                 'marketiftouched': 'TAKE_PROFIT_MARKET',
                 'limitiftouched': 'TAKE_PROFIT',
+            },
+            'reverseOrderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop_market': 'Stop',
+                'stoplimit': 'Stop',
+                'take_profit_market': 'Stop',
+                'take_profit': 'Stop',
+                'limit_maker': 'Limit',
             },
             'triggerTypes': {
                 'Mark': 'MARK_PRICE',
@@ -1859,9 +1868,7 @@ class binance(Exchange):
         #   Note self is not the actual cost, since Binance futures uses leverage to calculate margins.
         cost = self.safe_number_2(order, 'cummulativeQuoteQty', 'cumQuote')
         id = self.safe_string(order, 'orderId')
-        type = self.safe_string_lower(order, 'type')
-        if type == 'limit_maker':
-            type = 'limit'
+        type = self.reverse_api_order_type(self.safe_string_lower(order, 'type'))
         side = self.safe_string_lower(order, 'side')
         fills = self.safe_value(order, 'fills', [])
         trades = self.parse_trades(fills, market)
@@ -1908,7 +1915,7 @@ class binance(Exchange):
 
         # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        orderType = self.api_order_type(type)
+        orderType = self.api_order_type(type.lower())
         timeInForce = self.api_time_in_force(params['timeInForce'])
         workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
 
@@ -1978,6 +1985,9 @@ class binance(Exchange):
         #     TAKE_PROFIT_MARKET   stopPrice
         #     TRAILING_STOP_MARKET callbackRate
         #
+        # TEALSTREET
+        if uppercaseType == 'STOP' and not price:
+            uppercaseType = 'STOP_MARKET'
         if uppercaseType == 'MARKET':
             quoteOrderQty = self.safe_value(self.options, 'quoteOrderQty', False)
             if quoteOrderQty:
