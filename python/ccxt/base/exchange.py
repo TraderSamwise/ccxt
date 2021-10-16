@@ -2367,6 +2367,11 @@ class Exchange(object):
         value = self.safe_string(dictionary, key)
         return self.parse_number(value, default)
 
+    def safe_number_strip_alpha(self, dictionary, key, default=None): # TEALSTREET
+        value = self.safe_string(dictionary, key)
+        number = ''.join(x for x in value if x in ".1234567890")
+        return self.parse_number(number, default)
+
     def safe_number_2(self, dictionary, key1, key2, default=None):
         value = self.safe_string_2(dictionary, key1, key2)
         return self.parse_number(value, default)

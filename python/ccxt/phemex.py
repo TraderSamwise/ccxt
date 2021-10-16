@@ -504,7 +504,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         status = self.safe_string(market, 'status')
         active = status == 'Listed'
         lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
-        contractSize = self.safe_number(market, 'contractSize', 1) # TEALSTREET
+        contractSize = self.safe_number_strip_alpha(market, 'contractSize', 1) # TEALSTREET
         return {
             'id': id,
             'symbol': symbol,
