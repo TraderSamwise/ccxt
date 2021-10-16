@@ -5,10 +5,10 @@ const fs = require ('fs')
 
 
 (async () => {
-    const exchange = new ccxt.phemex ({ enableRateLimit: true });
+    const exchange = new ccxt.bybit({ enableRateLimit: true });
     while (true) {
-        await exchange.loadMarkets()
-        console.log(exchange.currencies.USD)
+        const res = await exchange.fetchOHLCV("XRP/USD", "1m", Date.now() - 1000*120)
+        console.log(res)
 
     }
 }) ();

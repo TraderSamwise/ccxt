@@ -785,6 +785,7 @@ module.exports = class bybit extends Exchange {
         if (limit !== undefined) {
             request['limit'] = limit; // max 200, default 200
         }
+        console.log (market);
         const method = market['linear'] ? 'publicLinearGetKline' : 'v2PublicGetKlineList';
         const response = await this[method] (this.extend (request, params));
         //
