@@ -27,7 +27,7 @@ bitmexExchange = ccxt.bitmex({
 bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-bybitExchange = ccxt.bybitlinear({
+bybitExchange = ccxt.bybitinverse({
     'apiKey': os.environ.get('bybit_key'),
     'secret': os.environ.get('bybit_secret'),
     'enableRateLimit': True
@@ -49,11 +49,11 @@ binanceExchange = ccxt.binanceusdm({
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 phemexExchange = ccxt.phemex({
-    'apiKey': os.environ.get('phemex_key'),
-    'secret': os.environ.get('phemex_secret'),
+    'apiKey': os.environ.get('phemex_key_main'),
+    'secret': os.environ.get('phemex_secret_main'),
     'enableRateLimit': True,
 })
-phemexExchange.urls['api'] = phemexExchange.urls['test']
+# phemexExchange.urls['api'] = phemexExchange.urls['test']
 
 okexExchange = ccxt.okex({
     'apiKey': os.environ.get('okex_key'),
@@ -70,18 +70,18 @@ def test_exchange_get_methods(exchange):
     print(exchange.name)
 
     # result = exchange.create_order(
-    #          'BTC-USD-SWAP',
-    #     'stoplimit',
+    #     'BTC/USD',
+    #     'limit',
     #     'buy',
     #     1,
-    #     35000,
+    #     55000,
     #     {
-    #         'stopPrice': 48000,
-    #         'timeInForce': 'PO',
+    #         'stopPrice': None,
+    #         'timeInForce': 'GTC',
     #         'reduceOnly': None,
-    #         'trigger': 'Index',
-    #         'closeOnTrigger': True,
-    #         'basePrice': 23890
+    #         'trigger': 'Mark',
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
     #     })
     #
     # # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
@@ -96,64 +96,63 @@ def test_exchange_get_methods(exchange):
     #     pprint(order_before)
     #     print('ORDER BEFORE')
 
-        # result = exchange.create_order(
-        #     'BTC/USD',
-        #     'limit',
-        #     'buy',
-        #     1,
-        #     40000,
-        #     {
-        #         'stopPrice': None,
-        #         'timeInForce': 'GTC',  # GTC, PO
-        #         'reduceOnly': False,
-        #         'trigger': None,
-        #         'closeOnTrigger': None,
-        #         'basePrice': None
-        #     })
+    # result = exchange.create_order(
+    #     'BTC/USD',
+    #     'limit',
+    #     'buy',
+    #     1,
+    #     40000,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': 'GTC',  # GTC, PO
+    #         'reduceOnly': False,
+    #         'trigger': None,
+    #         'closeOnTrigger': None,
+    #         'basePrice': None
+    #     })
 
-        # cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
-        # print('CANCEL RESULT')
-        # pprint(cancel_result)
-        # print('CANCEL RESULT')
-        #
-        # order_after = exchange.fetch_order(order['id'], 'BTC/USD')
-        # print('ORDER AFTER')
-        # pprint(order_after)
-        # print('ORDER AFTER')
-        #
-        # hi = True
+    # cancel_result = exchange.cancel_order(order['id'], 'BTC/USD')
+    # print('CANCEL RESULT')
+    # pprint(cancel_result)
+    # print('CANCEL RESULT')
+    #
+    # order_after = exchange.fetch_order(order['id'], 'BTC/USD')
+    # print('ORDER AFTER')
+    # pprint(order_after)
+    # print('ORDER AFTER')
+    #
+    # hi = True
 
-
-    #print('##########\nfetch_balance\n##########')
+    # print('##########\nfetch_balance\n##########')
     # pprint(exchange.fetch_markets())
     # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_open_orders(params={'type': 'oco'}))
-    #print('##########\nfetch_positions\n##########')
-    pprint(exchange.fetch_open_orders('BTC/USDT'))
+    # print('##########\nfetch_positions\n##########')
+    # pprint(exchange.fetch_open_orders('BTC/USD'))
     # pprint(exchange.cancel_order('61b45fad-0b82-4ea2-ac82-4649cfec6862', 'BTCUSDZ21', {'type': 'stop'}))
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={'stopPrice': None, 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000)
     # exchange.create_order('BTC/USD', 'limit', 'buy', 1, 36000, params={ 'timeInForce': 'PO', 'reduceOnly': True, 'trigger': None, 'closeOnTrigger': None})
-    #print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
-    #pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
-    #print('##########\nfetch_orders\n##########')
+    # print(exchange.fetch_positions(None, {'currency': 'BTC'})) # ph emex - make ts call that calls all
+    # pprint(exchange.fetch_positions(None, {'type': 'all'})) # bybit
+    # pprint(exchange.fetch_positions())
+    # print('##########\nfetch_orders\n##########')
     # pprint(exchange.fetch_orders())
-    # pprint(exchange.fetch_open_orders('BTC/USD', None, None)) # phemex /  bybit
+    pprint(exchange.fetch_open_orders('BTCUSD', None, None)) # phemex /  bybit
     # pprint(exchange.fetch_orders()) # phemex /  bybit
-    #pprint(exchange.fetch_open_orders())
+    # pprint(exchange.fetch_open_orders())
     # print('##########\nfetch_my_trades\n##########')
-    #pprint(exchange.fetch_my_trades())
+    # pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
 
-
 def main():
-    test_exchange_get_methods(binanceExchange)
+    # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(bitmexExchange)
     # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
-    # test_exchange_get_methods(okexExchange)
+    test_exchange_get_methods(phemexExchange)
 
 if __name__ == "__main__":
     main()

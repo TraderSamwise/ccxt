@@ -2402,7 +2402,7 @@ class Exchange(object):
 
     def reverse_api_order_type(self, exchangeOrderType):
         if exchangeOrderType:
-            exchangeOrderType = exchangeOrderType.lower()
+            # exchangeOrderType = exchangeOrderType.lower()
             try:
                 type = self.safe_string(self.reverseOrderTypes, exchangeOrderType)
                 if type:

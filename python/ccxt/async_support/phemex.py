@@ -323,7 +323,34 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 'x-phemex-request-expiry': 60,  # in seconds
                 'createOrderByQuoteRequiresPrice': True,
             },
-            'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
+            'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Stop',
+                'stoplimit': 'StopLimit',
+                'marketiftouched': 'MarketIfTouched',
+                'limitiftouched': 'LimitIfTouched',
+            },
+           'reverseOrderTypes': {
+                'Market': 'Market',
+                'Limit': 'Limit',
+                'Stop': 'Stop',
+                'StopLimit': 'Stop',
+                'MarketIfTouched': 'Stop',
+                'LimitIfTouched': 'Stop',
+            },
+            'triggerTypes': {
+                'Mark': 'ByMarkPrice',
+                'Last': 'ByLastPrice',
+            },
+            'timeInForces': {
+                'GTC': 'GoodTillCancel',
+                'PO': 'PostOnly',
+                'IOC': 'ImmediateOrCancel',
+                'FOK': 'FillOrKill',
+            }
         })
 
     def parse_safe_number(self, value=None):
@@ -1587,7 +1614,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         average = self.from_ep(self.safe_number(order, 'avgPriceEp'), market)
         status = self.parse_order_status(self.safe_string(order, 'ordStatus'))
         side = self.safe_string_lower(order, 'side')
-        type = self.parse_order_type(self.safe_string(order, 'ordType'))
+        type = self.reverse_api_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
         timestamp = self.safe_integer_product_2(order, 'actionTimeNs', 'createTimeNs', 0.000001)
         fee = None
         feeCost = self.from_ev(self.safe_number(order, 'cumFeeEv'), market)
@@ -1671,8 +1698,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         symbol = self.safe_symbol(marketId, market)
         status = self.parse_order_status(self.safe_string(order, 'ordStatus'))
         side = self.safe_string_lower(order, 'side')
-        type = self.parse_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
-        price = self.from_ep(self.safe_number(order, 'priceEp'), market)
+        type = self.reverse_api_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
+        price = self.parse_number(self.from_ep(self.safe_string(order, 'priceEp'), market))
         amount = self.safe_number(order, 'orderQty')
         filled = self.safe_number(order, 'cumQty')
         remaining = self.safe_number(order, 'leavesQty')
@@ -1687,6 +1714,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         fee = self.from_er(self.safe_number(order, 'feeRateEr'))
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closeOnTrigger')
+        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger') or self.safe_string(order, 'slTrigger') or self.safe_string(order, 'tpTrigger'))
+        average = price
         return {
             'info': order,
             'id': id,
@@ -1705,12 +1734,13 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'filled': filled,
             'remaining': remaining,
             'cost': cost,
-            'average': None,
+            'average': average,
             'status': status,
             'fee': fee,
             'trades': None,
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
+            'trigger': trigger # TEALSTREET
         }
 
     def parse_order(self, order, market=None):
