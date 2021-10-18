@@ -293,4 +293,3 @@ base = [
 ]
 
 __all__ = base + errors.__all__ + exchanges
-print(__all__)
