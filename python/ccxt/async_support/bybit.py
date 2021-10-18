@@ -1058,7 +1058,9 @@ class bybit(Exchange):
             result[code] = account
         return self.parse_balance(result, False)
 
-    def parse_order_status(self, status):
+    def parse_order_status(self, status, cancelType):
+        if cancelType and cancelType != 'UNKNOWN':
+            return 'canceled'
         statuses = {
             # basic orders
             'Created': 'open',
@@ -1182,13 +1184,13 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        # hi
         timestamp = self.parse8601(self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp', 'created_time') or self.iso8601(self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
         id = self.safe_string_2(order, 'stop_order_id', 'order_id')
-        status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'))
+        status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'), self.safe_string(order, 'cancel_type'))
         type = self.safe_string_lower_2(order, 'order_type', 'stop_order_type')
+        stopType = self.safe_string_lower(order, 'stop_order_type')
         rawOrderStatus = self.safe_string_2(order, 'order_status', 'stop_order_status')
-        if rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered':
+        if rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered' or stopType == 'TakeProfit' or stopType == 'StopLoss' or stopType == 'TrailingStop' or stopType == 'Stop':
             if type == 'limit' or type == 'limitiftouched':
                 type = 'stoplimit'
             elif type == 'market' or type == 'marketiftouched':
