@@ -679,9 +679,9 @@ class binance(Exchange):
                 'market': 'Market',
                 'limit': 'Limit',
                 'stop_market': 'Stop',
-                'stoplimit': 'Stop',
+                'stoplimit': 'StopLimit',
                 'take_profit_market': 'Stop',
-                'take_profit': 'Stop',
+                'take_profit': 'StopLimit',
                 'limit_maker': 'Limit',
             },
             'triggerTypes': {

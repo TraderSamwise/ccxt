@@ -679,9 +679,9 @@ class binance(Exchange):
                 'market': 'Market',
                 'limit': 'Limit',
                 'stop_market': 'Stop',
-                'stoplimit': 'Stop',
+                'stoplimit': 'StopLimit',
                 'take_profit_market': 'Stop',
-                'take_profit': 'Stop',
+                'take_profit': 'StopLimit',
                 'limit_maker': 'Limit',
             },
             'triggerTypes': {
@@ -1988,6 +1988,7 @@ class binance(Exchange):
         # TEALSTREET
         if uppercaseType == 'STOP' and not price:
             uppercaseType = 'STOP_MARKET'
+            request['type'] = uppercaseType
         if uppercaseType == 'MARKET':
             quoteOrderQty = self.safe_value(self.options, 'quoteOrderQty', False)
             if quoteOrderQty:
