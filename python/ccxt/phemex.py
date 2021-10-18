@@ -43,7 +43,7 @@ class PhemexTealstreetMixin(object):
         markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
         notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
         collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
-        leverage = notional / collateral
+        leverage = notional / (collateral or 1)
         initialMarginPercentage = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
         maintenanceMarginPercentage = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
         initialMargin = initialMarginPercentage * notional
@@ -54,7 +54,7 @@ class PhemexTealstreetMixin(object):
         liquidationPrice = float(Precise.string_div(self.safe_string(position, 'liquidationPriceEp'), '1e4'))
         status = 'open'
         entryPrice = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
-        marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+        marginRatio = maintenanceMargin / (collateral or 1)  # not sure what this is, followed binance calc
         marginType = 'cross'  # only cross
         percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
 
@@ -398,9 +398,9 @@ class phemex(Exchange, PhemexTealstreetMixin):
                'Market': 'Market',
                'Limit': 'Limit',
                'Stop': 'Stop',
-               'StopLimit': 'Stop',
+               'StopLimit': 'StopLimit',
                'MarketIfTouched': 'Stop',
-               'LimitIfTouched': 'Stop',
+               'LimitIfTouched': 'StopLimit',
             },
            'triggerTypes': {
                 'Mark': 'ByMarkPrice',

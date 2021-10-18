@@ -333,13 +333,13 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 'marketiftouched': 'MarketIfTouched',
                 'limitiftouched': 'LimitIfTouched',
             },
-           'reverseOrderTypes': {
-                'Market': 'Market',
-                'Limit': 'Limit',
-                'Stop': 'Stop',
-                'StopLimit': 'Stop',
-                'MarketIfTouched': 'Stop',
-                'LimitIfTouched': 'Stop',
+            'reverseOrderTypes': {
+               'Market': 'Market',
+               'Limit': 'Limit',
+               'Stop': 'Stop',
+               'StopLimit': 'StopLimit',
+               'MarketIfTouched': 'Stop',
+               'LimitIfTouched': 'StopLimit',
             },
             'triggerTypes': {
                 'Mark': 'ByMarkPrice',
