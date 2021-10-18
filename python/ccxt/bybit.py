@@ -1186,10 +1186,13 @@ class bybit(Exchange):
         timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp') or self.safe_string(order, 'created_time'))
         id = self.safe_string_2(order, 'order_id', 'stop_order_id')
         status = self.parse_order_status(self.safe_string_2(order, 'order_status', 'stop_order_status'))
-        type = self.safe_string_lower(order, 'order_type')
-        rawOrderStatus = self.safe_string(order, 'order_status')
-        if type == 'limit' and (rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered'):
-            type = 'stop'
+        type = self.safe_string_lower_2(order, 'order_type', 'stop_order_type')
+        rawOrderStatus = self.safe_string_2(order, 'order_status', 'stop_order_status')
+        if rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered':
+            if type == 'limit' or type == 'limitiftouched':
+                type = 'stoplimit'
+            elif type == 'market' or type == 'marketiftouched':
+                type = 'stop'
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
