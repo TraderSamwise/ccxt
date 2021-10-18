@@ -1693,6 +1693,9 @@ class okex(Exchange, OkexTealstreetMixin):
         type = self.safe_string(order, 'ordType')
         postOnly = False
         timeInForce = None
+        price = self.safe_number(order, 'px') or self.safe_number(order, 'ordPx') or self.safe_number(order, 'tpOrdPx') or self.safe_number(order, 'slOrdPx')
+        stopPrice = self.safe_number(order, 'triggerPx') or self.safe_number(order, 'tpTriggerPx') or self.safe_number(order, 'slTriggerPx')
+        price = None if price == -1 else price
         if type == 'post_only':
             postOnly = True
             type = 'limit'
@@ -1704,13 +1707,10 @@ class okex(Exchange, OkexTealstreetMixin):
             type = 'limit'
         elif type in ['conditional', 'oco', 'trigger']:
             # type = 'limit' if price else 'market'
-            type = 'stop'
-        price = self.safe_number(order, 'px') or self.safe_number(order, 'ordPx') or self.safe_number(order,
-                                                                                                      'tpOrdPx') or self.safe_number(
-            order, 'slOrdPx')
-        stopPrice = self.safe_number(order, 'triggerPx') or self.safe_number(order, 'tpTriggerPx') or self.safe_number(
-            order, 'slTriggerPx')
-        price = None if price == -1 else price
+            if price:
+                type = 'stoplimit'
+            else:
+                type = 'stop'
         marketId = self.safe_string(order, 'instId')
         symbol = self.safe_symbol(marketId, market, '-')
         filled = self.safe_number(order, 'accFillSz')
