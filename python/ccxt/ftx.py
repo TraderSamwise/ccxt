@@ -1326,6 +1326,9 @@ class ftx(Exchange, FTXTealstreetMixin):
         if triggerPriceIsDefined or orderPriceIsDefined or trailValueIsDefined:
             method = 'privatePostConditionalOrdersOrderIdModify'
             request['order_id'] = id
+            if not orderPriceIsDefined and price:
+                orderPrice = price
+                orderPriceIsDefined = True
             if triggerPriceIsDefined:
                 request['triggerPrice'] = float(self.price_to_precision(symbol, triggerPrice))
             if orderPriceIsDefined:
@@ -1414,7 +1417,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         clientOrderId = self.safe_value_2(params, 'client_order_id', 'clientOrderId')
         if clientOrderId is None:
             request['order_id'] = int(id)
-            if type == 'stop' or type == 'trailingStop' or type == 'takeProfit' or type == 'trailing_stop' or type == 'take_profit':
+            if type == 'stop' or type == 'stoplimit' or type == 'trailingStop' or type == 'takeProfit' or type == 'trailing_stop' or type == 'take_profit':
                 method = 'privateDeleteConditionalOrdersOrderId'
         else:
             request['client_order_id'] = clientOrderId

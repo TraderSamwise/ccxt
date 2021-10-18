@@ -1145,7 +1145,9 @@ class ftx(Exchange, FTXTealstreetMixin):
         side = self.safe_string(order, 'side')
         type = self.safe_string(order, 'type')
         average = self.safe_number(order, 'avgFillPrice')
-        price = self.safe_number(order, 'price')
+        price = self.safe_number_2(order, 'price', 'orderPrice')
+        if type == 'stop' and price:
+            type = 'stoplimit'
         cost = None
         if filled is not None and price is not None:
             cost = filled * price
