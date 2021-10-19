@@ -1673,6 +1673,12 @@ module.exports = class Exchange {
         return this.parseNumber (value, d)
     }
 
+     safeNumberStripAlpha (object, dictionary, key, d = undefined) { // TEALSTREET
+        const value = this.safeString (dictionary, key);
+        const number = value.replace (/[^\d.-]/g, '');
+        return this.parseNumber (number, d);
+    }
+
     safeNumber2 (object, key1, key2, d = undefined) {
         const value = this.safeString2 (object, key1, key2)
         return this.parseNumber (value, d)
