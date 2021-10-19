@@ -1582,7 +1582,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         statuses = {
             'Created': 'open',
             'Untriggered': 'open',
-            'Deactivated': 'closed',
+            'Deactivated': 'canceled',
             'Triggered': 'open',
             'Rejected': 'rejected',
             'New': 'open',
@@ -1875,6 +1875,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 request['baseQtyEv'] = self.to_ev(amount, market)
         elif market['swap']:
             request['orderQty'] = int(amount)
+        if price and type == 'Stop':
+            type = 'StopLimit'
         if type in ['Limit', 'StopLimit', 'LimitIfTouched']:
             request['priceEp'] = self.to_ep(price, market)
         basePrice = self.safe_value(params, 'basePrice')
