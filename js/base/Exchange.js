@@ -1680,7 +1680,7 @@ module.exports = class Exchange {
     }
 
     safeNumber2 (object, key1, key2, d = undefined) {
-        const value = this.safeString2 (object, key1, key2)g
+        const value = this.safeString2 (object, key1, key2)
         return this.parseNumber (value, d)
     }
 
