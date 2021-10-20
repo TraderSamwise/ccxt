@@ -411,6 +411,8 @@ module.exports = class phemex extends Exchange {
         };
         const status = this.safeString (market, 'status');
         const active = status === 'Listed';
+        const lotSize = this.safeNumber (market, 'lotSize', 1); // TEALSTREET
+        const contractSize = this.safeNumberStripAlpha (market, 'contractSize', 1); // TEALSTREET
         return {
             'id': id,
             'symbol': symbol,
@@ -432,6 +434,8 @@ module.exports = class phemex extends Exchange {
             'ratioScale': ratioScale,
             'precision': precision,
             'limits': limits,
+            'contractSize': contractSize, // TEALSTREET
+            'lotSize': lotSize, // TEALSTREET
         };
     }
 

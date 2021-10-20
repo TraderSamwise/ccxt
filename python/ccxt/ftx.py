@@ -1417,7 +1417,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         clientOrderId = self.safe_value_2(params, 'client_order_id', 'clientOrderId')
         if clientOrderId is None:
             request['order_id'] = int(id)
-            if type == 'stop' or type == 'stoplimit' or type == 'trailingStop' or type == 'takeProfit' or type == 'trailing_stop' or type == 'take_profit':
+            if type.lower() == 'stop' or type.lower() == 'stoplimit' or type == 'trailingStop' or type == 'takeProfit' or type == 'trailing_stop' or type == 'take_profit':
                 method = 'privateDeleteConditionalOrdersOrderId'
         else:
             request['client_order_id'] = clientOrderId
