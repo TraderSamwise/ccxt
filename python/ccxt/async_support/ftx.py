@@ -1698,7 +1698,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             price = self.safe_float(position, 'recentAverageOpenPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
-            leverage = notional / collateral
+            leverage = notional / collateral if collateral else None
             initialMarginPercentage = self.safe_float(position, 'initialMarginRequirement')
             maintenanceMarginPercentage = self.safe_float(position, 'maintenanceMarginRequirement')
             initialMargin = initialMarginPercentage * notional
@@ -1710,7 +1710,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             status = 'liquidating' if liquidating else 'open'
             entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
             breakEvenPrice = self.safe_float(position, 'recentBreakEvenPrice')
-            marginRatio = maintenanceMargin / collateral  # not sure what this is, followed binance calc
+            marginRatio = maintenanceMargin / collateral if collateral else None # not sure what this is, followed binance calc
             marginType = 'cross'
             percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
             # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
