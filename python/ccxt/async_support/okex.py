@@ -1736,7 +1736,7 @@ class okex(Exchange):
             #
             'tdMode': 'cross',  # cash, cross, isolated
             # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
-            # 'clOrdId': clientOrderId,  # up to 32 characters, must be unique
+            'clOrdId': self.refCode + self.uuid16(),  # up to 32 characters, must be unique
             # 'tag': tag,  # up to 8 characters
             #
             #     In long/short mode, side and posSide need to be combined
@@ -1759,14 +1759,15 @@ class okex(Exchange):
             # 'px': self.price_to_precision(symbol, price),  # limit orders only
             'reduceOnly': reduceOnly,  # MARGIN orders only
         }
-        clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
-        if clientOrderId is None:
-            brokerId = self.safe_string(self.options, 'brokerId')
-            if brokerId is not None:
-                request['clOrdId'] = brokerId + self.uuid16()
-        else:
-            request['clOrdId'] = clientOrderId
-            params = self.omit(params, ['clOrdId', 'clientOrderId'])
+        # clientOrderId = self.safe_string_2(params, 'clOrdId', 'clientOrderId')
+        # if clientOrderId is None:
+        #     brokerId = self.safe_string(self.options, 'brokerId')
+        #     if brokerId is not None:
+        #         request['clOrdId'] = brokerId + self.uuid16()
+        # else:
+        #     request['clOrdId'] = clientOrderId
+        #     params = self.omit(params, ['clOrdId', 'clientOrderId'])
+        params = self.omit(params, ['clOrdId', 'clientOrderId'])
         # if type == 'market':
         #     # for market buy it requires the amount of quote currency to spend
         #     price = basePrice
