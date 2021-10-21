@@ -1575,6 +1575,9 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 elif orderType == 'StopLimit':
                     orderType = 'LimitIfTouched'
 
+        if price and orderType == 'Stop': # TEALSTREET
+            orderType = 'StopLimit'
+
         if (orderType == 'Limit') or (orderType == 'StopLimit') or (orderType == 'LimitIfTouched'):
             request['price'] = float(self.price_to_precision(symbol, price))
 
@@ -1584,6 +1587,10 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             params = self.omit(params, ['clOrdID', 'clientOrderId'])
 
         request['orderType'] = orderType
+
+        # default market close params from ts don't work
+        if request['orderType'] == 'Market' and request['execInst'] == 'ReduceOnly,Close':
+            request['execInst'] = 'ReduceOnly'
 
         params = self.omit(params, ['basePrice'])
         response = self.privatePostOrder(self.extend(request, params))
@@ -1605,6 +1612,9 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             request['orderQty'] = amount
         if price is not None:
             request['price'] = price
+        stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
+        if stopPrice:
+            request['stopPx'] = float(self.price_to_precision(symbol, stopPrice))
         response = self.privatePutOrder(self.extend(request, params))
         return self.parse_order(response)
 

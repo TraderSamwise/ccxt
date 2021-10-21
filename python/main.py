@@ -28,8 +28,8 @@ bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
 bybitExchange = ccxt.bybitinverse({
-    'apiKey': os.environ.get('bybit_key'),
-    'secret': os.environ.get('bybit_secret'),
+    'apiKey': os.environ.get('bybit_kjs_key'),
+    'secret': os.environ.get('bybit_kjs_secret'),
     'enableRateLimit': True
 })
 bybitExchange.set_sandbox_mode(True)
@@ -139,9 +139,9 @@ def test_exchange_get_methods(exchange):
     # pprint(exchange.fetch_positions())
     # print('##########\nfetch_orders\n##########')
     # pprint(exchange.fetch_orders())
-    pprint(exchange.fetch_open_orders('BTCUSD', None, None)) # phemex /  bybit
+    # pprint(exchange.fetch_open_orders('BTC/USD', None, None)) # phemex /  bybit
     # pprint(exchange.fetch_orders()) # phemex /  bybit
-    # pprint(exchange.fetch_open_orders())
+    pprint(exchange.fetch_open_orders())
     # print('##########\nfetch_my_trades\n##########')
     # pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
@@ -152,7 +152,7 @@ def main():
     # test_exchange_get_methods(bybitExchange)
     # test_exchange_get_methods(binanceExchange)
     # test_exchange_get_methods(phemexExchange)
-    test_exchange_get_methods(phemexExchange)
+    test_exchange_get_methods(bybitExchange)
 
 if __name__ == "__main__":
     main()

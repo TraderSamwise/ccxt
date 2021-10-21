@@ -1515,7 +1515,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         statuses = {
             'Created': 'open',
             'Untriggered': 'open',
-            'Deactivated': 'closed',
+            'Deactivated': 'canceled',
             'Triggered': 'open',
             'Rejected': 'rejected',
             'New': 'open',
