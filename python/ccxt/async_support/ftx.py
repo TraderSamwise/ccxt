@@ -989,7 +989,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             if self.currencies:
                 currency = self.safe_value(self.currencies, code)
                 info = self.safe_value(currency, 'info')
-                collateralWeight = self.safe_float(info, 'collateralWeight')
+                collateralWeight = self.safe_float(info, 'collateralWeight', 1)
                 usdFreeValue *= collateralWeight
 
             usdNotionalValue['free'] += usdTotalValue if usdTotalValue < usdFreeValue else usdFreeValue
