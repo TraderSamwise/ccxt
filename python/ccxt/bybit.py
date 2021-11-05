@@ -156,6 +156,8 @@ class bybit(Exchange):
                             'position/switch-mode',
                             'position/switch-isolated',
                             'position/risk-limit',
+                            'position/set-tp-sl-ts',
+
                         ],
                     },
                 },
@@ -1455,6 +1457,23 @@ class bybit(Exchange):
                 if market['swap']:
                     if market['linear']:
                         method = 'privateLinearPostStopOrderCreate'
+                        if request['close_on_trigger']:
+                            request['reduce_only'] = True
+                    # if market['linear']:
+                    #     if request['close_on_trigger']:
+                    #
+                    #         position =
+                    #
+                    #         method = 'privateLinearPostPositionSetTpSlTs'
+                    #         newReequest = {}
+                    #         newRequest['side'] = 'Buy' if request['side'] == 'Sell' else 'Sell'
+                    #         newRequest['slTriggerBy'] =
+                    #         newRequest['tpTriggerBy'] =
+                    #         newRequest['stopLoss'] =
+                    #         newRequest['takeProfit'] =
+                    #         newRequest['side'] =
+                    #     else:
+                    #         method = 'privateLinearPostStopOrderCreate'
                     elif market['inverse']:
                         method = 'v2PrivatePostStopOrderCreate'
                 elif market['futures']:

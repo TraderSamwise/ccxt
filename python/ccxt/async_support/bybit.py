@@ -260,6 +260,7 @@ class bybit(Exchange):
                             'position/set-leverage',
                             'position/trading-stop',
                             'position/set-risk',
+                            'position/set-tp-sl-ts',
                         ],
                     },
                 },
