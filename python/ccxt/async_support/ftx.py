@@ -26,6 +26,7 @@ from ccxt.base.errors import RateLimitExceeded
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+from ccxtpro.base.cache import ArrayCache, ArrayCacheBySymbolById, ArrayCacheByFieldBySymbolById
 
 class FTXTealstreetMixin(object):
     def bigger(self, a, b):  # Find the bigger of two numbers ...
@@ -1745,8 +1746,13 @@ class ftx(Exchange, FTXTealstreetMixin):
                 'percentage': percentage,  # not important
             })
 
-        return unifiedResult
-        # return self.safe_value(result, 'positions', [])
+        limit = self.safe_integer(self.options, 'positionsLimit', 100)
+        self.positions = ArrayCacheBySymbolById(limit)
+
+        for position in unifiedResult:
+            self.positions.append(position)
+
+        return self.positions
 
     async def fetch_deposit_address(self, code, params={}):
         await self.load_markets()
