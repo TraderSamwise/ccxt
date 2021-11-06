@@ -1748,6 +1748,10 @@ class bybit(Exchange):
         params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         result = self.safe_value(response, 'result', [])
+        # retMsg = self.safe_string(result, 'ret_msg')
+        # if retMsg == 'OK':
+        #     # delete orders
+        #     return
         return self.parse_orders(result, market)
 
     def fetch_orders(self, symbol=None, since=None, limit=None, params={}):
