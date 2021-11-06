@@ -139,8 +139,6 @@ class Exchange(BaseExchange, ExchangeTealstreetMixin):
     async def fetch(self, url, method='GET', headers=None, body=None):
         """Perform a HTTP request and return decoded JSON data"""
         request_headers = self.prepare_request_headers(headers)
-        print(request_headers)
-
         url = self.proxy + url
 
         if self.verbose:
