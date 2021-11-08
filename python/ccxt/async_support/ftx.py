@@ -1695,6 +1695,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             side = 'long' if self.safe_string(position, 'side') == 'buy' else 'short'
             id = symbol + ":" + side
             contracts = self.safe_float(position, 'netSize')
+            snapshotContracts = contracts
             price = self.safe_float(position, 'recentAverageOpenPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
@@ -1710,6 +1711,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             status = 'liquidating' if liquidating else 'open'
             entryPrice = self.safe_float(position, 'recentAverageOpenPrice')
             breakEvenPrice = self.safe_float(position, 'recentBreakEvenPrice')
+            snapshotBreakEvenPrice = breakEvenPrice
             marginRatio = maintenanceMargin / collateral if collateral else None # not sure what this is, followed binance calc
             marginType = 'cross'
             percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
@@ -1725,6 +1727,7 @@ class ftx(Exchange, FTXTealstreetMixin):
                 'hedged': hedged,
                 'side': side,
                 'contracts': contracts,
+                'snapshotContracts': snapshotContracts,
                 'price': price,
                 'markPrice': markPrice,
                 'notional': notional,
@@ -1739,6 +1742,7 @@ class ftx(Exchange, FTXTealstreetMixin):
                 'status': status,
                 'entryPrice': entryPrice,
                 'breakEvenPrice': breakEvenPrice,
+                'snapshotBreakEvenPrice': snapshotBreakEvenPrice,
                 'marginRatio': marginRatio,
                 'collateral': collateral,
                 'marginType': marginType,
