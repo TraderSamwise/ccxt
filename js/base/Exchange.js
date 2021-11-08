@@ -1107,8 +1107,7 @@ module.exports = class Exchange {
 
         // single-pass filter for both symbol and since
         if (valueIsDefined || sinceIsDefined) {
-            array = array.filter ((entry) =>
-                ((valueIsDefined ? (entry[field] === value) : true) &&
+            array = array.filter ((entry) => ((valueIsDefined ? (entry[field] === value) : true) &&
                  (sinceIsDefined ? (entry[key] >= since) : true)))
         }
 
@@ -1387,7 +1386,7 @@ module.exports = class Exchange {
 
     // TEALSTREET
     usdToPrecision (value) {
-      return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, 6)
+        return decimalToPrecision (value, TRUNCATE, 0.01, this.precisionMode, 6)
     }
 
     costToPrecision (symbol, cost) {
@@ -1673,8 +1672,8 @@ module.exports = class Exchange {
         return this.parseNumber (value, d)
     }
 
-     safeNumberStripAlpha (object, dictionary, key, d = undefined) { // TEALSTREET
-        const value = this.safeString (dictionary, key);
+    safeNumberStripAlpha (object, key, d = undefined) { // TEALSTREET
+        const value = this.safeString (object, key);
         const number = value.replace (/[^\d.-]/g, '');
         return this.parseNumber (number, d);
     }
