@@ -834,8 +834,12 @@ module.exports = class bybit extends Exchange {
         //         "time_now":"1587884120.168077"
         //     }
         //
-        const result = this.safeValue (response, 'result', {});
-        return this.parseOHLCVs (result, market, timeframe, since, limit);
+        const result = this.safeValue (response, 'result');
+        if (!result) {
+            return [];
+        } else {
+            return this.parseOHLCVs (result, market, timeframe, since, limit);
+        }
     }
 
     parseTrade (trade, market = undefined) {
