@@ -57,7 +57,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             'certified': True,
             'pro': True,
             'hostname': 'ftx.com',  # or ftx.us
-            'refCode': 'tealstreet', # Tealstreet
+            'refCode': 'Tealstreet', # Tealstreet
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/1294454/67149189-df896480-f2b0-11e9-8816-41593e17f9ec.jpg',
                 'www': 'https://ftx.com',
