@@ -57,6 +57,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             'certified': True,
             'pro': True,
             'hostname': 'ftx.com',  # or ftx.us
+            'refCode': 'tealstreet', # Tealstreet
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/1294454/67149189-df896480-f2b0-11e9-8816-41593e17f9ec.jpg',
                 'www': 'https://ftx.com',
@@ -1214,6 +1215,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             'reduceOnly': reduceOnly or closeOnTrigger,  # optional, default is False
             'ioc': ioc,  # optional, default is False, limit or market orders only
             'postOnly': postOnly,  # optional, default is False, limit or market orders only
+            'externalReferralProgram': self.refCode,
             # 'clientId': 'abcdef0123456789',  # string, optional, client order id, limit or market orders only
             # 'retryUntilFilled': False # whether or not to keep re-triggering until filled. optional, default true for market orders
         }
@@ -1313,7 +1315,9 @@ class ftx(Exchange, FTXTealstreetMixin):
     def edit_order(self, id, symbol, type, side, amount, price=None, params={}):
         self.load_markets()
         market = self.market(symbol)
-        request = {}
+        request = {
+            'externalReferralProgram': self.refCode,
+        }
         method = None
         clientOrderId = self.safe_string_2(params, 'client_order_id', 'clientOrderId')
         triggerPrice = self.safe_number_2(params, 'triggerPrice', 'stopPrice')

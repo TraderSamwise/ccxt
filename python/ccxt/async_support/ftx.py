@@ -57,6 +57,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             'certified': True,
             'pro': True,
             'hostname': 'ftx.com',  # or ftx.us
+            'refCode': 'tealstreet', # Tealstreet
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/1294454/67149189-df896480-f2b0-11e9-8816-41593e17f9ec.jpg',
                 'www': 'https://ftx.com',
@@ -1196,6 +1197,7 @@ class ftx(Exchange, FTXTealstreetMixin):
             # 'ioc': False,  # optional, default is False, limit or market orders only
             # 'postOnly': False,  # optional, default is False, limit or market orders only
             # 'clientId': 'abcdef0123456789',  # string, optional, client order id, limit or market orders only
+            'externalReferralProgram': self.refCode,
         }
         clientOrderId = self.safe_string_2(params, 'clientId', 'clientOrderId')
         if clientOrderId is not None:
@@ -1281,7 +1283,9 @@ class ftx(Exchange, FTXTealstreetMixin):
     async def edit_order(self, id, symbol, type, side, amount, price=None, params={}):
         await self.load_markets()
         market = self.market(symbol)
-        request = {}
+        request = {
+            'externalReferralProgram': self.refCode,
+        }
         method = None
         clientOrderId = self.safe_string_2(params, 'client_order_id', 'clientOrderId')
         triggerPrice = self.safe_number_2(params, 'triggerPrice', 'stopPrice')
