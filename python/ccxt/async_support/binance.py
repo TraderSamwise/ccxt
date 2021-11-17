@@ -35,6 +35,7 @@ class binance(Exchange):
             'rateLimit': 500,
             'certified': True,
             'pro': True,
+            'refCode': 's3vFFRQp', # Tealstreet
             # new metainfo interface
             'has': {
                 'cancelAllOrders': True,
@@ -1935,6 +1936,7 @@ class binance(Exchange):
             'symbol': market['id'],
             'type': uppercaseType,
             'side': side.upper(),
+            'newClientOrderId': 'x-' + self.refCode,
         }
         if clientOrderId is None:
             broker = self.safe_value(self.options, 'broker')

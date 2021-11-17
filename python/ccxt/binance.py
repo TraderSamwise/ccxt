@@ -35,6 +35,7 @@ class binance(Exchange):
             'rateLimit': 500,
             'certified': True,
             'pro': True,
+            'refCode': 's3vFFRQp', # Tealstreet
             # new metainfo interface
             'has': {
                 'cancelAllOrders': True,
@@ -1922,6 +1923,8 @@ class binance(Exchange):
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = side.upper()
 
+        # print(getattr(self, 'fapiPrivateGetApiReferralIfNewUser')({'brokerId': self.refCode}))
+
         clientOrderId = self.safe_string_2(params, 'newClientOrderId', 'clientOrderId')
         params = self.omit(params, ['type', 'newClientOrderId', 'clientOrderId'])
         method = 'privatePostOrder'
@@ -1946,6 +1949,7 @@ class binance(Exchange):
             'type': uppercaseType,
             'side': side,
             'reduceOnly': reduceOnly,
+            'newClientOrderId': 'x-' + self.refCode,
         }
         if clientOrderId is None:
             broker = self.safe_value(self.options, 'broker')
