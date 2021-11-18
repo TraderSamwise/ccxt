@@ -46,6 +46,14 @@ class FTXTealstreetMixin(object):
         else:
             return self.bigger(a, b)
 
+    def api_referral_success(self):
+        response = self.privateGetApiKeyStatus()
+        result = self.safe_value(response, 'result')
+        externalReferralProgram = self.safe_string(result, 'externalReferralProgram')
+        if externalReferralProgram == self.refCode:
+            return True
+        return False
+
 class ftx(Exchange, FTXTealstreetMixin):
 
     def describe(self):
@@ -137,6 +145,7 @@ class ftx(Exchange, FTXTealstreetMixin):
                 },
                 'private': {
                     'get': [
+                        'api_key_status',
                         'account',
                         'positions',
                         'wallet/coins',

@@ -75,10 +75,21 @@ def test_bybit():
     # pprint(exchange.fetch_positions())
     pprint(exchange.cancel_all_orders('BTC/USD'))
 
+def test_ftx():
+    exchange = test.mn_ftx_exchange
+    # exchange = test.mns_ftx_exchange
+
+    # pprint(exchange.fetch_positions())
+    pprint(exchange.api_referral_success())
+
+
 def test_exchange_get_methods(exchange):
     print(exchange.name)
     # pprint(exchange.fetch_positions())
-    pprint(exchange.cancel_all_orders('BTC/USDT'))
+    pprint(exchange.api_referral_success())
+
+
+    # pprint(exchange.cancel_all_orders('BTC/USDT'))
 
     # result = exchange.create_order(
     #     'BTC/USD',
@@ -165,6 +176,7 @@ def main():
     # test_exchange_get_methods(phemexExchange)
     # test_exchange_get_methods(test.tn_bybit_linear_exchange)
     test_bybit()
+    test_ftx()
 
 if __name__ == "__main__":
     main()
