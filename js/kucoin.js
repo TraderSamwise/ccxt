@@ -19,10 +19,11 @@ module.exports = class kucoin extends Exchange {
             'certified': false,
             'pro': true,
             'comment': 'Platform 2.0',
+            'quoteJsonNumbers': false,
             'has': {
-                'CORS': false,
                 'cancelAllOrders': true,
                 'cancelOrder': true,
+                'CORS': undefined,
                 'createDepositAddress': true,
                 'createOrder': true,
                 'fetchAccounts': true,
@@ -32,21 +33,26 @@ module.exports = class kucoin extends Exchange {
                 'fetchDepositAddress': true,
                 'fetchDeposits': true,
                 'fetchFundingFee': true,
+                'fetchFundingHistory': true,
+                'fetchFundingRateHistory': false,
+                'fetchIndexOHLCV': false,
                 'fetchLedger': true,
                 'fetchMarkets': true,
+                'fetchMarkOHLCV': false,
                 'fetchMyTrades': true,
                 'fetchOHLCV': true,
                 'fetchOpenOrders': true,
                 'fetchOrder': true,
                 'fetchOrderBook': true,
+                'fetchPremiumIndexOHLCV': false,
                 'fetchStatus': true,
                 'fetchTicker': true,
                 'fetchTickers': true,
                 'fetchTime': true,
                 'fetchTrades': true,
                 'fetchWithdrawals': true,
-                'withdraw': true,
                 'transfer': true,
+                'withdraw': true,
             },
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/51840849/87295558-132aaf80-c50e-11ea-9801-a2fb0c57c799.jpg',
@@ -104,7 +110,8 @@ module.exports = class kucoin extends Exchange {
                         'market/orderbook/level3',
                         'accounts',
                         'accounts/{accountId}',
-                        'accounts/{accountId}/ledgers',
+                        // 'accounts/{accountId}/ledgers', Deprecated endpoint
+                        'accounts/ledgers',
                         'accounts/{accountId}/holds',
                         'accounts/transferable',
                         'sub/user',
@@ -276,9 +283,11 @@ module.exports = class kucoin extends Exchange {
                     '400007': AuthenticationError,
                     '400008': NotSupported,
                     '400100': BadRequest,
+                    '400350': InvalidOrder, // {"code":"400350","msg":"Upper limit for holding: 10,000USDT, you can still buy 10,000USDT worth of coin."}
+                    '400500': InvalidOrder, // {"code":"400500","msg":"Your located country/region is currently not supported for the trading of this token"}
                     '411100': AccountSuspended,
                     '415000': BadRequest, // {"code":"415000","msg":"Unsupported Media Type"}
-                    '500000': ExchangeError,
+                    '500000': ExchangeNotAvailable, // {"code":"500000","msg":"Internal Server Error"}
                 },
                 'broad': {
                     'Exceeded the access frequency': RateLimitExceeded,
@@ -311,6 +320,9 @@ module.exports = class kucoin extends Exchange {
                 'symbolSeparator': '-',
                 'fetchMyTradesMethod': 'private_get_fills',
                 'fetchBalance': 'trade',
+                'fetchMarkets': {
+                    'fetchTickersFees': true,
+                },
                 // endpoint versions
                 'versions': {
                     'public': {
@@ -350,12 +362,22 @@ module.exports = class kucoin extends Exchange {
                 'accountsByType': {
                     'trade': 'trade',
                     'trading': 'trade',
+                    'spot': 'trade',
                     'margin': 'margin',
                     'main': 'main',
+                    'funding': 'main',
                     'futures': 'contract',
                     'contract': 'contract',
                     'pool': 'pool',
                     'pool-x': 'pool',
+                },
+                'networks': {
+                    'ETH': 'eth',
+                    'ERC20': 'eth',
+                    'TRX': 'trx',
+                    'TRC20': 'trx',
+                    'KCC': 'kcc',
+                    'TERRA': 'luna',
                 },
             },
         });
@@ -412,21 +434,67 @@ module.exports = class kucoin extends Exchange {
         const response = await this.publicGetSymbols (params);
         //
         //     {
-        //         quoteCurrency: 'BTC',
-        //         symbol: 'KCS-BTC',
-        //         quoteMaxSize: '9999999',
-        //         quoteIncrement: '0.000001',
-        //         baseMinSize: '0.01',
-        //         quoteMinSize: '0.00001',
-        //         enableTrading: true,
-        //         priceIncrement: '0.00000001',
-        //         name: 'KCS-BTC',
-        //         baseIncrement: '0.01',
-        //         baseMaxSize: '9999999',
-        //         baseCurrency: 'KCS'
+        //         "code": "200000",
+        //         "data": [
+        //             {
+        //                 "symbol": "XLM-USDT",
+        //                 "name": "XLM-USDT",
+        //                 "baseCurrency": "XLM",
+        //                 "quoteCurrency": "USDT",
+        //                 "feeCurrency": "USDT",
+        //                 "market": "USDS",
+        //                 "baseMinSize": "0.1",
+        //                 "quoteMinSize": "0.01",
+        //                 "baseMaxSize": "10000000000",
+        //                 "quoteMaxSize": "99999999",
+        //                 "baseIncrement": "0.0001",
+        //                 "quoteIncrement": "0.000001",
+        //                 "priceIncrement": "0.000001",
+        //                 "priceLimitRate": "0.1",
+        //                 "isMarginEnabled": true,
+        //                 "enableTrading": true
+        //             },
+        //         ]
         //     }
         //
-        const data = response['data'];
+        const data = this.safeValue (response, 'data');
+        const options = this.safeValue (this.options, 'fetchMarkets', {});
+        const fetchTickersFees = this.safeValue (options, 'fetchTickersFees', true);
+        let tickersResponse = {};
+        if (fetchTickersFees) {
+            tickersResponse = await this.publicGetMarketAllTickers (params);
+        }
+        //
+        //     {
+        //         "code": "200000",
+        //         "data": {
+        //             "time":1602832092060,
+        //             "ticker":[
+        //                 {
+        //                     "symbol": "BTC-USDT",   // symbol
+        //                     "symbolName":"BTC-USDT", // Name of trading pairs, it would change after renaming
+        //                     "buy": "11328.9",   // bestAsk
+        //                     "sell": "11329",    // bestBid
+        //                     "changeRate": "-0.0055",    // 24h change rate
+        //                     "changePrice": "-63.6", // 24h change price
+        //                     "high": "11610",    // 24h highest price
+        //                     "low": "11200", // 24h lowest price
+        //                     "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
+        //                     "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
+        //                     "last": "11328.9",  // last price
+        //                     "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
+        //                     "takerFeeRate": "0.001",    // Basic Taker Fee
+        //                     "makerFeeRate": "0.001",    // Basic Maker Fee
+        //                     "takerCoefficient": "1",    // Taker Fee Coefficient
+        //                     "makerCoefficient": "1" // Maker Fee Coefficient
+        //                 }
+        //             ]
+        //         }
+        //     }
+        //
+        const tickersData = this.safeValue (tickersResponse, 'data', {});
+        const tickers = this.safeValue (tickersData, 'ticker', []);
+        const tickersByMarketId = this.indexBy (tickers, 'symbol');
         const result = [];
         for (let i = 0; i < data.length; i++) {
             const market = data[i];
@@ -436,6 +504,7 @@ module.exports = class kucoin extends Exchange {
             const quote = this.safeCurrencyCode (quoteId);
             const symbol = base + '/' + quote;
             const active = this.safeValue (market, 'enableTrading');
+            const margin = this.safeValue (market, 'isMarginEnabled');
             const baseMaxSize = this.safeNumber (market, 'baseMaxSize');
             const baseMinSizeString = this.safeString (market, 'baseMinSize');
             const quoteMaxSizeString = this.safeString (market, 'quoteMaxSize');
@@ -460,7 +529,17 @@ module.exports = class kucoin extends Exchange {
                     'min': quoteMinSize,
                     'max': quoteMaxSize,
                 },
+                'leverage': {
+                    'max': this.safeNumber (market, 'maxLeverage', 1), // * Don't default to 1 for margin markets, leverage is located elsewhere
+                },
             };
+            const ticker = this.safeValue (tickersByMarketId, id, {});
+            const makerFeeRate = this.safeString (ticker, 'makerFeeRate');
+            const takerFeeRate = this.safeString (ticker, 'makerFeeRate');
+            const makerCoefficient = this.safeString (ticker, 'makerCoefficient');
+            const takerCoefficient = this.safeString (ticker, 'takerCoefficient');
+            const maker = this.parseNumber (Precise.stringMul (makerFeeRate, makerCoefficient));
+            const taker = this.parseNumber (Precise.stringMul (takerFeeRate, takerCoefficient));
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -468,7 +547,12 @@ module.exports = class kucoin extends Exchange {
                 'quoteId': quoteId,
                 'base': base,
                 'quote': quote,
+                'type': 'spot',
+                'spot': true,
+                'margin': margin,
                 'active': active,
+                'maker': maker,
+                'taker': taker,
                 'precision': precision,
                 'limits': limits,
                 'info': market,
@@ -564,9 +648,10 @@ module.exports = class kucoin extends Exchange {
     }
 
     async fetchFundingFee (code, params = {}) {
-        const currencyId = this.currencyId (code);
+        await this.loadMarkets ();
+        const currency = this.currency (code);
         const request = {
-            'currency': currencyId,
+            'currency': currency['id'],
         };
         const response = await this.privateGetWithdrawalsQuotas (this.extend (request, params));
         const data = response['data'];
@@ -579,21 +664,111 @@ module.exports = class kucoin extends Exchange {
         };
     }
 
+    isFuturesMethod (methodName, params) {
+        //
+        // Helper
+        // @methodName (string): The name of the method
+        // @params (dict): The parameters passed into {methodName}
+        // @return: true if the method used is meant for futures trading, false otherwise
+        //
+        const defaultType = this.safeString2 (this.options, methodName, 'defaultType', 'trade');
+        const requestedType = this.safeString (params, 'type', defaultType);
+        const accountsByType = this.safeValue (this.options, 'accountsByType');
+        const type = this.safeString (accountsByType, requestedType);
+        if (type === undefined) {
+            const keys = Object.keys (accountsByType);
+            throw new ExchangeError (this.id + ' type must be one of ' + keys.join (', '));
+        }
+        params = this.omit (params, 'type');
+        return (type === 'contract') || (type === 'futures');
+    }
+
+    async fetchFundingHistory (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        //
+        // Private
+        // @param symbol (string): The pair for which the contract was traded
+        // @param since (number): The unix start time of the first funding payment requested
+        // @param limit (number): The number of results to return
+        // @param params (dict): Additional parameters to send to the API
+        // @param return: Data for the history of the accounts funding payments for futures contracts
+        //
+        if (this.isFuturesMethod ('fetchFundingHistory', params)) {
+            if (symbol === undefined) {
+                throw new ArgumentsRequired (this.id + ' fetchFundingHistory() requires a symbol argument');
+            }
+            await this.loadMarkets ();
+            const market = this.market (symbol);
+            const request = {
+                'symbol': market['id'],
+            };
+            if (since !== undefined) {
+                request['startAt'] = since;
+            }
+            if (limit !== undefined) {
+                request['maxCount'] = limit;
+            }
+            const method = 'futuresPrivateGetFundingHistory';
+            const response = await this[method] (this.extend (request, params));
+            // {
+            //  "data": {
+            //     "dataList": [
+            //       {
+            //         "id": 36275152660006,                // id
+            //         "symbol": "XBTUSDM",                 // Symbol
+            //         "timePoint": 1557918000000,          // Time point (milisecond)
+            //         "fundingRate": 0.000013,             // Funding rate
+            //         "markPrice": 8058.27,                // Mark price
+            //         "positionQty": 10,                   // Position size
+            //         "positionCost": -0.001241,           // Position value at settlement period
+            //         "funding": -0.00000464,              // Settled funding fees. A positive number means that the user received the funding fee, and vice versa.
+            //         "settleCurrency": "XBT"              // Settlement currency
+            //       },
+            //  }
+            // }
+            const data = this.safeValue (response, 'data');
+            const dataList = this.safeValue (data, 'dataList');
+            const fees = [];
+            for (let i = 0; i < dataList.length; i++) {
+                const timestamp = this.safeInteger (dataList[i], 'timePoint');
+                fees.push ({
+                    'info': dataList[i],
+                    'symbol': this.safeSymbol (dataList[i], 'symbol'),
+                    'code': this.safeCurrencyCode (dataList[i], 'settleCurrency'),
+                    'timestamp': timestamp,
+                    'datetime': this.iso8601 (timestamp),
+                    'id': this.safeNumber (dataList[i], 'id'),
+                    'amount': this.safeNumber (dataList[i], 'funding'),
+                    'fundingRate': this.safeNumber (dataList[i], 'fundingRate'),
+                    'markPrice': this.safeNumber (dataList[i], 'markPrice'),
+                    'positionQty': this.safeNumber (dataList[i], 'positionQty'),
+                    'positionCost': this.safeNumber (dataList[i], 'positionCost'),
+                });
+            }
+            return fees;
+        } else {
+            throw new NotSupported (this.id + ' fetchFundingHistory() supports linear and inverse contracts only');
+        }
+    }
+
     parseTicker (ticker, market = undefined) {
         //
         //     {
-        //         symbol: "ETH-BTC",
-        //         high: "0.019518",
-        //         vol: "7997.82836194",
-        //         last: "0.019329",
-        //         low: "0.019",
-        //         buy: "0.019329",
-        //         sell: "0.01933",
-        //         changePrice: "-0.000139",
-        //         time:  1580553706304,
-        //         averagePrice: "0.01926386",
-        //         changeRate: "-0.0071",
-        //         volValue: "154.40791568183474"
+        //         "symbol": "BTC-USDT",   // symbol
+        //         "symbolName":"BTC-USDT", // Name of trading pairs, it would change after renaming
+        //         "buy": "11328.9",   // bestAsk
+        //         "sell": "11329",    // bestBid
+        //         "changeRate": "-0.0055",    // 24h change rate
+        //         "changePrice": "-63.6", // 24h change price
+        //         "high": "11610",    // 24h highest price
+        //         "low": "11200", // 24h lowest price
+        //         "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
+        //         "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
+        //         "last": "11328.9",  // last price
+        //         "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
+        //         "takerFeeRate": "0.001",    // Basic Taker Fee
+        //         "makerFeeRate": "0.001",    // Basic Maker Fee
+        //         "takerCoefficient": "1",    // Taker Fee Coefficient
+        //         "makerCoefficient": "1" // Maker Fee Coefficient
         //     }
         //
         //     {
@@ -618,27 +793,42 @@ module.exports = class kucoin extends Exchange {
         //         "mark": 0
         //     }
         //
+        // market/ticker ws subscription
+        //
+        //     {
+        //         bestAsk: '62258.9',
+        //         bestAskSize: '0.38579986',
+        //         bestBid: '62258.8',
+        //         bestBidSize: '0.0078381',
+        //         price: '62260.7',
+        //         sequence: '1621383297064',
+        //         size: '0.00002841',
+        //         time: 1634641777363
+        //     }
+        //
         let percentage = this.safeNumber (ticker, 'changeRate');
         if (percentage !== undefined) {
             percentage = percentage * 100;
         }
-        const last = this.safeNumber2 (ticker, 'last', 'lastTradedPrice');
+        let last = this.safeNumber2 (ticker, 'last', 'lastTradedPrice');
+        last = this.safeNumber (ticker, 'price', last);
         const marketId = this.safeString (ticker, 'symbol');
-        const symbol = this.safeSymbol (marketId, market, '-');
+        market = this.safeMarket (marketId, market, '-');
+        const symbol = market['symbol'];
         const baseVolume = this.safeNumber (ticker, 'vol');
         const quoteVolume = this.safeNumber (ticker, 'volValue');
         const vwap = this.vwap (baseVolume, quoteVolume);
         const timestamp = this.safeInteger2 (ticker, 'time', 'datetime');
-        return {
+        return this.safeTicker ({
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
             'high': this.safeNumber (ticker, 'high'),
             'low': this.safeNumber (ticker, 'low'),
-            'bid': this.safeNumber (ticker, 'buy'),
-            'bidVolume': undefined,
-            'ask': this.safeNumber (ticker, 'sell'),
-            'askVolume': undefined,
+            'bid': this.safeNumber2 (ticker, 'buy', 'bestBid'),
+            'bidVolume': this.safeNumber (ticker, 'bestBidSize'),
+            'ask': this.safeNumber2 (ticker, 'sell', 'bestAsk'),
+            'askVolume': this.safeNumber (ticker, 'bestAskSize'),
             'vwap': vwap,
             'open': this.safeNumber (ticker, 'open'),
             'close': last,
@@ -650,7 +840,7 @@ module.exports = class kucoin extends Exchange {
             'baseVolume': baseVolume,
             'quoteVolume': quoteVolume,
             'info': ticker,
-        };
+        }, market);
     }
 
     async fetchTickers (symbols = undefined, params = {}) {
@@ -660,26 +850,36 @@ module.exports = class kucoin extends Exchange {
         //     {
         //         "code": "200000",
         //         "data": {
-        //             "date": 1550661940645,
-        //             "ticker": [
-        //                 'buy': '0.00001168',
-        //                 'changePrice': '-0.00000018',
-        //                 'changeRate': '-0.0151',
-        //                 'datetime': 1550661146316,
-        //                 'high': '0.0000123',
-        //                 'last': '0.00001169',
-        //                 'low': '0.00001159',
-        //                 'sell': '0.00001182',
-        //                 'symbol': 'LOOM-BTC',
-        //                 'vol': '44399.5669'
-        //             },
-        //         ]
+        //             "time":1602832092060,
+        //             "ticker":[
+        //                 {
+        //                     "symbol": "BTC-USDT",   // symbol
+        //                     "symbolName":"BTC-USDT", // Name of trading pairs, it would change after renaming
+        //                     "buy": "11328.9",   // bestAsk
+        //                     "sell": "11329",    // bestBid
+        //                     "changeRate": "-0.0055",    // 24h change rate
+        //                     "changePrice": "-63.6", // 24h change price
+        //                     "high": "11610",    // 24h highest price
+        //                     "low": "11200", // 24h lowest price
+        //                     "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
+        //                     "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
+        //                     "last": "11328.9",  // last price
+        //                     "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
+        //                     "takerFeeRate": "0.001",    // Basic Taker Fee
+        //                     "makerFeeRate": "0.001",    // Basic Maker Fee
+        //                     "takerCoefficient": "1",    // Taker Fee Coefficient
+        //                     "makerCoefficient": "1" // Maker Fee Coefficient
+        //                 }
+        //             ]
+        //         }
         //     }
         //
         const data = this.safeValue (response, 'data', {});
         const tickers = this.safeValue (data, 'ticker', []);
+        const time = this.safeInteger (data, 'time');
         const result = {};
         for (let i = 0; i < tickers.length; i++) {
+            tickers[i]['time'] = time;
             const ticker = this.parseTicker (tickers[i]);
             const symbol = this.safeString (ticker, 'symbol');
             if (symbol !== undefined) {
@@ -700,17 +900,23 @@ module.exports = class kucoin extends Exchange {
         //     {
         //         "code": "200000",
         //         "data": {
-        //             'buy': '0.00001168',
-        //             'changePrice': '-0.00000018',
-        //             'changeRate': '-0.0151',
-        //             'datetime': 1550661146316,
-        //             'high': '0.0000123',
-        //             'last': '0.00001169',
-        //             'low': '0.00001159',
-        //             'sell': '0.00001182',
-        //             'symbol': 'LOOM-BTC',
-        //             'vol': '44399.5669'
-        //         },
+        //             "time": 1602832092060,  // time
+        //             "symbol": "BTC-USDT",   // symbol
+        //             "buy": "11328.9",   // bestAsk
+        //             "sell": "11329",    // bestBid
+        //             "changeRate": "-0.0055",    // 24h change rate
+        //             "changePrice": "-63.6", // 24h change price
+        //             "high": "11610",    // 24h highest price
+        //             "low": "11200", // 24h lowest price
+        //             "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
+        //             "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
+        //             "last": "11328.9",  // last price
+        //             "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
+        //             "takerFeeRate": "0.001",    // Basic Taker Fee
+        //             "makerFeeRate": "0.001",    // Basic Maker Fee
+        //             "takerCoefficient": "1",    // Taker Fee Coefficient
+        //             "makerCoefficient": "1" // Maker Fee Coefficient
+        //         }
         //     }
         //
         return this.parseTicker (response['data'], market);
@@ -780,8 +986,8 @@ module.exports = class kucoin extends Exchange {
 
     async createDepositAddress (code, params = {}) {
         await this.loadMarkets ();
-        const currencyId = this.currencyId (code);
-        const request = { 'currency': currencyId };
+        const currency = this.currency (code);
+        const request = { 'currency': currency['id'] };
         const response = await this.privatePostDepositAddresses (this.extend (request, params));
         // BCH {"code":"200000","data":{"address":"bitcoincash:qza3m4nj9rx7l9r0cdadfqxts6f92shvhvr5ls4q7z","memo":""}}
         // BTC {"code":"200000","data":{"address":"36SjucKqQpQSvsak9A7h6qzFjrVXpRNZhE","memo":""}}
@@ -806,8 +1012,21 @@ module.exports = class kucoin extends Exchange {
 
     async fetchDepositAddress (code, params = {}) {
         await this.loadMarkets ();
-        const currencyId = this.currencyId (code);
-        const request = { 'currency': currencyId };
+        const currency = this.currency (code);
+        const request = {
+            'currency': currency['id'],
+            // for USDT - OMNI, ERC20, TRC20, default is ERC20
+            // for BTC - Native, Segwit, TRC20, the parameters are bech32, btc, trx, default is Native
+            // 'chain': 'ERC20', // optional
+        };
+        // same as for withdraw
+        const networks = this.safeValue (this.options, 'networks', {});
+        let network = this.safeStringUpper (params, 'network'); // this line allows the user to specify either ERC20 or ETH
+        network = this.safeStringLower (networks, network, network); // handle ERC20>ETH alias
+        if (network !== undefined) {
+            request['chain'] = network;
+            params = this.omit (params, 'network');
+        }
         const response = await this.privateGetDepositAddresses (this.extend (request, params));
         // BCH {"code":"200000","data":{"address":"bitcoincash:qza3m4nj9rx7l9r0cdadfqxts6f92shvhvr5ls4q7z","memo":""}}
         // BTC {"code":"200000","data":{"address":"36SjucKqQpQSvsak9A7h6qzFjrVXpRNZhE","memo":""}}
@@ -823,6 +1042,7 @@ module.exports = class kucoin extends Exchange {
             'currency': code,
             'address': address,
             'tag': tag,
+            'network': undefined,
         };
     }
 
@@ -933,17 +1153,22 @@ module.exports = class kucoin extends Exchange {
             // 'autoBorrow': false, // The system will first borrow you funds at the optimal interest rate and then place an order for you
         };
         const quoteAmount = this.safeNumber2 (params, 'cost', 'funds');
+        let amountString = undefined;
+        let costString = undefined;
         if (type === 'market') {
             if (quoteAmount !== undefined) {
                 params = this.omit (params, [ 'cost', 'funds' ]);
                 // kucoin uses base precision even for quote values
-                request['funds'] = this.amountToPrecision (symbol, quoteAmount);
+                costString = this.amountToPrecision (symbol, quoteAmount);
+                request['funds'] = costString;
             } else {
+                amountString = this.amountToPrecision (symbol, amount);
                 request['size'] = this.amountToPrecision (symbol, amount);
             }
         } else {
+            amountString = this.amountToPrecision (symbol, amount);
+            request['size'] = amountString;
             request['price'] = this.priceToPrecision (symbol, price);
-            request['size'] = this.amountToPrecision (symbol, amount);
         }
         const response = await this.privatePostOrders (this.extend (request, params));
         //
@@ -968,8 +1193,8 @@ module.exports = class kucoin extends Exchange {
             'type': type,
             'side': side,
             'price': price,
-            'amount': undefined,
-            'cost': undefined,
+            'amount': this.parseNumber (amountString),
+            'cost': this.parseNumber (costString),
             'average': undefined,
             'filled': undefined,
             'remaining': undefined,
@@ -977,11 +1202,6 @@ module.exports = class kucoin extends Exchange {
             'fee': undefined,
             'trades': undefined,
         };
-        if (quoteAmount === undefined) {
-            order['amount'] = amount;
-        } else {
-            order['cost'] = quoteAmount;
-        }
         return order;
     }
 
@@ -1156,18 +1376,16 @@ module.exports = class kucoin extends Exchange {
         const type = this.safeString (order, 'type');
         const timestamp = this.safeInteger (order, 'createdAt');
         const datetime = this.iso8601 (timestamp);
-        let price = this.safeNumber (order, 'price');
-        if (price === 0.0) {
-            // market orders
-            price = undefined;
-        }
+        const price = this.safeString (order, 'price');
+        // price is zero for market order
+        // omitZero is called in safeOrder2
         const side = this.safeString (order, 'side');
         const feeCurrencyId = this.safeString (order, 'feeCurrency');
         const feeCurrency = this.safeCurrencyCode (feeCurrencyId);
         const feeCost = this.safeNumber (order, 'fee');
-        const amount = this.safeNumber (order, 'size');
-        const filled = this.safeNumber (order, 'dealSize');
-        const cost = this.safeNumber (order, 'dealFunds');
+        const amount = this.safeString (order, 'size');
+        const filled = this.safeString (order, 'dealSize');
+        const cost = this.safeString (order, 'dealFunds');
         // bool
         const isActive = this.safeValue (order, 'isActive', false);
         const cancelExist = this.safeValue (order, 'cancelExist', false);
@@ -1181,7 +1399,7 @@ module.exports = class kucoin extends Exchange {
         const timeInForce = this.safeString (order, 'timeInForce');
         const stopPrice = this.safeNumber (order, 'stopPrice');
         const postOnly = this.safeValue (order, 'postOnly');
-        return this.safeOrder ({
+        return this.safeOrder2 ({
             'id': orderId,
             'clientOrderId': clientOrderId,
             'symbol': symbol,
@@ -1203,7 +1421,7 @@ module.exports = class kucoin extends Exchange {
             'lastTradeTimestamp': undefined,
             'average': undefined,
             'trades': undefined,
-        });
+        }, market);
     }
 
     async fetchMyTrades (symbol = undefined, since = undefined, limit = undefined, params = {}) {
@@ -1461,16 +1679,28 @@ module.exports = class kucoin extends Exchange {
     }
 
     async withdraw (code, amount, address, tag = undefined, params = {}) {
+        [ tag, params ] = this.handleWithdrawTagAndParams (tag, params);
         await this.loadMarkets ();
         this.checkAddress (address);
-        const currency = this.currencyId (code);
+        const currency = this.currency (code);
         const request = {
-            'currency': currency,
+            'currency': currency['id'],
             'address': address,
             'amount': amount,
+            // 'memo': tag,
+            // 'isInner': false, // internal transfer or external withdrawal
+            // 'remark': 'optional',
+            // 'chain': 'OMNI', // 'ERC20', 'TRC20', default is ERC20
         };
         if (tag !== undefined) {
             request['memo'] = tag;
+        }
+        const networks = this.safeValue (this.options, 'networks', {});
+        let network = this.safeStringUpper (params, 'network'); // this line allows the user to specify either ERC20 or ETH
+        network = this.safeStringLower (networks, network, network); // handle ERC20>ETH alias
+        if (network !== undefined) {
+            request['chain'] = network;
+            params = this.omit (params, 'network');
         }
         const response = await this.privatePostWithdrawals (this.extend (request, params));
         //
@@ -1745,7 +1975,7 @@ module.exports = class kucoin extends Exchange {
             throw new ExchangeError (this.id + ' type must be one of ' + keys.join (', '));
         }
         params = this.omit (params, 'type');
-        if (type === 'contract') {
+        if ((type === 'contract') || (type === 'futures')) {
             // futures api requires a futures apiKey
             // only fetches one balance at a time
             // by default it will only fetch the BTC balance of the futures account
@@ -1779,7 +2009,7 @@ module.exports = class kucoin extends Exchange {
             account['free'] = this.safeString (data, 'availableBalance');
             account['total'] = this.safeString (data, 'accountEquity');
             result[code] = account;
-            return this.parseBalance (result, false);
+            return this.parseBalance (result);
         } else {
             const request = {
                 'type': type,
@@ -1814,7 +2044,7 @@ module.exports = class kucoin extends Exchange {
                     result[code] = account;
                 }
             }
-            return this.parseBalance (result, false);
+            return this.parseBalance (result);
         }
     }
 
@@ -1920,143 +2150,190 @@ module.exports = class kucoin extends Exchange {
         }
     }
 
-    async fetchLedger (code = undefined, since = undefined, limit = undefined, params = {}) {
-        if (code === undefined) {
-            throw new ArgumentsRequired (this.id + ' fetchLedger() requires a code param');
-        }
-        await this.loadMarkets ();
-        await this.loadAccounts ();
-        const currency = this.currency (code);
-        let accountId = this.safeString (params, 'accountId');
-        if (accountId === undefined) {
-            for (let i = 0; i < this.accounts.length; i++) {
-                const account = this.accounts[i];
-                if (account['currency'] === code && account['type'] === 'main') {
-                    accountId = account['id'];
-                    break;
-                }
-            }
-        }
-        if (accountId === undefined) {
-            throw new ExchangeError (this.id + ' ' + code + 'main account is not loaded in loadAccounts');
-        }
-        const request = {
-            'accountId': accountId,
+    parseLedgerEntryType (type) {
+        const types = {
+            'Assets Transferred in After Upgrading': 'transfer', // Assets Transferred in After V1 to V2 Upgrading
+            'Deposit': 'transaction', // Deposit
+            'Withdrawal': 'transaction', // Withdrawal
+            'Transfer': 'transfer', // Transfer
+            'Trade_Exchange': 'trade', // Trade
+            // 'Vote for Coin': 'Vote for Coin', // Vote for Coin
+            'KuCoin Bonus': 'bonus', // KuCoin Bonus
+            'Referral Bonus': 'referral', // Referral Bonus
+            'Rewards': 'bonus', // Activities Rewards
+            // 'Distribution': 'Distribution', // Distribution, such as get GAS by holding NEO
+            'Airdrop/Fork': 'airdrop', // Airdrop/Fork
+            'Other rewards': 'bonus', // Other rewards, except Vote, Airdrop, Fork
+            'Fee Rebate': 'rebate', // Fee Rebate
+            'Buy Crypto': 'trade', // Use credit card to buy crypto
+            'Sell Crypto': 'sell', // Use credit card to sell crypto
+            'Public Offering Purchase': 'trade', // Public Offering Purchase for Spotlight
+            // 'Send red envelope': 'Send red envelope', // Send red envelope
+            // 'Open red envelope': 'Open red envelope', // Open red envelope
+            // 'Staking': 'Staking', // Staking
+            // 'LockDrop Vesting': 'LockDrop Vesting', // LockDrop Vesting
+            // 'Staking Profits': 'Staking Profits', // Staking Profits
+            // 'Redemption': 'Redemption', // Redemption
+            'Refunded Fees': 'fee', // Refunded Fees
+            'KCS Pay Fees': 'fee', // KCS Pay Fees
+            'Margin Trade': 'trade', // Margin Trade
+            'Loans': 'Loans', // Loans
+            // 'Borrowings': 'Borrowings', // Borrowings
+            // 'Debt Repayment': 'Debt Repayment', // Debt Repayment
+            // 'Loans Repaid': 'Loans Repaid', // Loans Repaid
+            // 'Lendings': 'Lendings', // Lendings
+            // 'Pool transactions': 'Pool transactions', // Pool-X transactions
+            'Instant Exchange': 'trade', // Instant Exchange
+            'Sub-account transfer': 'transfer', // Sub-account transfer
+            'Liquidation Fees': 'fee', // Liquidation Fees
+            // 'Soft Staking Profits': 'Soft Staking Profits', // Soft Staking Profits
+            // 'Voting Earnings': 'Voting Earnings', // Voting Earnings on Pool-X
+            // 'Redemption of Voting': 'Redemption of Voting', // Redemption of Voting on Pool-X
+            // 'Voting': 'Voting', // Voting on Pool-X
+            // 'Convert to KCS': 'Convert to KCS', // Convert to KCS
         };
-        if (since !== undefined) {
-            request['startAt'] = Math.floor (since / 1000);
-        }
-        const response = await this.privateGetAccountsAccountIdLedgers (this.extend (request, params));
-        //
-        //     {
-        //         code: '200000',
-        //         data: {
-        //             totalNum: 1,
-        //             totalPage: 1,
-        //             pageSize: 50,
-        //             currentPage: 1,
-        //             items: [
-        //                 {
-        //                     createdAt: 1561897880000,
-        //                     amount: '0.0111123',
-        //                     bizType: 'Exchange',
-        //                     balance: '0.13224427',
-        //                     fee: '0.0000111',
-        //                     context: '{"symbol":"KCS-ETH","orderId":"5d18ab98c788c6426188296f","tradeId":"5d18ab9818996813f539a806"}',
-        //                     currency: 'ETH',
-        //                     direction: 'out'
-        //                 }
-        //             ]
-        //         }
-        //     }
-        //
-        const items = response['data']['items'];
-        return this.parseLedger (items, currency, since, limit);
+        return this.safeString (types, type, type);
     }
 
     parseLedgerEntry (item, currency = undefined) {
         //
-        // trade
-        //
         //     {
-        //         createdAt: 1561897880000,
-        //         amount: '0.0111123',
-        //         bizType: 'Exchange',
-        //         balance: '0.13224427',
-        //         fee: '0.0000111',
-        //         context: '{"symbol":"KCS-ETH","orderId":"5d18ab98c788c6426188296f","tradeId":"5d18ab9818996813f539a806"}',
-        //         currency: 'ETH',
-        //         direction: 'out'
+        //         "id": "611a1e7c6a053300067a88d9", //unique key for each ledger entry
+        //         "currency": "USDT", //Currency
+        //         "amount": "10.00059547", //The total amount of assets (fees included) involved in assets changes such as transaction, withdrawal and bonus distribution.
+        //         "fee": "0", //Deposit or withdrawal fee
+        //         "balance": "0", //Total assets of a currency remaining funds after transaction
+        //         "accountType": "MAIN", //Account Type
+        //         "bizType": "Loans Repaid", //business type
+        //         "direction": "in", //side, in or out
+        //         "createdAt": 1629101692950, //Creation time
+        //         "context": "{\"borrowerUserId\":\"601ad03e50dc810006d242ea\",\"loanRepayDetailNo\":\"611a1e7cc913d000066cf7ec\"}" //Business core parameters
         //     }
         //
-        // withdrawal
-        //
-        //     {
-        //         createdAt: 1561900264000,
-        //         amount: '0.14333217',
-        //         bizType: 'Withdrawal',
-        //         balance: '0',
-        //         fee: '0.01',
-        //         context: '{"orderId":"5d18b4e687111437cf1c48b9","txId":"0x1d136ee065c5c4c5caa293faa90d43e213c953d7cdd575c89ed0b54eb87228b8"}',
-        //         currency: 'ETH',
-        //         direction: 'out'
-        //     }
-        //
+        const id = this.safeString (item, 'id');
         const currencyId = this.safeString (item, 'currency');
         const code = this.safeCurrencyCode (currencyId, currency);
-        const fee = {
-            'cost': this.safeNumber (item, 'fee'),
-            'code': code,
-        };
         const amount = this.safeNumber (item, 'amount');
-        const after = this.safeNumber (item, 'balance');
+        const balanceAfter = undefined;
+        // const balanceAfter = this.safeNumber (item, 'balance'); only returns zero string
+        const bizType = this.safeString (item, 'bizType');
+        const type = this.parseLedgerEntryType (bizType);
         const direction = this.safeString (item, 'direction');
-        let before = undefined;
-        if (after !== undefined && amount !== undefined) {
-            const difference = (direction === 'out') ? amount : -amount;
-            before = this.sum (after, difference);
-        }
         const timestamp = this.safeInteger (item, 'createdAt');
-        const type = this.parseLedgerEntryType (this.safeString (item, 'bizType'));
-        const contextString = this.safeString (item, 'context');
-        let id = undefined;
+        const datetime = this.iso8601 (timestamp);
+        const account = this.safeString (item, 'accountType'); // MAIN, TRADE, MARGIN, or CONTRACT
+        const context = this.safeString (item, 'context'); // contains other information about the ledger entry
+        //
+        // withdrawal transaction
+        //
+        //     "{\"orderId\":\"617bb2d09e7b3b000196dac8\",\"txId\":\"0x79bb9855f86b351a45cab4dc69d78ca09586a94c45dde49475722b98f401b054\"}"
+        //
+        // deposit to MAIN, trade via MAIN
+        //
+        //     "{\"orderId\":\"617ab9949e7b3b0001948081\",\"txId\":\"0x7a06b16bbd6b03dbc3d96df5683b15229fc35e7184fd7179a5f3a310bd67d1fa@default@0\"}"
+        //
+        // sell trade
+        //
+        //     "{\"symbol\":\"ETH-USDT\",\"orderId\":\"617adcd1eb3fa20001dd29a1\",\"tradeId\":\"617adcd12e113d2b91222ff9\"}"
+        //
         let referenceId = undefined;
-        if (this.isJsonEncodedObject (contextString)) {
-            const context = this.parseJson (contextString);
-            id = this.safeString (context, 'orderId');
-            if (type === 'trade') {
-                referenceId = this.safeString (context, 'tradeId');
-            } else if (type === 'transaction') {
-                referenceId = this.safeString (context, 'txId');
+        if (context !== undefined && context !== '') {
+            const parsed = JSON.parse (context);
+            const orderId = this.safeString (parsed, 'orderId');
+            const tradeId = this.safeString (parsed, 'tradeId');
+            // transactions only have an orderId but for trades we wish to use tradeId
+            if (tradeId !== undefined) {
+                referenceId = tradeId;
+            } else {
+                referenceId = orderId;
             }
+        }
+        let fee = undefined;
+        const feeCost = this.safeNumber (item, 'fee');
+        let feeCurrency = undefined;
+        if (feeCost !== 0) {
+            feeCurrency = code;
+            fee = { 'cost': feeCost, 'currency': feeCurrency };
         }
         return {
             'id': id,
-            'currency': code,
-            'account': undefined,
-            'referenceAccount': undefined,
-            'referenceId': referenceId,
-            'status': undefined,
-            'amount': amount,
-            'before': before,
-            'after': after,
-            'fee': fee,
             'direction': direction,
-            'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
+            'account': account,
+            'referenceId': referenceId,
+            'referenceAccount': account,
             'type': type,
+            'currency': code,
+            'amount': amount,
+            'timestamp': timestamp,
+            'datetime': datetime,
+            'before': undefined,
+            'after': balanceAfter, // undefined
+            'status': undefined,
+            'fee': fee,
             'info': item,
         };
     }
 
-    parseLedgerEntryType (type) {
-        const types = {
-            'Exchange': 'trade',
-            'Withdrawal': 'transaction',
-            'Deposit': 'transaction',
-            'Transfer': 'transfer',
+    async fetchLedger (code = undefined, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        await this.loadAccounts ();
+        const request = {
+            // 'currency': currency['id'], // can choose up to 10, if not provided returns for all currencies by default
+            // 'direction': 'in', // 'out'
+            // 'bizType': 'DEPOSIT', // DEPOSIT, WITHDRAW, TRANSFER, SUB_TRANSFER,TRADE_EXCHANGE, MARGIN_EXCHANGE, KUCOIN_BONUS (optional)
+            // 'startAt': since,
+            // 'endAt': exchange.milliseconds (),
         };
-        return this.safeString (types, type, type);
+        if (since !== undefined) {
+            request['startAt'] = since;
+        }
+        // atm only single currency retrieval is supported
+        let currency = undefined;
+        if (code !== undefined) {
+            currency = this.currency (code);
+            request['currency'] = currency['id'];
+        }
+        const response = await this.privateGetAccountsLedgers (this.extend (request, params));
+        //
+        //     {
+        //         "code":"200000",
+        //         "data":{
+        //             "currentPage":1,
+        //             "pageSize":50,
+        //             "totalNum":1,
+        //             "totalPage":1,
+        //             "items":[
+        //                 {
+        //                     "id":"617cc528729f5f0001c03ceb",
+        //                     "currency":"GAS",
+        //                     "amount":"0.00000339",
+        //                     "fee":"0",
+        //                     "balance":"0",
+        //                     "accountType":"MAIN",
+        //                     "bizType":"Distribution",
+        //                     "direction":"in",
+        //                     "createdAt":1635566888183,
+        //                     "context":"{\"orderId\":\"617cc47a1c47ed0001ce3606\",\"description\":\"Holding NEO,distribute GAS(2021/10/30)\"}"
+        //                 }
+        //                 {
+        //                     "id": "611a1e7c6a053300067a88d9",//unique key
+        //                     "currency": "USDT", //Currency
+        //                     "amount": "10.00059547", //Change amount of the funds
+        //                     "fee": "0", //Deposit or withdrawal fee
+        //                     "balance": "0", //Total assets of a currency
+        //                     "accountType": "MAIN", //Account Type
+        //                     "bizType": "Loans Repaid", //business type
+        //                     "direction": "in", //side, in or out
+        //                     "createdAt": 1629101692950, //Creation time
+        //                     "context": "{\"borrowerUserId\":\"601ad03e50dc810006d242ea\",\"loanRepayDetailNo\":\"611a1e7cc913d000066cf7ec\"}"
+        //                 },
+        //             ]
+        //         }
+        //     }
+        //
+        const data = this.safeValue (response, 'data');
+        const items = this.safeValue (data, 'items');
+        return this.parseLedger (items, currency, since, limit);
     }
 
     async fetchPositions (symbols = undefined, params = {}) {
