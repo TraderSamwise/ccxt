@@ -2,68 +2,6 @@ import os
 from pprint import pprint
 import test_exchanges as test
 import ccxt
-#
-#
-# # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# ftxExchange = ccxt.ftx({
-#     'apiKey': os.environ.get('ftx_key'),
-#     'secret': os.environ.get('ftx_secret'),
-#     'headers': {
-#         'FTX-SUBACCOUNT': 'APITEST',
-#     },
-#     'enableRateLimit': True,
-# })
-#
-# ftxExchange.fetch_currencies()
-#
-# # fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
-# bitmexExchange = ccxt.bitmex({
-#     'apiKey': os.environ.get('bitmex_key'),
-#     'secret': os.environ.get('bitmex_secret'),
-#     'enableRateLimit': True,
-# })
-# # for bitmex testnet https://github.com/ccxt/ccxt/issues/5717
-# bitmexExchange.urls['api'] = bitmexExchange.urls['test']
-#
-# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# bybitExchange = ccxt.bybitinverse({
-#     'apiKey': os.environ.get('bybit_kjs_key'),
-#     'secret': os.environ.get('bybit_kjs_secret'),
-#     'enableRateLimit': True
-# })
-# bybitExchange.set_sandbox_mode(True)
-#
-# # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
-# binanceExchange = ccxt.binanceusdm({
-#     'apiKey': os.environ.get('binance_key'),
-#     'secret': os.environ.get('binance_secret'),
-#     'enableRateLimit': True,
-#     # 'options': {
-#     #      'defaultType': 'future', # USD-M
-#     #     #'defaultType': 'delivery', # COIN-M
-#     #     #'defaultType': 'spot', # COIN-M
-#     #     'leverageBrackets': None,
-#     # },
-# })
-#
-# # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# phemexExchange = ccxt.phemex({
-#     'apiKey': os.environ.get('phemex_key_main'),
-#     'secret': os.environ.get('phemex_secret_main'),
-#     'enableRateLimit': True,
-# })
-# # phemexExchange.urls['api'] = phemexExchange.urls['test']
-#
-# okexExchange = ccxt.okex({
-#     'apiKey': os.environ.get('okex_key'),
-#     'secret': os.environ.get('okex_secret'),
-#     'password': os.environ.get('okex_password'),
-#     'enableRateLimit': True,
-#     'headers': {
-#         'x-simulated-trading': '1',
-#     },
-# })
-# okexExchange.set_sandbox_mode(True)
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
@@ -75,6 +13,7 @@ def test_bybit():
     # pprint(exchange.fetch_positions())
     pprint(exchange.cancel_all_orders('BTC/USD'))
 
+# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 def test_ftx():
     exchange = test.mn_ftx_exchange
     # exchange = test.mns_ftx_exchange
@@ -82,12 +21,36 @@ def test_ftx():
     # pprint(exchange.fetch_positions())
     pprint(exchange.api_referral_success())
 
+# KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
+def test_kucoin():
+    # exchange = test.mn_kucoin_exchange
+    exchange = test.tn_kucoin_exchange
 
-def test_exchange_get_methods(exchange):
-    print(exchange.name)
-    # pprint(exchange.fetch_positions())
-    pprint(exchange.api_referral_success())
+    pprint(exchange.fetch_balance())
 
+def main():
+    # test_bybit()
+    # test_ftx()
+    test_kucoin()
+
+if __name__ == "__main__":
+    main()
+
+# def main():
+#     # test_exchange_get_methods(bybitExchange)
+#     # test_exchange_get_methods(bitmexExchange)
+#     # test_exchange_get_methods(bybitExchange)
+#     # test_exchange_get_methods(binanceExchange)
+#     # test_exchange_get_methods(phemexExchange)
+#     # test_exchange_get_methods(test.tn_bybit_linear_exchange)
+#     test_bybit()
+#     test_ftx()
+
+
+# def test_exchange_get_methods(exchange):
+#     print(exchange.name)
+#     # pprint(exchange.fetch_positions())
+#     pprint(exchange.api_referral_success())
 
     # pprint(exchange.cancel_all_orders('BTC/USDT'))
 
@@ -168,15 +131,66 @@ def test_exchange_get_methods(exchange):
     # pprint(exchange.fetch_my_trades())
     # print(exchange.fetch_my_trades('BTC/USD', None, None))
 
-def main():
-    # test_exchange_get_methods(bybitExchange)
-    # test_exchange_get_methods(bitmexExchange)
-    # test_exchange_get_methods(bybitExchange)
-    # test_exchange_get_methods(binanceExchange)
-    # test_exchange_get_methods(phemexExchange)
-    # test_exchange_get_methods(test.tn_bybit_linear_exchange)
-    test_bybit()
-    test_ftx()
 
-if __name__ == "__main__":
-    main()
+#
+#
+# # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
+# ftxExchange = ccxt.ftx({
+#     'apiKey': os.environ.get('ftx_key'),
+#     'secret': os.environ.get('ftx_secret'),
+#     'headers': {
+#         'FTX-SUBACCOUNT': 'APITEST',
+#     },
+#     'enableRateLimit': True,
+# })
+#
+# ftxExchange.fetch_currencies()
+#
+# # fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
+# bitmexExchange = ccxt.bitmex({
+#     'apiKey': os.environ.get('bitmex_key'),
+#     'secret': os.environ.get('bitmex_secret'),
+#     'enableRateLimit': True,
+# })
+# # for bitmex testnet https://github.com/ccxt/ccxt/issues/5717
+# bitmexExchange.urls['api'] = bitmexExchange.urls['test']
+#
+# fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
+# bybitExchange = ccxt.bybitinverse({
+#     'apiKey': os.environ.get('bybit_kjs_key'),
+#     'secret': os.environ.get('bybit_kjs_secret'),
+#     'enableRateLimit': True
+# })
+# bybitExchange.set_sandbox_mode(True)
+#
+# # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
+# binanceExchange = ccxt.binanceusdm({
+#     'apiKey': os.environ.get('binance_key'),
+#     'secret': os.environ.get('binance_secret'),
+#     'enableRateLimit': True,
+#     # 'options': {
+#     #      'defaultType': 'future', # USD-M
+#     #     #'defaultType': 'delivery', # COIN-M
+#     #     #'defaultType': 'spot', # COIN-M
+#     #     'leverageBrackets': None,
+#     # },
+# })
+#
+# # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
+# phemexExchange = ccxt.phemex({
+#     'apiKey': os.environ.get('phemex_key_main'),
+#     'secret': os.environ.get('phemex_secret_main'),
+#     'enableRateLimit': True,
+# })
+# # phemexExchange.urls['api'] = phemexExchange.urls['test']
+#
+# okexExchange = ccxt.okex({
+#     'apiKey': os.environ.get('okex_key'),
+#     'secret': os.environ.get('okex_secret'),
+#     'password': os.environ.get('okex_password'),
+#     'enableRateLimit': True,
+#     'headers': {
+#         'x-simulated-trading': '1',
+#     },
+# })
+# okexExchange.set_sandbox_mode(True)

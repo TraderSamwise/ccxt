@@ -84,6 +84,24 @@ mns_ftx_params = {
 mns_ftx_exchange_pro = ccxtpro.ftx(mns_ftx_params)
 mns_ftx_exchange = ccxt.ftx(mns_ftx_params)
 
+# KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
+mn_kucoin_params = {
+    'apiKey': os.environ.get('mn_kucoin_key'),
+    'secret': os.environ.get('mn_kucoin_secret'),
+    'enableRateLimit': True,
+}
+mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
+mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
+tn_kucoin_params = {
+    'apiKey': os.environ.get('tn_kucoin_key'),
+    'secret': os.environ.get('tn_kucoin_secret'),
+    'enableRateLimit': True,
+}
+tn_kucoin_exchange_pro = ccxtpro.kucoin(tn_kucoin_params)
+tn_kucoin_exchange_pro.set_sandbox_mode(True)
+tn_kucoin_exchange = ccxt.kucoin(tn_kucoin_params)
+tn_kucoin_exchange.set_sandbox_mode(True)
+
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 mn_phemex_params = {
     'apiKey': os.environ.get('mn_phemex_key'),
