@@ -98,7 +98,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'version': 'v1',
             'certified': False,
             'pro': True,
-            'hostname': 'vapi.phemex.com',
+            'hostname': 'api.phemex.com',
             'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelAllOrders': True,  # swap contracts only
