@@ -30,8 +30,8 @@ def test_kucoin():
 
 def main():
     # test_bybit()
-    # test_ftx()
-    test_kucoin()
+    test_ftx()
+    # test_kucoin()
 
 if __name__ == "__main__":
     main()
