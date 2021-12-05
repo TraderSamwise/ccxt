@@ -317,6 +317,24 @@ class ftx(Exchange, FTXTealstreetMixin):
                     'ftx.us': 'FTXUS',
                 },
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'market',
+                'limit': 'limit',
+                'stop': 'stop',
+                'stoplimit': 'stop',
+            },
+            'reverseOrderTypes': {
+                'market': 'market',
+                'limit': 'limit',
+                'stop': 'stop',
+                'take_profit': 'stop',
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            },
         })
 
     # TEALSTREET
@@ -1153,7 +1171,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         if (symbol is None) and (market is not None):
             symbol = market['symbol']
         side = self.safe_string(order, 'side')
-        type = self.safe_string(order, 'type')
+        type = self.reverse_api_order_type(self.safe_string_lower(order, 'type'))
         average = self.safe_number(order, 'avgFillPrice')
         price = self.safe_number_2(order, 'price', 'orderPrice')
         if type == 'stop' and price:

@@ -324,6 +324,12 @@ class ftx(Exchange, FTXTealstreetMixin):
                 'stop': 'stop',
                 'stoplimit': 'stop',
             },
+            'reverseOrderTypes': {
+                'market': 'market',
+                'limit': 'limit',
+                'stop': 'stop',
+                'take_profit': 'stop',
+            },
             'triggerTypes': {
                 'Mark': 'MarkPrice',
                 'Last': 'LastPrice',
@@ -1164,7 +1170,7 @@ class ftx(Exchange, FTXTealstreetMixin):
         if (symbol is None) and (market is not None):
             symbol = market['symbol']
         side = self.safe_string(order, 'side')
-        type = self.safe_string(order, 'type')
+        type = self.reverse_api_order_type(self.safe_string_lower(order, 'type'))
         average = self.safe_number(order, 'avgFillPrice')
         price = self.safe_number(order, 'price')
         cost = None
