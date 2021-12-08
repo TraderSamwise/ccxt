@@ -8,7 +8,8 @@ def test_bitmex():
     exchange = test.tn_bitmex_exchange
 
     # pprint(exchange.fetch_balance())
-    pprint(exchange.fetch_positions())
+    # pprint(exchange.fetch_positions())
+    pprint(exchange.fetch_orders())
     # pprint(exchange.fetch_my_trades())
     # pprint(exchange.fetch_positions())
     # result = exchange.create_order(

@@ -20,8 +20,12 @@ from ccxt.base.precise import Precise
 
 class BitmexTealstreetMixin(object):
 
-    def parse_position(self: 'bitmex', position, collateral=None):
+    def parse_position(self: 'bitmex', position, balance = {}):
         info = position
+        positionCurrency = self.safe_string(position, 'currency')
+        currency = 'USDT' if positionCurrency == 'USDt' else 'BTC'
+        precision = '1e8' if currency == 'BTC' else '1e6'
+        collateral = balance.get('total').get(currency)
         marketId = self.safe_string(position, 'symbol')
         market = self.safe_market(marketId)
         symbol = market['symbol']
@@ -31,8 +35,8 @@ class BitmexTealstreetMixin(object):
         isolated = False if self.safe_value(position, 'crossMargin') == True else True
         hedged = False # trading in opposite direction will close the position
         side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
-        contracts = self.safe_integer(position, 'currentQty')
-        # contracts1e8 = Precise.string_div(contracts, '1e8')
+        rawContracts = self.safe_integer(position, 'currentQty')
+        contracts = Precise.string_div(rawContracts, precision) if currency == 'USDT' else rawContracts
         price = self.safe_float(position, 'avgEntryPrice')
         markPrice = self.safe_float(position, 'markPrice')
         # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
@@ -41,10 +45,10 @@ class BitmexTealstreetMixin(object):
         leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
         initialMarginPercentage = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
         maintenanceMarginPercentage = self.safe_float(position, 'maintMarginReq') # TODO make maintenanceMargin * btcNotional?
-        maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), '1e8'))
-        initialMargin = float(Precise.string_div(position.get('initMargin'), '1e8')) # TODO make initialMargin * btcNotional?
-        unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), '1e8'))
-        realizedPnl = float(Precise.string_div(position.get('realisedPnl'), '1e8'))
+        maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), precision))
+        initialMargin = float(Precise.string_div(position.get('initMargin'), precision)) # TODO make initialMargin * btcNotional?
+        unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), precision))
+        realizedPnl = float(Precise.string_div(position.get('realisedPnl'), precision))
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = self.safe_string(position, 'liquidationPrice')
         status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
@@ -86,7 +90,6 @@ class BitmexTealstreetMixin(object):
         self.load_markets()
         unfilteredResponse = self.privateGetPosition(params)
         balance = self.fetch_balance()
-        collateral = balance.get('total').get('BTC')
 
         #     [
         #         {
@@ -228,7 +231,7 @@ class BitmexTealstreetMixin(object):
         unifiedResult = []
         for i in range(0, len(response)):
             position = response[i]
-            unifiedResult.append(self.parse_position(position, collateral))
+            unifiedResult.append(self.parse_position(position, balance))
         return unifiedResult
 
 class bitmex(Exchange, BitmexTealstreetMixin):
