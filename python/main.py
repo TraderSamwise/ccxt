@@ -3,6 +3,32 @@ from pprint import pprint
 import test_exchanges as test
 import ccxt
 
+# BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
+def test_bitmex():
+    exchange = test.tn_bitmex_exchange
+
+    # pprint(exchange.fetch_balance())
+    pprint(exchange.fetch_positions())
+    # pprint(exchange.fetch_my_trades())
+    # pprint(exchange.fetch_positions())
+    # result = exchange.create_order(
+    #     'BTC/USD',
+    #     'limit',
+    #     'buy',
+    #     1,
+    #     55000,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': 'GTC',
+    #         'reduceOnly': None,
+    #         'trigger': 'Mark',
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
+    #     })
+    #
+    # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
+    # pprint(exchange.cancel_all_orders('BTC/USD'))
+
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
     # exchange = test.mn_bybit_linear_exchange
@@ -12,6 +38,7 @@ def test_bybit():
 
     # pprint(exchange.fetch_positions())
     pprint(exchange.cancel_all_orders('BTC/USD'))
+
 
 # FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 def test_ftx():
@@ -31,7 +58,8 @@ def test_kucoin():
 def main():
     # test_bybit()
     # test_ftx()
-    test_kucoin()
+    # test_kucoin()
+    test_bitmex()
 
 if __name__ == "__main__":
     main()

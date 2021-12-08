@@ -3,6 +3,7 @@ from pprint import pprint
 import ccxt
 import time
 import pytest
+import test_exchanges as te
 
 __test__ = True
 
@@ -64,8 +65,8 @@ okexExchange.set_sandbox_mode(True)
 # start test stuff
 
 # SETTINGS
-exchange = ftxExchange
-symbol = 'BTC-PERP' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
+exchange = te.tn_bitmex_exchange
+symbol = 'BTC/USDT' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP'
 size = 0.001 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
