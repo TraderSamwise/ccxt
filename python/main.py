@@ -9,7 +9,7 @@ def test_bitmex():
 
     # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_positions())
-    pprint(exchange.fetch_open_orders())
+    # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_my_trades())
     # pprint(exchange.fetch_positions())
     # result = exchange.create_order(
@@ -26,6 +26,21 @@ def test_bitmex():
     #         'closeOnTrigger': False,
     #         'basePrice': None
     #     })
+    #
+    result = exchange.create_order(
+        'BTC/USDT',
+        'limit',
+        'buy',
+        0.001,
+        45000,
+        {
+            'stopPrice': None,
+            'timeInForce': 'GTC',
+            'reduceOnly': None,
+            'trigger': 'Mark',
+            'closeOnTrigger': False,
+            'basePrice': None
+        })
     #
     # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
     # pprint(exchange.cancel_all_orders('BTC/USD'))
