@@ -332,6 +332,9 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             if code == 'BTC':
                 free = Precise.string_div(free, '1e8')
                 total = Precise.string_div(total, '1e8')
+            elif code == 'USDT':
+                free = Precise.string_div(free, '1e6')
+                total = Precise.string_div(total, '1e6')
             account['free'] = free
             account['total'] = total
             result[code] = account
