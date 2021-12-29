@@ -1,67 +1,11 @@
 import os
 from pprint import pprint
-import ccxt
-import time
-import pytest
+# import ccxt
+# import time
+# import pytest
 import test_exchanges as te
 
 __test__ = True
-
-# exchanges
-
-ftxExchange = ccxt.ftx({
-    'apiKey': os.environ.get('ftx_key'),
-    'secret': os.environ.get('ftx_secret'),
-    'headers': {
-        'FTX-SUBACCOUNT': 'APITEST',
-    },
-    'enableRateLimit': True,
-})
-
-bitmexExchange = ccxt.bitmex({
-    'apiKey': os.environ.get('bitmex_key'),
-    'secret': os.environ.get('bitmex_secret'),
-    'enableRateLimit': True,
-})
-bitmexExchange.set_sandbox_mode(True)
-
-bybitExchange = ccxt.bybit({
-    'apiKey': os.environ.get('bybit_key'),
-    'secret': os.environ.get('bybit_secret'),
-    'enableRateLimit': False,
-})
-bybitExchange.set_sandbox_mode(True)
-
-binanceExchange = ccxt.binanceusdm({
-    'apiKey': os.environ.get('binance_key'),
-    'secret': os.environ.get('binance_secret'),
-    'enableRateLimit': False,
-    # 'options': {
-        # 'defaultType': 'future', # USD-M
-        # 'defaultType': 'delivery', # COIN-M
-        # 'defaultType': 'spot', # COIN-M
-       #  'leverageBrackets': None,
-    # },
-})
-
-phemexExchange = ccxt.phemex({
-    'apiKey': os.environ.get('phemex_key'),
-    'secret': os.environ.get('phemex_secret'),
-    # 'enableRateLimit': True,
-})
-phemexExchange.urls['api'] = phemexExchange.urls['test']
-
-okexExchange = ccxt.okex({
-    'apiKey': os.environ.get('okex_key'),
-    'secret': os.environ.get('okex_secret'),
-    'password': os.environ.get('okex_password'),
-    'enableRateLimit': False,
-    'headers': {
-        'x-simulated-trading': '1',
-    },
-})
-okexExchange.set_sandbox_mode(True)
-
 # start test stuff
 
 # SETTINGS
@@ -72,6 +16,7 @@ ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
 orders = []
+cat = os.environ.get('tn_bitmex_key')
 actions = []
 
 # trigger_types = {v: k for k, v in exchange['triggerTypes'].items()}

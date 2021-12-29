@@ -1374,6 +1374,7 @@ class bybit(Exchange):
         trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
+        type = 'stoplimit' if type == 'stop' and price else type
 
         if market['inverse']:
             qty = int(qty)
@@ -1406,7 +1407,7 @@ class bybit(Exchange):
             # 'sl_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
         }
         priceIsRequired = False
-        if type == 'limit':
+        if type == 'limit': # this?
             priceIsRequired = True
         if priceIsRequired:
             if price is not None:

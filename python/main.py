@@ -2,6 +2,101 @@ import os
 from pprint import pprint
 import test_exchanges as test
 import ccxt
+from ccxt import errors
+import time
+
+def buy_stuff():
+    exchange = test.mngz_ftx_exchange
+    symbol = 'BTC-PERP'
+    count = 0
+    sleep_time = 5
+    clear_buys = True
+
+    response = exchange.api_referral_success()
+
+    while True:
+        try:
+            ticker = exchange.fetch_ticker(symbol)
+            last = ticker['last']
+            if last > 49700:
+                buyprice = last * 0.995
+                clear_buys = False
+            else:
+                buyprice = (last - 5)
+                clear_buys = True
+            print(buyprice)
+            count += 1
+            if count % 12 == 0 and clear_buys:
+                orders = exchange.fetch_open_orders(symbol)
+                for order in orders:
+                    if order['side'] == 'buy':
+                        try:
+                            cancel_result = exchange.cancel_order(order['id'], symbol, { 'type': 'limit'})
+                        except BaseException as err:
+                            cancel_result = err
+                        print(cancel_result)
+
+            result = ''
+            try:
+                result = exchange.create_order(
+                    symbol,
+                    'limit',
+                    'buy',
+                    0.01,
+                    buyprice,
+                    {
+                        'stopPrice': None,
+                        'timeInForce': 'GTC',
+                        'reduceOnly': None,
+                        'closeOnTrigger': None,
+                        'basePrice': None,
+                        'trigger': None,
+                    })
+            except BaseException as err:
+                result = err
+            print(result)
+
+            if last > 49700:
+                try:
+                    positions = exchange.fetch_positions(symbol)
+                    position = [x for x in positions if x['symbol'] == symbol][0]
+
+                    orders = exchange.fetch_open_orders(symbol)
+                    total_sell = sum([x['amount'] for x in orders if x['symbol'] == symbol and x['side'] == 'sell'])
+                    order_sell = position['contracts']-total_sell
+                    if order_sell >= 0.01:
+                        result = exchange.create_order(
+                            symbol,
+                            'limit',
+                            'sell',
+                            position['contracts']-total_sell,
+                            last * 1.005,
+                            {
+                                'stopPrice': None,
+                                'timeInForce': 'GTC',
+                                'reduceOnly': True,
+                                'closeOnTrigger': None,
+                                'basePrice': None,
+                                'trigger': None,
+                            })
+                        print(result)
+                        time.sleep(1)
+                except BaseException as err:
+                    result = err
+                    print(result)
+
+            try:
+                if '"success":false' not in str(result):
+                    sleep_time = 1
+                else:
+                    sleep_time = 5
+            except:
+                sleep_time = 1
+
+        except:
+            print('error')
+
+        time.sleep(sleep_time)
 
 # BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
 def test_bitmex():
@@ -37,9 +132,9 @@ def test_bitmex():
             'stopPrice': None,
             'timeInForce': 'GTC',
             'reduceOnly': None,
-            'trigger': 'Mark',
-            'closeOnTrigger': False,
-            'basePrice': None
+            'closeOnTrigger': None,
+            'basePrice': None,
+            'trigger': None,
         })
     #
     # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
@@ -47,22 +142,53 @@ def test_bitmex():
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
-    # exchange = test.mn_bybit_linear_exchange
-    exchange = test.mn_bybit_inverse_exchange
-    # exchange = test.tn_bybit_linear_exchange
+    # exchange = test.mn_bybit_inverse_exchange
+    exchange = test.mn_bybit_linear_exchange
     # exchange = test.tn_bybit_inverse_exchange
+    # exchange = test.tn_bybit_linear_exchange
 
+    # symbol = 'BTC/USD'
+    symbol = 'BTC/USDT'
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    exchange.create_order(symbol,
+                          'stop',
+                          'sell',
+                          0.001,
+                          51001,
+                          {
+                              'stopPrice': 51000,
+                              'timeInForce': 'PO',
+                              'reduceOnly': None,
+                              'trigger': 'Last',
+                              'closeOnTrigger': False,
+                              'basePrice': last
+                          })
+    # exchange.create_order(symbol,
+    # 'stoplimit',
+    # 'buy',
+    # 1,
+    # last * 0.94,
+    # {
+    #     'stopPrice': last * 1.06,
+    #     'timeInForce': 'PO',
+    #     'reduceOnly': None,
+    #     'trigger': 'Last',
+    #     'closeOnTrigger': False,
+    #     'basePrice': last
+    # })
+    pprint(exchange.fetch_open_orders('BTC/USD'))
     # pprint(exchange.fetch_positions())
-    pprint(exchange.cancel_all_orders('BTC/USD'))
-
+    # pprint(exchange.cancel_all_orders('BTC/USD'))
 
 # FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 def test_ftx():
     exchange = test.mn_ftx_exchange
-    # exchange = test.mns_ftx_exchange
 
+    pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
-    pprint(exchange.api_referral_success())
+    # pprint(exchange.api_referral_success())
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 def test_kucoin():
@@ -72,10 +198,11 @@ def test_kucoin():
     pprint(exchange.fetch_balance())
 
 def main():
-    # test_bybit()
+    test_bybit()
     # test_ftx()
     # test_kucoin()
-    test_bitmex()
+    # test_bitmex()
+    # buy_stuff()
 
 if __name__ == "__main__":
     main()
