@@ -439,6 +439,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
             swap = (id == basequote)
+            inverse = self.safe_value(market, 'isInverse')
             # 'positionCurrency' may be empty("", as Bitmex currently returns for ETHUSD)
             # so let's take the quote currency first and then adjust if needed
             positionId = self.safe_string_2(market, 'positionCurrency', 'quoteCurrency')
@@ -463,9 +464,10 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             lotSize = self.safe_number(market, 'lotSize') # TEALSTREET
             contractSize = 1 # TEALSTREET
             tickSize = self.safe_number(market, 'tickSize')
-            if lotSize is not None:
+            orderMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier') or 1 # TEALSTREET
+            if lotSize:
                 precision['amount'] = lotSize
-            if tickSize is not None:
+            if tickSize:
                 precision['price'] = tickSize
             limits = {
                 'amount': {
@@ -505,7 +507,10 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'prediction': prediction,
                 'info': market,
                 'contractSize': contractSize, # TEALSTREET
-                'lotSize': lotSize # TEALSTREET
+                'lotSize': lotSize, # TEALSTREET
+                'inverse': inverse, # TEALSTREET
+                'orderAmount': contractSize, # TEALSTREET
+                'orderMultiplier': orderMultiplier, # TEALSTREET
             })
         return result
 
@@ -1536,7 +1541,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
         orderType = self.api_order_type(type)
-        timeInForce = self.api_time_in_force(params['timeInForce'])
+        timeInForce = self.api_time_in_force(params['timeInpie :Force'])
         trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = self.capitalize(side)
@@ -1557,9 +1562,11 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         request = {
             'symbol': market['id'],
             'side': self.capitalize(side),
-            'orderQty': float(self.amount_to_precision(symbol, amount)),
             'timeInForce': timeInForce,
         }
+
+        orderMultiplier = market['orderMultiplier']
+        request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
 
         request['execInst'] = ','.join(execInstValues)
 
@@ -1616,7 +1623,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         else:
             request['orderID'] = id
         if amount is not None:
-            request['orderQty'] = amount
+            orderMultiplier = market['orderMultiplier']
+            request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
         if price is not None:
             request['price'] = price
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')

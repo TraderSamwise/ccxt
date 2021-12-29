@@ -203,6 +203,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
             swap = (id == basequote)
+            inverse = self.safe_value(market, 'isInverse')
             # 'positionCurrency' may be empty("", as Bitmex currently returns for ETHUSD)
             # so let's take the quote currency first and then adjust if needed
             positionId = self.safe_string_2(market, 'positionCurrency', 'quoteCurrency')
@@ -269,7 +270,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'prediction': prediction,
                 'info': market,
                 'contractSize': contractSize, # TEALSTREET
-                'lotSize': lotSize # TEALSTREET
+                'lotSize': lotSize, # TEALSTREET
+                'inverse': inverse, # TEALSTREET
             })
         return result
 
@@ -1207,6 +1209,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         timestamp = self.parse8601(self.safe_string(order, 'timestamp'))
         lastTradeTimestamp = self.parse8601(self.safe_string(order, 'transactTime'))
         price = self.safe_number(order, 'price')
+        currency = self.safe_string(order, 'currency')
         amount = Precise.string_div(self.safe_string(order, 'orderQty'), '1e6') if currency == 'USDT' else self.safe_number(order, 'orderQty')
         filled = Precise.div(self.safe_number(order, 'cumQty', 0.0), '1e6') if currency == 'USDT' and self.safe_number(order, 'cumQty') else self.safe_number(order, 'cumQty', 0.0)
         average = self.safe_number(order, 'avgPx')

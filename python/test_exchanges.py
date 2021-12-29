@@ -1,7 +1,8 @@
 import ccxtpro
 import ccxt
 import os
-
+from python_utils.read_env import read_env
+read_env()
 
 username = os.environ.get('PROXY_USER')
 password = os.environ.get('PROXY_PASS')
@@ -27,7 +28,7 @@ mn_binance_usdm_exchange = ccxt.binanceusdm(mn_binance_params)
 tn_bitmex_params = {
     'apiKey': os.environ.get('tn_bitmex_key'),
     'secret': os.environ.get('tn_bitmex_secret'),
-    # 'enableRateLimit': True,
+    'enableRateLimit': True,
     # 'wsproxy': proxy,
 }
 tn_bitmex_exchange_pro = ccxtpro.bitmex(tn_bitmex_params)
@@ -64,7 +65,8 @@ mn_ftx_params = {
     'apiKey': os.environ.get('mn_ftx_key'),
     'secret': os.environ.get('mn_ftx_secret'),
     'headers': {
-        'authorization': 'jwt eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyfGt5bGVqc2lta29AZ21haWwuY29tIiwiaXNzIjoiZnR4LmNvbSIsIm5iZiI6MTYyOTkwMDY1MSwiZXhwIjoxNjMyNDkyNzExLCJhdWQiOiJodHRwczovL2Z0ZXhjaGFuZ2UuY29tL2FwaS8iLCJpYXQiOjE2Mjk5MDA3MTEsIm1mYSI6dHJ1ZSwib25seUFsbG93U3VwcG9ydE9ubHkiOmZhbHNlLCJ3aXRoZHJhd2Fsc0Rpc2FibGVkIjpmYWxzZSwiaW50ZXJuYWxUcmFuc2ZlcnNEaXNhYmxlZCI6ZmFsc2UsInJlYWRPbmx5IjpudWxsfQ.WDJ1g7f52Ph6lOkedbDggRaXESolfmh0fmaYo8F3JNWSCdjPPVL8XsM1173wVa-fuPohHNl3TecfJ-tQ4IruG0aSQ7nQeZQxYExe35p7xaIZ6u_ecQfpwUwuHM2GXoieedvTWqXJzYwxvtLx8u0Zb49guCPFNbJ7McDsaFxLgZvynmbyPIj_YLuYqZkZ-KWrj-QkuyJY_o3XfUQflAxPmCzlbZgHtKaF_4BalAM6hsRqWX4qcSX9eY9V55NVGUmFHEVocV84XqsA_0fSo5tLga0WjebVfJ1ZIHT6qauOpgcH5sTqy7qkDV7tDnWi1E-EQbzOboSElPrZLgV5CnldQg'
+        'FTX-SUBACCOUNT': os.environ.get('mn_ftx_subaccount_name'),
+        # 'authorization': 'jwt eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyfGt5bGVqc2lta29AZ21haWwuY29tIiwiaXNzIjoiZnR4LmNvbSIsIm5iZiI6MTYyOTkwMDY1MSwiZXhwIjoxNjMyNDkyNzExLCJhdWQiOiJodHRwczovL2Z0ZXhjaGFuZ2UuY29tL2FwaS8iLCJpYXQiOjE2Mjk5MDA3MTEsIm1mYSI6dHJ1ZSwib25seUFsbG93U3VwcG9ydE9ubHkiOmZhbHNlLCJ3aXRoZHJhd2Fsc0Rpc2FibGVkIjpmYWxzZSwiaW50ZXJuYWxUcmFuc2ZlcnNEaXNhYmxlZCI6ZmFsc2UsInJlYWRPbmx5IjpudWxsfQ.WDJ1g7f52Ph6lOkedbDggRaXESolfmh0fmaYo8F3JNWSCdjPPVL8XsM1173wVa-fuPohHNl3TecfJ-tQ4IruG0aSQ7nQeZQxYExe35p7xaIZ6u_ecQfpwUwuHM2GXoieedvTWqXJzYwxvtLx8u0Zb49guCPFNbJ7McDsaFxLgZvynmbyPIj_YLuYqZkZ-KWrj-QkuyJY_o3XfUQflAxPmCzlbZgHtKaF_4BalAM6hsRqWX4qcSX9eY9V55NVGUmFHEVocV84XqsA_0fSo5tLga0WjebVfJ1ZIHT6qauOpgcH5sTqy7qkDV7tDnWi1E-EQbzOboSElPrZLgV5CnldQg'
     },
     'enableRateLimit': True,
     # 'proxy': 'http://localhost/api/proxy/',
@@ -83,6 +85,18 @@ mns_ftx_params = {
 }
 mns_ftx_exchange_pro = ccxtpro.ftx(mns_ftx_params)
 mns_ftx_exchange = ccxt.ftx(mns_ftx_params)
+mngz_ftx_params = {
+    'apiKey': os.environ.get('mngz_ftx_key'),
+    'secret': os.environ.get('mngz_ftx_secret'),
+    'headers': {
+        'FTX-SUBACCOUNT': os.environ.get('mngz_ftx_subaccount_name'),
+        # 'authorization': 'jwt eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyfGt5bGVqc2lta29AZ21haWwuY29tIiwiaXNzIjoiZnR4LmNvbSIsIm5iZiI6MTYyOTkwMDY1MSwiZXhwIjoxNjMyNDkyNzExLCJhdWQiOiJodHRwczovL2Z0ZXhjaGFuZ2UuY29tL2FwaS8iLCJpYXQiOjE2Mjk5MDA3MTEsIm1mYSI6dHJ1ZSwib25seUFsbG93U3VwcG9ydE9ubHkiOmZhbHNlLCJ3aXRoZHJhd2Fsc0Rpc2FibGVkIjpmYWxzZSwiaW50ZXJuYWxUcmFuc2ZlcnNEaXNhYmxlZCI6ZmFsc2UsInJlYWRPbmx5IjpudWxsfQ.WDJ1g7f52Ph6lOkedbDggRaXESolfmh0fmaYo8F3JNWSCdjPPVL8XsM1173wVa-fuPohHNl3TecfJ-tQ4IruG0aSQ7nQeZQxYExe35p7xaIZ6u_ecQfpwUwuHM2GXoieedvTWqXJzYwxvtLx8u0Zb49guCPFNbJ7McDsaFxLgZvynmbyPIj_YLuYqZkZ-KWrj-QkuyJY_o3XfUQflAxPmCzlbZgHtKaF_4BalAM6hsRqWX4qcSX9eY9V55NVGUmFHEVocV84XqsA_0fSo5tLga0WjebVfJ1ZIHT6qauOpgcH5sTqy7qkDV7tDnWi1E-EQbzOboSElPrZLgV5CnldQg'
+    },
+    'enableRateLimit': True,
+    # 'proxy': 'http://localhost/api/proxy/',
+}
+mngz_ftx_exchange_pro = ccxtpro.ftx(mngz_ftx_params)
+mngz_ftx_exchange = ccxt.ftx(mngz_ftx_params)
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 mn_kucoin_params = {
