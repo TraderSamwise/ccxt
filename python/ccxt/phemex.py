@@ -99,23 +99,29 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'certified': False,
             'pro': True,
             'hostname': 'api.phemex.com',
-            'refCode': 'Tealstreet', # Tealstreet
             'has': {
-                'cancelAllOrders': True,  # swap contracts only
+                'cancelAllOrders': True,
                 'cancelOrder': True,
                 'createOrder': True,
+                'editOrder': True,
                 'fetchBalance': True,
+                'fetchBorrowRate': False,
+                'fetchBorrowRates': False,
                 'fetchClosedOrders': True,
                 'fetchCurrencies': True,
                 'fetchDepositAddress': True,
                 'fetchDeposits': True,
+                'fetchIndexOHLCV': False,
                 'fetchMarkets': True,
+                'fetchMarkOHLCV': False,
                 'fetchMyTrades': True,
                 'fetchOHLCV': True,
                 'fetchOpenOrders': True,
                 'fetchOrder': True,
                 'fetchOrderBook': True,
                 'fetchOrders': True,
+                'fetchPositions': True,
+                'fetchPremiumIndexOHLCV': False,
                 'fetchTicker': True,
                 'fetchTrades': True,
                 'fetchWithdrawals': True,
@@ -135,7 +141,10 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 'www': 'https://phemex.com',
                 'doc': 'https://github.com/phemex/phemex-api-docs',
                 'fees': 'https://phemex.com/fees-conditions',
-                'referral': 'https://phemex.com/register?referralCode=EDNVJ',
+                'referral': {
+                    'url': 'https://phemex.com/register?referralCode=EDNVJ',
+                    'discount': 0.1,
+                },
             },
             'timeframes': {
                 '1m': '60',
@@ -222,6 +231,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
                     'delete': [
                         # spot
                         'spot/orders',  # ?symbol=<symbol>&orderID=<orderID>
+                        'spot/orders/all',  # ?symbol=<symbol>&untriggered=<untriggered>
                         # 'spot/orders',  # ?symbol=<symbol>&clOrdID=<clOrdID>
                         # swap
                         'orders/cancel',  # ?symbol=<symbol>&orderID=<orderID>
@@ -235,8 +245,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 'trading': {
                     'tierBased': False,
                     'percentage': True,
-                    'taker': 0.1 / 100,
-                    'maker': 0.1 / 100,
+                    'taker': self.parse_number('0.001'),
+                    'maker': self.parse_number('0.001'),
                 },
             },
             'requiredCredentials': {
@@ -383,41 +393,21 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'options': {
                 'x-phemex-request-expiry': 60,  # in seconds
                 'createOrderByQuoteRequiresPrice': True,
+                'networks': {
+                    'TRC20': 'TRX',
+                    'ERC20': 'ETH',
+                },
+                'defaultNetworks': {
+                    'USDT': 'ETH',
+                },
             },
-            'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-            # TEALSTREET
-            'orderTypes': {
-               'market': 'Market',
-               'limit': 'Limit',
-               'stop': 'Stop',
-               'stoplimit': 'StopLimit',
-               'marketiftouched': 'MarketIfTouched',
-               'limitiftouched': 'LimitIfTouched',
-            },
-            'reverseOrderTypes': {
-               'Market': 'Market',
-               'Limit': 'Limit',
-               'Stop': 'Stop',
-               'StopLimit': 'StopLimit',
-               'MarketIfTouched': 'Stop',
-               'LimitIfTouched': 'StopLimit',
-            },
-           'triggerTypes': {
-                'Mark': 'ByMarkPrice',
-                'Last': 'ByLastPrice',
-            },
-            'timeInForces': {
-                'GTC': 'GoodTillCancel',
-                'PO': 'PostOnly',
-                'IOC': 'ImmediateOrCancel',
-                'FOK': 'FillOrKill',
-            }
-       })
+        })
 
     def parse_safe_number(self, value=None):
         if value is None:
             return value
-        value = value.replace(',', '')
+        parts = value.split(',')
+        value = ''.join(parts)
         parts = value.split(' ')
         return self.safe_number(parts, 0)
 
@@ -481,7 +471,11 @@ class phemex(Exchange, PhemexTealstreetMixin):
         if settlementCurrencyId != quoteId:
             inverse = True
         linear = not inverse
-        symbol = id if (inverse) else (base + '/' + quote)  # fix for uBTCUSD inverse
+        symbol = None
+        if linear:
+            symbol = base + '/' + quote + ':' + quote
+        else:
+            symbol = base + '/' + quote + ':' + base
         precision = {
             'amount': self.safe_number(market, 'lotSize'),
             'price': self.safe_number(market, 'tickSize'),
@@ -511,8 +505,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
         status = self.safe_string(market, 'status')
         active = status == 'Listed'
-        lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
-        contractSize = self.safe_number_strip_alpha(market, 'contractSize', 1) # TEALSTREET
+        contractSize = self.safe_string(market, 'contractSize')
         return {
             'id': id,
             'symbol': symbol,
@@ -533,9 +526,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'valueScale': valueScale,
             'ratioScale': ratioScale,
             'precision': precision,
+            'contractSize': contractSize,
             'limits': limits,
-            'contractSize': contractSize, # TEALSTREET
-            'lotSize': lotSize # TEALSTREET
         }
 
     def parse_spot_market(self, market):
@@ -620,6 +612,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'priceScale': 8,
             'valueScale': 8,
             'ratioScale': 8,
+            'contractSize': None,
             'limits': limits,
         }
 
@@ -784,19 +777,18 @@ class phemex(Exchange, PhemexTealstreetMixin):
             id = self.safe_string(currency, 'currency')
             name = self.safe_string(currency, 'name')
             code = self.safe_currency_code(id)
-            valueScale = self.safe_integer(currency, 'valueScale')
-            minValueEv = self.safe_number(currency, 'minValueEv')
-            maxValueEv = self.safe_number(currency, 'maxValueEv')
+            valueScaleString = self.safe_string(currency, 'valueScale')
+            valueScale = int(valueScaleString)
+            minValueEv = self.safe_string(currency, 'minValueEv')
+            maxValueEv = self.safe_string(currency, 'maxValueEv')
             minAmount = None
             maxAmount = None
             precision = None
             if valueScale is not None:
-                precision = math.pow(10, -valueScale)
-                precision = float(self.decimal_to_precision(precision, ROUND, 0.00000001, self.precisionMode))
-                if minValueEv is not None:
-                    minAmount = float(self.decimal_to_precision(minValueEv * precision, ROUND, 0.00000001, self.precisionMode))
-                if maxValueEv is not None:
-                    maxAmount = float(self.decimal_to_precision(maxValueEv * precision, ROUND, 0.00000001, self.precisionMode))
+                precisionString = self.parse_precision(valueScaleString)
+                precision = self.parse_number(precisionString)
+                minAmount = self.parse_number(Precise.string_mul(minValueEv, precisionString))
+                maxAmount = self.parse_number(Precise.string_mul(maxValueEv, precisionString))
             result[code] = {
                 'id': id,
                 'info': currency,
@@ -822,12 +814,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
     def parse_bid_ask(self, bidask, priceKey=0, amountKey=1, market=None):
         if market is None:
             raise ArgumentsRequired(self.id + ' parseBidAsk() requires a market argument')
-        amount = self.safe_number(bidask, amountKey)
+        amount = self.safe_string(bidask, amountKey)
         if market['spot']:
             amount = self.from_ev(amount, market)
         return [
-            self.from_ep(self.safe_number(bidask, priceKey), market),
-            amount,
+            self.parse_number(self.from_ep(self.safe_string(bidask, priceKey), market)),
+            self.parse_number(amount),
         ]
 
     def parse_order_book(self, orderbook, symbol, timestamp=None, bidsKey='bids', asksKey='asks', priceKey=0, amountKey=1, market=None):
@@ -946,15 +938,15 @@ class phemex(Exchange, PhemexTealstreetMixin):
         #
         baseVolume = None
         if (market is not None) and market['spot']:
-            baseVolume = self.from_ev(self.safe_number(ohlcv, 7), market)
+            baseVolume = self.parse_number(self.from_ev(self.safe_string(ohlcv, 7), market))
         else:
-            baseVolume = self.safe_integer(ohlcv, 7)
+            baseVolume = self.safe_number(ohlcv, 7)
         return [
             self.safe_timestamp(ohlcv, 0),
-            self.from_ep(self.safe_number(ohlcv, 3), market),
-            self.from_ep(self.safe_number(ohlcv, 4), market),
-            self.from_ep(self.safe_number(ohlcv, 5), market),
-            self.from_ep(self.safe_number(ohlcv, 6), market),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 3), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 4), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 5), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 6), market)),
             baseVolume,
         ]
 
@@ -1238,12 +1230,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
         #         "execStatus": "MakerFill"
         #     }
         #
-        price = None
-        amount = None
+        priceString = None
+        amountString = None
         timestamp = None
         id = None
         side = None
-        cost = None
+        costString = None
         type = None
         fee = None
         marketId = self.safe_string(trade, 'symbol')
@@ -1257,11 +1249,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             if tradeLength > 4:
                 id = self.safe_string(trade, tradeLength - 4)
             side = self.safe_string_lower(trade, tradeLength - 3)
-            price = self.from_ep(self.safe_number(trade, tradeLength - 2), market)
-            amount = self.from_ev(self.safe_number(trade, tradeLength - 1), market)
-            if market['spot']:
-                if (price is not None) and (amount is not None):
-                    cost = price * amount
+            priceString = self.from_ep(self.safe_string(trade, tradeLength - 2), market)
+            amountString = self.from_ev(self.safe_string(trade, tradeLength - 1), market)
         else:
             timestamp = self.safe_integer_product(trade, 'transactTimeNs', 0.000001)
             id = self.safe_string_2(trade, 'execId', 'execID')
@@ -1271,20 +1260,13 @@ class phemex(Exchange, PhemexTealstreetMixin):
             execStatus = self.safe_string(trade, 'execStatus')
             if execStatus == 'MakerFill':
                 takerOrMaker = 'maker'
-            price = self.from_ep(self.safe_number(trade, 'execPriceEp'), market)
-            amount = self.from_ev(self.safe_number(trade, 'execBaseQtyEv'), market)
-            amount = self.safe_number(trade, 'execQty', amount)
-            cost = self.from_ev(self.safe_number(trade, 'execValueEv'), market)
-            feeCost = self.from_ev(self.safe_number(trade, 'execFeeEv'), market)
-            if feeCost is not None:
-                feeRate = None
-                feeRateEr = self.safe_number(trade, 'feeRateEr')
-                if feeRateEr < 0:
-                    feeRateEr = abs(feeRateEr)
-                    feeRate = self.from_er(feeRateEr, market)
-                    feeRate = -feeRate
-                else:
-                    feeRate = self.from_er(feeRateEr, market)
+            priceString = self.from_ep(self.safe_string(trade, 'execPriceEp'), market)
+            amountString = self.from_ev(self.safe_string(trade, 'execBaseQtyEv'), market)
+            amountString = self.safe_string(trade, 'execQty', amountString)
+            costString = self.from_ev(self.safe_string_2(trade, 'execQuoteQtyEv', 'execValueEv'), market)
+            feeCostString = self.from_ev(self.safe_string(trade, 'execFeeEv'), market)
+            if feeCostString is not None:
+                feeRateString = self.from_er(self.safe_string(trade, 'feeRateEr'), market)
                 feeCurrencyCode = None
                 if market['spot']:
                     feeCurrencyCode = market['base'] if (side == 'buy') else market['quote']
@@ -1294,11 +1276,11 @@ class phemex(Exchange, PhemexTealstreetMixin):
                         settlementCurrencyId = self.safe_string(info, 'settlementCurrency')
                         feeCurrencyCode = self.safe_currency_code(settlementCurrencyId)
                 fee = {
-                    'cost': feeCost,
-                    'rate': feeRate,
+                    'cost': self.parse_number(feeCostString),
+                    'rate': self.parse_number(feeRateString),
                     'currency': feeCurrencyCode,
                 }
-        return {
+        return self.safe_trade({
             'info': trade,
             'id': id,
             'symbol': symbol,
@@ -1308,11 +1290,11 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'type': type,
             'side': side,
             'takerOrMaker': takerOrMaker,
-            'price': price,
-            'amount': amount,
-            'cost': cost,
+            'price': priceString,
+            'amount': amountString,
+            'cost': costString,
             'fee': fee,
-        }
+        }, market)
 
     def parse_spot_balance(self, response):
         #
@@ -1349,13 +1331,13 @@ class phemex(Exchange, PhemexTealstreetMixin):
             currency = self.safe_value(self.currencies, code, {})
             scale = self.safe_integer(currency, 'valueScale', 8)
             account = self.account()
-            balanceEv = self.safe_number(balance, 'balanceEv')
-            lockedTradingBalanceEv = self.safe_number(balance, 'lockedTradingBalanceEv')
-            lockedWithdrawEv = self.safe_number(balance, 'lockedWithdrawEv')
-            total = self.from_en(balanceEv, scale, scale, DECIMAL_PLACES)
-            lockedTradingBalance = self.from_en(lockedTradingBalanceEv, scale, scale, DECIMAL_PLACES)
-            lockedWithdraw = self.from_en(lockedWithdrawEv, scale, scale, DECIMAL_PLACES)
-            used = self.sum(lockedTradingBalance, lockedWithdraw)
+            balanceEv = self.safe_string(balance, 'balanceEv')
+            lockedTradingBalanceEv = self.safe_string(balance, 'lockedTradingBalanceEv')
+            lockedWithdrawEv = self.safe_string(balance, 'lockedWithdrawEv')
+            total = self.from_en(balanceEv, scale)
+            lockedTradingBalance = self.from_en(lockedTradingBalanceEv, scale)
+            lockedWithdraw = self.from_en(lockedWithdrawEv, scale)
+            used = Precise.string_add(lockedTradingBalance, lockedWithdraw)
             lastUpdateTimeNs = self.safe_integer_product(balance, 'lastUpdateTimeNs', 0.000001)
             timestamp = lastUpdateTimeNs if (timestamp is None) else max(timestamp, lastUpdateTimeNs)
             account['total'] = total
@@ -1363,7 +1345,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             result[code] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
-        return self.parse_balance(result)
+        return self.safe_balance(result)
 
     def parse_swap_balance(self, response):
         #
@@ -1447,13 +1429,13 @@ class phemex(Exchange, PhemexTealstreetMixin):
         code = self.safe_currency_code(currencyId)
         currency = self.currency(code)
         account = self.account()
-        accountBalanceEv = self.safe_number(balance, 'accountBalanceEv')
-        totalUsedBalanceEv = self.safe_number(balance, 'totalUsedBalanceEv')
+        accountBalanceEv = self.safe_string(balance, 'accountBalanceEv')
+        totalUsedBalanceEv = self.safe_string(balance, 'totalUsedBalanceEv')
         valueScale = self.safe_integer(currency, 'valueScale', 8)
-        account['total'] = self.from_en(accountBalanceEv, valueScale, valueScale, DECIMAL_PLACES)
-        account['used'] = self.from_en(totalUsedBalanceEv, valueScale, valueScale, DECIMAL_PLACES)
+        account['total'] = self.from_en(accountBalanceEv, valueScale)
+        account['used'] = self.from_en(totalUsedBalanceEv, valueScale)
         result[code] = account
-        return self.parse_balance(result)
+        return self.safe_balance(result)
 
     def fetch_balance(self, params={}):
         self.load_markets()
@@ -1582,7 +1564,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         statuses = {
             'Created': 'open',
             'Untriggered': 'open',
-            'Deactivated': 'canceled',
+            'Deactivated': 'closed',
             'Triggered': 'open',
             'Rejected': 'rejected',
             'New': 'open',
@@ -1671,32 +1653,27 @@ class phemex(Exchange, PhemexTealstreetMixin):
             clientOrderId = None
         marketId = self.safe_string(order, 'symbol')
         symbol = self.safe_symbol(marketId, market)
-        price = self.from_ep(self.safe_number(order, 'priceEp'), market)
-        if price == 0:
-            price = None
-        amount = self.from_ev(self.safe_number(order, 'baseQtyEv'), market)
-        remaining = self.from_ev(self.safe_number(order, 'leavesBaseQtyEv'), market)
-        filled = self.from_ev(self.safe_number(order, 'cumBaseQtyEv'), market)
-        cost = self.from_ev(self.safe_number(order, 'quoteQtyEv'), market)
-        average = self.from_ep(self.safe_number(order, 'avgPriceEp'), market)
+        price = self.from_ep(self.safe_string(order, 'priceEp'), market)
+        amount = self.from_ev(self.safe_string(order, 'baseQtyEv'), market)
+        remaining = self.omit_zero(self.from_ev(self.safe_string(order, 'leavesBaseQtyEv'), market))
+        filled = self.from_ev(self.safe_string_2(order, 'cumBaseQtyEv', 'cumBaseValueEv'), market)
+        cost = self.from_ev(self.safe_string_2(order, 'cumQuoteValueEv', 'quoteQtyEv'), market)
+        average = self.from_ep(self.safe_string(order, 'avgPriceEp'), market)
         status = self.parse_order_status(self.safe_string(order, 'ordStatus'))
         side = self.safe_string_lower(order, 'side')
-        type = self.reverse_api_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
+        type = self.parse_order_type(self.safe_string(order, 'ordType'))
         timestamp = self.safe_integer_product_2(order, 'actionTimeNs', 'createTimeNs', 0.000001)
         fee = None
-        feeCost = self.from_ev(self.safe_number(order, 'cumFeeEv'), market)
+        feeCost = self.from_ev(self.safe_string(order, 'cumFeeEv'), market)
         if feeCost is not None:
             fee = {
                 'cost': feeCost,
                 'currency': None,
             }
-        if filled is None:
-            if (amount is not None) and (remaining is not None):
-                filled = min(0, amount - remaining)
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
-        stopPrice = self.from_ep(self.safe_number(order, 'stopPxEp', market))
+        stopPrice = self.parse_number(self.omit_zero(self.from_ep(self.safe_string(order, 'stopPxEp', market))))
         postOnly = (timeInForce == 'PO')
-        return {
+        return self.safe_order2({
             'info': order,
             'id': id,
             'clientOrderId': clientOrderId,
@@ -1718,7 +1695,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'status': status,
             'fee': fee,
             'trades': None,
-        }
+        }, market)
 
     def parse_swap_order(self, order, market=None):
         #
@@ -1761,28 +1738,22 @@ class phemex(Exchange, PhemexTealstreetMixin):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None
         marketId = self.safe_string(order, 'symbol')
-        evScale = '1e8' if marketId == 'BTCUSD' else '1e4'
         symbol = self.safe_symbol(marketId, market)
         status = self.parse_order_status(self.safe_string(order, 'ordStatus'))
         side = self.safe_string_lower(order, 'side')
-        type = self.reverse_api_order_type(self.safe_string_2(order, 'orderType', 'ordType', None))
+        type = self.parse_order_type(self.safe_string(order, 'orderType'))
         price = self.parse_number(self.from_ep(self.safe_string(order, 'priceEp'), market))
         amount = self.safe_number(order, 'orderQty')
         filled = self.safe_number(order, 'cumQty')
         remaining = self.safe_number(order, 'leavesQty')
         timestamp = self.safe_integer_product(order, 'actionTimeNs', 0.000001)
-        cost = self.safe_number(order, 'cumValue') or float(Precise.string_div(self.safe_string(order, 'cumValueEv'), evScale))
+        cost = self.safe_number(order, 'cumValue')
         lastTradeTimestamp = self.safe_integer_product(order, 'transactTimeNs', 0.000001)
         if lastTradeTimestamp == 0:
             lastTradeTimestamp = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
-        stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'))
+        stopPrice = self.safe_number(order, 'stopPx')
         postOnly = (timeInForce == 'PO')
-        fee = self.from_er(self.safe_number(order, 'feeRateEr'))
-        reduce = self.safe_value(order, 'reduceOnly')
-        close = self.safe_value(order, 'closeOnTrigger')
-        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger') or self.safe_string(order, 'slTrigger') or self.safe_string(order, 'tpTrigger'))
-        average = price
         return {
             'info': order,
             'id': id,
@@ -1801,17 +1772,14 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'filled': filled,
             'remaining': remaining,
             'cost': cost,
-            'average': average,
+            'average': None,
             'status': status,
-            'fee': fee,
+            'fee': None,
             'trades': None,
-            'reduce': reduce, # TEALSTREET
-            'close' : close, # TEALSTREET
-            'trigger': trigger # TEALSTREET
         }
 
     def parse_order(self, order, market=None):
-        if 'closedPnl' in order or 'closedPnlEv' in order:
+        if 'closedPnl' in order:
             return self.parse_swap_order(order, market)
         return self.parse_spot_order(order, market)
 
@@ -1819,35 +1787,27 @@ class phemex(Exchange, PhemexTealstreetMixin):
         self.load_markets()
         market = self.market(symbol)
         side = self.capitalize(side)
-        type = self.api_order_type(type)
-
-        # TEALSTREET
-        reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        timeInForce = self.api_time_in_force(params['timeInForce'])
-        trigger = self.api_trigger_type(params['trigger'])
-        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
-        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
-
+        type = self.capitalize(type)
         request = {
             # common
             'symbol': market['id'],
             'side': side,  # Sell, Buy
-            # 'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
-            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders, handled below
+            'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
+            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders
             # 'priceEp': self.to_ep(price, market),  # required for limit orders
-            'timeInForce': timeInForce,  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
+            # 'timeInForce': 'GoodTillCancel',  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
             # ----------------------------------------------------------------
             # spot
             # 'qtyType': 'ByBase',  # ByBase, ByQuote
             # 'quoteQtyEv': self.to_ep(cost, market),
             # 'baseQtyEv': self.to_ev(amount, market),
-            'triggerType': self.api_trigger_type(trigger),  # required for conditional orders
+            # 'trigger': 'ByLastPrice',  # required for conditional orders
             # ----------------------------------------------------------------
             # swap
-            'clOrdID': self.refCode + '_' + self.uuid22(),  # max length 40
+            # 'clOrdID': self.uuid(),  # max length 40
             # 'orderQty': self.amount_to_precision(amount, symbol),
-            'reduceOnly': reduceOnly,
-            'closeOnTrigger': closeOnTrigger,  # implicit reduceOnly and cancel other orders in the same direction
+            # 'reduceOnly': False,
+            # 'closeOnTrigger': False,  # implicit reduceOnly and cancel other orders in the same direction
             # 'takeProfitEp': self.to_ep(takeProfit, market),
             # 'stopLossEp': self.to_ep(stopLossEp, market),
             # 'triggerType': 'ByMarkPrice',  # ByMarkPrice, ByLastPrice
@@ -1870,30 +1830,20 @@ class phemex(Exchange, PhemexTealstreetMixin):
                     elif cost is None:
                         raise ArgumentsRequired(self.id + ' createOrder() ' + qtyType + ' requires a price argument or a cost parameter')
                 cost = amount if (cost is None) else cost
-                request['quoteQtyEv'] = self.to_ep(cost, market)
+                costString = str(cost)
+                request['quoteQtyEv'] = self.to_ev(costString, market)
             else:
-                request['baseQtyEv'] = self.to_ev(amount, market)
+                amountString = str(amount)
+                request['baseQtyEv'] = self.to_ev(amountString, market)
         elif market['swap']:
             request['orderQty'] = int(amount)
-        if price and type == 'Stop':
-            type = 'StopLimit'
-        if type in ['Limit', 'StopLimit', 'LimitIfTouched']:
-            request['priceEp'] = self.to_ep(price, market)
-        basePrice = self.safe_value(params, 'basePrice')
-        if basePrice == 0.0:
-            ticker = self.fetch_ticker(symbol)
-            basePrice = ticker['last']
-        stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
+        if type == 'Limit':
+            priceString = str(price)
+            request['priceEp'] = self.to_ep(priceString, market)
+        stopPrice = self.safe_string_2(params, 'stopPx', 'stopPrice')
         if stopPrice is not None:
             request['stopPxEp'] = self.to_ep(stopPrice, market)
-            # TEALSTREET TODO: get current mark price and set to base price
-            if (side == 'Buy' and stopPrice < basePrice) or (side == 'Sell' and stopPrice > basePrice):
-                if type == 'Stop':
-                    type = 'MarketIfTouched'
-                elif type == 'StopLimit':
-                    type = 'LimitIfTouched'
-        request['ordType'] = type
-        params = self.omit(params, ['stopPx', 'stopPrice', 'basePrice'])
+        params = self.omit(params, ['stopPx', 'stopPrice'])
         method = 'privatePostSpotOrders' if market['spot'] else 'privatePostOrders'
         response = getattr(self, method)(self.extend(request, params))
         #
@@ -1975,162 +1925,39 @@ class phemex(Exchange, PhemexTealstreetMixin):
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
 
-    def edit_order(self, id, symbol, type, side, amount=None, price=None, params={}):
+    def edit_order(self, id, symbol, type=None, side=None, amount=None, price=None, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' editOrder() requires a symbol argument')
+        if type is not None:
+            raise ArgumentsRequired(self.id + ' editOrder() type changing is not implemented. Try to cancel & recreate order for that purpose')
+        if side is not None:
+            raise ArgumentsRequired(self.id + ' editOrder() side changing is not implemented. Try to cancel & recreate order for that purpose')
         self.load_markets()
         market = self.market(symbol)
-        side = self.capitalize(side)
-        type = self.api_order_type(type)
-
-        # TEALSTREET
-        # reduceOnly = self.safe_value(params, 'reduceOnly', False)
-        # timeInForce = self.api_time_in_force(params['timeInForce'])
-        # trigger = self.api_trigger_type(params['trigger'])
-        # closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
-        params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
-
         request = {
-            # common
-            'orderID': id,
             'symbol': market['id'],
-            # 'side': side,  # Sell, Buy
-            # 'ordType': type,  # Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched or Pegged for swap orders
-            # 'stopPxEp': self.to_ep(stopPx, market),  # for conditional orders, handled below
-            # 'priceEp': self.to_ep(price, market),  # required for limit orders
-            # 'timeInForce': timeInForce,  # GoodTillCancel, PostOnly, ImmediateOrCancel, FillOrKill
-            # ----------------------------------------------------------------
-            # spot
-            # 'qtyType': 'ByBase',  # ByBase, ByQuote
-            # 'quoteQtyEv': self.to_ep(cost, market),
-            # 'baseQtyEv': self.to_ev(amount, market),
-            # 'triggerType': self.api_trigger_type(trigger),  # required for conditional orders
-            # ----------------------------------------------------------------
-            # swap
-            'clOrdID': self.refCode + '_' + self.uuid22(),  # max length 40
-            # 'orderQty': self.amount_to_precision(amount, symbol),
-            # 'reduceOnly': reduceOnly,
-            # 'closeOnTrigger': closeOnTrigger,  # implicit reduceOnly and cancel other orders in the same direction
-            # 'takeProfitEp': self.to_ep(takeProfit, market),
-            # 'stopLossEp': self.to_ep(stopLossEp, market),
-            # 'triggerType': 'ByMarkPrice',  # ByMarkPrice, ByLastPrice
-            # 'pegOffsetValueEp': integer,  # Trailing offset from current price. Negative value when position is long, positive when position is short
-            # 'pegPriceType': 'TrailingStopPeg',  # TrailingTakeProfitPeg
-            # 'text': 'comment',
         }
-        if market['spot']:
-            qtyType = self.safe_value(params, 'qtyType', 'ByBase')
-            if (type == 'Market') or (type == 'Stop') or (type == 'MarketIfTouched'):
-                if price is not None:
-                    qtyType = 'ByQuote'
-            request['qtyType'] = qtyType
-            if qtyType == 'ByQuote':
-                cost = self.safe_number(params, 'cost')
-                params = self.omit(params, 'cost')
-                if self.options['createOrderByQuoteRequiresPrice']:
-                    if price is not None:
-                        cost = amount * price
-                    elif cost is None:
-                        raise ArgumentsRequired(self.id + ' createOrder() ' + qtyType + ' requires a price argument or a cost parameter')
-                cost = amount if (cost is None) else cost
-                request['quoteQtyEv'] = self.to_ep(cost, market)
-            else:
-                request['baseQtyEv'] = self.to_ev(amount, market)
-        elif market['swap']:
-            request['orderQty'] = int(amount)
-        if type in ['Limit', 'StopLimit', 'LimitIfTouched'] or price:
+        clientOrderId = self.safe_string_2(params, 'clientOrderId', 'clOrdID')
+        params = self.omit(params, ['clientOrderId', 'clOrdID'])
+        if clientOrderId is not None:
+            request['clOrdID'] = clientOrderId
+        else:
+            request['orderID'] = id
+        if price is not None:
             request['priceEp'] = self.to_ep(price, market)
-        basePrice = self.safe_value(params, 'basePrice')
-        if not basePrice:
-            ticker = self.fetch_ticker(symbol)
-            basePrice = ticker['last']
-        stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
-        if stopPrice:
+        # Note the uppercase 'V' in 'baseQtyEV' request. that is exchange's requirement at self moment. However, to avoid mistakes from user side, let's support lowercased 'baseQtyEv' too
+        finalQty = self.safe_string(params, 'baseQtyEv')
+        params = self.omit(params, ['baseQtyEv'])
+        if finalQty is not None:
+            request['baseQtyEV'] = finalQty
+        elif amount is not None:
+            request['baseQtyEV'] = self.to_ev(amount, market)
+        stopPrice = self.safe_string_2(params, 'stopPx', 'stopPrice')
+        if stopPrice is not None:
             request['stopPxEp'] = self.to_ep(stopPrice, market)
-            # TEALSTREET TODO: get current mark price and set to base price
-            if (side == 'Buy' and stopPrice < basePrice) or (side == 'Sell' and stopPrice > basePrice):
-                if type == 'Stop':
-                    type = 'MarketIfTouched'
-                elif type == 'StopLimit':
-                    type = 'LimitIfTouched'
-        # request['ordType'] = type
-        params = self.omit(params, ['stopPx', 'stopPrice', 'basePrice'])
-        method = 'privatePutSpotOrdersReplace' if market['spot'] else 'privatePutOrdersReplace'
+        params = self.omit(params, ['stopPx', 'stopPrice'])
+        method = 'privatePutSpotOrders' if market['spot'] else 'privatePutOrdersReplace'
         response = getattr(self, method)(self.extend(request, params))
-        #
-        # spot
-        #
-        #     {
-        #         "code": 0,
-        #         "msg": "",
-        #         "data": {
-        #             "orderID": "d1d09454-cabc-4a23-89a7-59d43363f16d",
-        #             "clOrdID": "309bcd5c-9f6e-4a68-b775-4494542eb5cb",
-        #             "priceEp": 0,
-        #             "action": "New",
-        #             "trigger": "UNSPECIFIED",
-        #             "pegPriceType": "UNSPECIFIED",
-        #             "stopDirection": "UNSPECIFIED",
-        #             "bizError": 0,
-        #             "symbol": "sBTCUSDT",
-        #             "side": "Buy",
-        #             "baseQtyEv": 0,
-        #             "ordType": "Limit",
-        #             "timeInForce": "GoodTillCancel",
-        #             "ordStatus": "Created",
-        #             "cumFeeEv": 0,
-        #             "cumBaseQtyEv": 0,
-        #             "cumQuoteQtyEv": 0,
-        #             "leavesBaseQtyEv": 0,
-        #             "leavesQuoteQtyEv": 0,
-        #             "avgPriceEp": 0,
-        #             "cumBaseAmountEv": 0,
-        #             "cumQuoteAmountEv": 0,
-        #             "quoteQtyEv": 0,
-        #             "qtyType": "ByBase",
-        #             "stopPxEp": 0,
-        #             "pegOffsetValueEp": 0
-        #         }
-        #     }
-        #
-        # swap
-        #
-        #     {
-        #         "code":0,
-        #         "msg":"",
-        #         "data":{
-        #             "bizError":0,
-        #             "orderID":"7a1ad384-44a3-4e54-a102-de4195a29e32",
-        #             "clOrdID":"",
-        #             "symbol":"ETHUSD",
-        #             "side":"Buy",
-        #             "actionTimeNs":1592668973945065381,
-        #             "transactTimeNs":0,
-        #             "orderType":"Market",
-        #             "priceEp":2267500,
-        #             "price":226.75000000,
-        #             "orderQty":1,
-        #             "displayQty":0,
-        #             "timeInForce":"ImmediateOrCancel",
-        #             "reduceOnly":false,
-        #             "closedPnlEv":0,
-        #             "closedPnl":0E-8,
-        #             "closedSize":0,
-        #             "cumQty":0,
-        #             "cumValueEv":0,
-        #             "cumValue":0E-8,
-        #             "leavesQty":1,
-        #             "leavesValueEv":11337,
-        #             "leavesValue":1.13370000,
-        #             "stopDirection":"UNSPECIFIED",
-        #             "stopPxEp":0,
-        #             "stopPx":0E-8,
-        #             "trigger":"UNSPECIFIED",
-        #             "pegOffsetValueEp":0,
-        #             "execStatus":"PendingNew",
-        #             "pegPriceType":"UNSPECIFIED",
-        #             "ordStatus":"Created"
-        #         }
-        #     }
-        #
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
 
@@ -2149,32 +1976,25 @@ class phemex(Exchange, PhemexTealstreetMixin):
         else:
             request['orderID'] = id
         method = 'privateDeleteSpotOrders' if market['spot'] else 'privateDeleteOrdersCancel'
-        params = self.omit(params, 'type')
         response = getattr(self, method)(self.extend(request, params))
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
 
     def cancel_all_orders(self, symbol=None, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         self.load_markets()
         request = {
             # 'symbol': market['id'],
             # 'untriggerred': False,  # False to cancel non-conditional orders, True to cancel conditional orders
             # 'text': 'up to 40 characters max',
         }
-        market = None
-        if symbol is not None:
-            market = self.market(symbol)
-            if not market['swap']:
-                raise NotSupported(self.id + ' cancelAllOrders() supports swap market type orders only')
-            request['symbol'] = market['id']
-
-        # TEALSTREET
-        type = self.safe_string(params, 'type')
-        if (type == 'stop'):
-            request['untriggered'] = True
-
-        params = self.omit(params, 'type')
-        return self.privateDeleteOrdersAll(self.extend(request, params))
+        market = self.market(symbol)
+        method = 'privateDeleteSpotOrdersAll'
+        if market['swap']:
+            method = 'privateDeleteOrdersAll'
+        request['symbol'] = market['id']
+        return getattr(self, method)(self.extend(request, params))
 
     def fetch_order(self, id, symbol=None, params={}):
         if symbol is None:
@@ -2231,16 +2051,18 @@ class phemex(Exchange, PhemexTealstreetMixin):
         request = {
             'symbol': market['id'],
         }
+        response = None
         try:
             response = getattr(self, method)(self.extend(request, params))
-            data = self.safe_value(response, 'data', {})
-            if isinstance(data, list):
-                return self.parse_orders(data, market, since, limit)
-            else:
-                rows = self.safe_value(data, 'rows', [])
-                return self.parse_orders(rows, market, since, limit)
         except Exception as e:
-            return []
+            if isinstance(e, OrderNotFound):
+                return []
+        data = self.safe_value(response, 'data', {})
+        if isinstance(data, list):
+            return self.parse_orders(data, market, since, limit)
+        else:
+            rows = self.safe_value(data, 'rows', [])
+            return self.parse_orders(rows, market, since, limit)
 
     def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         if symbol is None:
@@ -2301,10 +2123,9 @@ class phemex(Exchange, PhemexTealstreetMixin):
 
     def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchClosedOrders() requires a symbol argument')
+            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
         self.load_markets()
         market = self.market(symbol)
-        market['valueScale'] = 0 if market['valueScale'] is None else market['valueScale'] # fixes bug for parsing price into None scale
         method = 'privateGetExchangeSpotOrderTrades' if market['spot'] else 'privateGetExchangeOrderTrade'
         request = {
             'symbol': market['id'],
@@ -2398,6 +2219,16 @@ class phemex(Exchange, PhemexTealstreetMixin):
         request = {
             'currency': currency['id'],
         }
+        defaultNetworks = self.safe_value(self.options, 'defaultNetworks')
+        defaultNetwork = self.safe_string_upper(defaultNetworks, code)
+        networks = self.safe_value(self.options, 'networks', {})
+        network = self.safe_string_upper(params, 'network', defaultNetwork)
+        network = self.safe_string(networks, network, network)
+        if network is None:
+            request['chainName'] = currency['id']
+        else:
+            request['chainName'] = network
+            params = self.omit(params, 'network')
         response = self.privateGetPhemexUserWalletsV2DepositAddress(self.extend(request, params))
         #     {
         #         "code":0,
@@ -2416,6 +2247,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'currency': code,
             'address': address,
             'tag': tag,
+            'network': None,
             'info': response,
         }
 
@@ -2529,7 +2361,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         code = currency['code']
         timestamp = self.safe_integer_2(transaction, 'createdAt', 'submitedAt')
         type = self.safe_string_lower(transaction, 'type')
-        feeCost = self.from_en(self.safe_number(transaction, 'feeEv'), currency['valueScale'], currency['precision'])
+        feeCost = self.parse_number(self.from_en(self.safe_string(transaction, 'feeEv'), currency['valueScale']))
         fee = None
         if feeCost is not None:
             type = 'withdrawal'
@@ -2538,7 +2370,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 'currency': code,
             }
         status = self.parse_transaction_status(self.safe_string(transaction, 'status'))
-        amount = self.from_en(self.safe_number(transaction, 'amountEv'), currency['valueScale'], currency['precision'])
+        amount = self.parse_number(self.from_en(self.safe_string(transaction, 'amountEv'), currency['valueScale']))
         return {
             'info': transaction,
             'id': id,
@@ -2571,8 +2403,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             currency = self.currency(code)
             params = self.omit(params, 'code')
             request['currency'] = currency['id']
-        # response = self.privateGetAccountsAccountPositions(self.extend(request, params)) # this call is not prone to be rate limited
-        response = self.privateGetAccountsPositions(self.extend(request, params))
+        response = self.privateGetAccountsAccountPositions(self.extend(request, params))
         #
         #     {
         #         "code":0,"msg":"",
@@ -2650,21 +2481,9 @@ class phemex(Exchange, PhemexTealstreetMixin):
         #     }
         #
         data = self.safe_value(response, 'data', {})
-        accountBalance = data.get('account')
-        positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0'] # only open positions
-        unifiedResult = []
-
-        contractType = 'inverse' if accountBalance.get('currency') == 'BTC' else 'linear'
-
-        # scales
-        # Ep = 1e4
-        # Er = 1e8
-        # Ev = 1e8 for bitcoin, 1e4 for inverse
-        for i in range(0, len(positions)):
-            position = positions[i]
-            unifiedResult.append(self.parse_position(position, contractType, accountBalance))
-
-        return unifiedResult
+        positions = self.safe_value(data, 'positions', [])
+        # todo unify parsePosition/parsePositions
+        return positions
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         query = self.omit(params, self.extract_params(path))
@@ -2692,7 +2511,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
                 headers['Content-Type'] = 'application/json'
             auth = requestPath + queryString + expiryString + payload
             headers['x-phemex-request-signature'] = self.hmac(self.encode(auth), self.encode(self.secret))
-        url = self.implode_params(self.urls['api'][api], {'hostname': self.hostname}) + url
+        url = self.implode_hostname(self.urls['api'][api]) + url
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
     def handle_errors(self, httpCode, reason, url, method, headers, body, response, requestHeaders, requestBody):
