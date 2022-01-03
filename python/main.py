@@ -139,6 +139,7 @@ def test_bitmex():
     #
     # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
     # pprint(exchange.cancel_all_orders('BTC/USD'))
+# BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
@@ -181,6 +182,7 @@ def test_bybit():
     pprint(exchange.fetch_open_orders('BTC/USD'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
+# BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 
 # FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 def test_ftx():
@@ -189,6 +191,7 @@ def test_ftx():
     pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.api_referral_success())
+# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 def test_kucoin():
@@ -196,12 +199,24 @@ def test_kucoin():
     exchange = test.tn_kucoin_exchange
 
     pprint(exchange.fetch_balance())
+# KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
+
+# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
+def test_phemex():
+    # exchange = test.mn_phemex_exchange
+    exchange = test.mn_phemex_exchange
+
+    # pprint(exchange.fetch_balance())
+
+    pprint(exchange.fetch_markets())
+# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():
-    test_bybit()
-    # test_ftx()
-    # test_kucoin()
     # test_bitmex()
+    # test_bybit()
+    # test_ftx()
+    test_phemex()
+    # test_kucoin()
     # buy_stuff()
 
 if __name__ == "__main__":
