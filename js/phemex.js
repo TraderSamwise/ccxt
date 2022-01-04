@@ -498,7 +498,12 @@ module.exports = class phemex extends Exchange {
         };
         const base = this.safeCurrencyCode (baseId);
         const quote = this.safeCurrencyCode (quoteId);
-        const symbol = base + '/' + quote;
+        let symbol;
+        if (linear) {
+            symbol = base + '/' + quote + ':' + quote;
+        } else {
+            symbol = base + '/' + quote + ':' + base;
+        }
         const status = this.safeString (market, 'status');
         const active = status === 'Listed';
         return {
