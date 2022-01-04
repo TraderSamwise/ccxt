@@ -381,7 +381,12 @@ module.exports = class phemex extends Exchange {
             inverse = true;
         }
         const linear = !inverse;
-        const symbol = (inverse) ? id : (base + '/' + quote); // fix for uBTCUSD inverse
+        let symbol;
+        if (linear) {
+            symbol = base + '/' + quote + ':' + quote;
+        } else {
+            symbol = base + '/' + quote + ':' + base;
+        }
         const precision = {
             'amount': this.safeNumber (market, 'lotSize'),
             'price': this.safeNumber (market, 'tickSize'),
@@ -498,12 +503,7 @@ module.exports = class phemex extends Exchange {
         };
         const base = this.safeCurrencyCode (baseId);
         const quote = this.safeCurrencyCode (quoteId);
-        let symbol;
-        if (linear) {
-            symbol = base + '/' + quote + ':' + quote;
-        } else {
-            symbol = base + '/' + quote + ':' + base;
-        }
+        const symbol = base + '/' + quote;
         const status = this.safeString (market, 'status');
         const active = status === 'Listed';
         return {
