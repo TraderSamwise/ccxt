@@ -206,9 +206,8 @@ def test_phemex():
     # exchange = test.mn_phemex_exchange
     exchange = test.mn_phemex_exchange
 
-    # pprint(exchange.fetch_balance())
-
-    pprint(exchange.fetch_markets())
+    pprint(exchange.fetch_balance())
+    # pprint(exchange.fetch_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():

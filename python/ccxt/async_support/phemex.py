@@ -420,7 +420,11 @@ class phemex(Exchange, PhemexTealstreetMixin):
         if settlementCurrencyId != quoteId:
             inverse = True
         linear = not inverse
-        symbol = id if (inverse) else (base + '/' + quote)  # fix for uBTCUSD inverse
+        symbol = None
+        if linear:
+            symbol = base + '/' + quote + ':' + quote
+        else:
+            symbol = base + '/' + quote + ':' + base
         precision = {
             'amount': self.safe_number(market, 'lotSize'),
             'price': self.safe_number(market, 'tickSize'),
