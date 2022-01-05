@@ -10,7 +10,7 @@ __test__ = True
 
 # SETTINGS
 exchange = te.tn_phemex_exchange
-symbol = 'BTC/USD:BTC' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
+symbol = 'LINK/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
 size = 1 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
@@ -529,7 +529,10 @@ def test_close_position():
     print(exchange.name)
     print('Close position')
     if exchange.id == 'phemex':
-        code = symbol.split(':', 1)[1]
+        try:
+            code = symbol.split(':', 1)[1]
+        except:
+            code = symbol.split('/', 1)[1]
         position = exchange.fetch_positions(symbol, { 'code': code })[0]
     else:
         position = exchange.fetch_positions(symbol)
