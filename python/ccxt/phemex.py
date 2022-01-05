@@ -38,7 +38,8 @@ class PhemexTealstreetMixin(object):
         hedged = False  # trading in opposite direction will close the position
         side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
         id = symbol # + ':' + side
-        contracts = self.safe_integer(position, 'size')
+        rawContracts = self.safe_integer(position, 'size')
+        contracts = rawContracts * (1 if side == 'long' else -1)
         price = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
         markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
         notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
@@ -469,7 +470,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         #     }
         #
         id = self.safe_string(market, 'symbol')
-        baseId = self.safe_string_2(market, 'baseCurrency', 'contractUnderlyingAssets')
+        baseId = self.safe_string(market, 'contractUnderlyingAssets')
         quoteId = self.safe_string(market, 'quoteCurrency')
         base = self.safe_currency_code(baseId)
         quote = self.safe_currency_code(quoteId)
@@ -480,12 +481,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
         settlementCurrencyId = self.safe_string(market, 'settleCurrency')
         if settlementCurrencyId != quoteId:
             inverse = True
+            base = settlementCurrencyId
         linear = not inverse
-        symbol = None
         if linear:
-            symbol = base + '/' + quote + ':' + quote
+            symbol = base + '/' + quote
         else:
-            symbol = base + '/' + quote + ':' + base
+            symbol = base + '/' + quote + ':' + settlementCurrencyId
         precision = {
             'amount': self.safe_number(market, 'lotSize'),
             'price': self.safe_number(market, 'tickSize'),

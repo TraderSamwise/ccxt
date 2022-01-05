@@ -368,9 +368,9 @@ module.exports = class phemex extends Exchange {
         //     }
         //
         const id = this.safeString (market, 'symbol');
-        const baseId = this.safeString2 (market, 'baseCurrency', 'contractUnderlyingAssets');
+        const baseId = this.safeString (market, 'contractUnderlyingAssets');
         const quoteId = this.safeString (market, 'quoteCurrency');
-        const base = this.safeCurrencyCode (baseId);
+        let base = this.safeCurrencyCode (baseId);
         const quote = this.safeCurrencyCode (quoteId);
         const type = this.safeStringLower (market, 'type');
         let inverse = false;
@@ -379,13 +379,14 @@ module.exports = class phemex extends Exchange {
         const settlementCurrencyId = this.safeString (market, 'settleCurrency');
         if (settlementCurrencyId !== quoteId) {
             inverse = true;
+            base = settlementCurrencyId;
         }
         const linear = !inverse;
         let symbol;
         if (linear) {
-            symbol = base + '/' + quote + ':' + quote;
+            symbol = base + '/' + quote;
         } else {
-            symbol = base + '/' + quote + ':' + base;
+            symbol = base + '/' + quote + ':' + settlementCurrencyId;
         }
         const precision = {
             'amount': this.safeNumber (market, 'lotSize'),
