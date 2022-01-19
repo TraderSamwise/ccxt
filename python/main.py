@@ -210,12 +210,22 @@ def test_phemex():
     # pprint(exchange.fetch_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
+# OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
+def test_okex():
+    # exchange = test.mn_okex_exchange
+    exchange = test.tn_okex_exchange
+    pprint(exchange.fetch_balance())
+    # pprint(exchange.fetch_balance())
+    # pprint(exchange.fetch_markets())
+# OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
+
 def main():
     # test_bitmex()
     # test_bybit()
     # test_ftx()
-    test_phemex()
     # test_kucoin()
+    # test_phemex()
+    test_okex()
     # buy_stuff()
 
 if __name__ == "__main__":

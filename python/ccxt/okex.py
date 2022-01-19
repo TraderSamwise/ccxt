@@ -27,6 +27,25 @@ from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
 class OkexTealstreetMixin(object):
+    def fetch_account_configuration(self: 'okex'):
+        response = self.privateGetAccountConfig()
+        data = self.safe_value(response, 'data')
+        return data
+
+    def fetch_margin_mode(self: 'okex'):
+        accountConfig = self.fetch_account_configuration()
+        marginMode = self.safe_string(accountConfig[0], 'acctLv')
+
+        if marginMode == '1':
+            return 'simple'
+        elif marginMode == '2':
+            return 'single-currency margin'
+        elif marginMode ==  '3':
+            return 'multi-currency margin'
+        elif marginMode == '4':
+            return 'portfolio margin'
+        return 'simple'
+
     # TEALSTREET: this may work to cancel all without giving a order id
     def cancel_all_orders(self: 'okex', symbol=None, params={}):
         if symbol is None:
@@ -1341,7 +1360,9 @@ class okex(Exchange, OkexTealstreetMixin):
             result[code] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
-        return self.parse_balance(result, False)
+        balance = self.parse_balance(result, False)
+        balance['marginMode'] = self.fetch_margin_mode() # TEALSTREET
+        return balance
 
     def create_order(self, symbol, type, side, amount, price=None, params={}):
         self.load_markets()

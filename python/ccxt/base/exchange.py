@@ -1592,7 +1592,7 @@ class Exchange(object):
         }
 
     def parse_balance(self, balance, legacy=True):
-        currencies = self.omit(balance, ['info', 'timestamp', 'datetime', 'free', 'used', 'total']).keys()
+        currencies = self.omit(balance, ['info', 'timestamp', 'datetime', 'free', 'used', 'total', 'marginMode']).keys()
         balance['free'] = {}
         balance['used'] = {}
         balance['total'] = {}
