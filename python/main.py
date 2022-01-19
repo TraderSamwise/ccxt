@@ -97,6 +97,61 @@ def buy_stuff():
             print('error')
 
         time.sleep(sleep_time)
+        
+# BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
+def test_binance():
+    # exchange = test.mn_binance_usdm_exchange
+    exchange = test.mn_binance_coinm_exchange
+
+    symbol = 'BTC/USD'
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    exchange.edit_order('37677901237',
+         'BTC/USD',
+         'limit',
+         'buy',
+         1.0,
+         40000.0,
+         {
+            'closeOnTrigger': None,
+              'reduceOnly': None,
+              'stopPrice': 0.0,
+              'timeInForce': 'GTC',
+              'trigger': 'Last'
+        }
+    )
+
+    # exchange.create_order(symbol,
+    #                       'stop',
+    #                       'sell',
+    #                       0.001,
+    #                       51001,
+    #                       {
+    #                           'stopPrice': 51000,
+    #                           'timeInForce': 'PO',
+    #                           'reduceOnly': None,
+    #                           'trigger': 'Last',
+    #                           'closeOnTrigger': False,
+    #                           'basePrice': last
+    #                       })
+    # exchange.create_order(symbol,
+    # 'stoplimit',
+    # 'buy',
+    # 1,
+    # last * 0.94,
+    # {
+    #     'stopPrice': last * 1.06,
+    #     'timeInForce': 'PO',
+    #     'reduceOnly': None,
+    #     'trigger': 'Last',
+    #     'closeOnTrigger': False,
+    #     'basePrice': last
+    # })
+    pprint(exchange.fetch_open_orders('BTC/USD'))
+    # pprint(exchange.fetch_positions())
+    # pprint(exchange.cancel_all_orders('BTC/USD'))
+# BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
 
 # BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
 def test_bitmex():
@@ -220,12 +275,13 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
+    test_binance()
     # test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
-    test_okex()
+    # test_okex()
     # buy_stuff()
 
 if __name__ == "__main__":
