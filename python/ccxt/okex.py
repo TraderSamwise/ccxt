@@ -574,7 +574,7 @@ class okex(Exchange, OkexTealstreetMixin):
                 'fetchLedger': {
                     'method': 'privateGetAccountBills',  # privateGetAccountBillsArchive, privateGetAssetBills
                 },
-                'brokerId': 'e847386590ce4dBC',
+                'brokerId': '4415b2ef965e42BC',
             },
             'commonCurrencies': {
                 # OKEX refers to ERC20 version of Aeternity(AEToken)

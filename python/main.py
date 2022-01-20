@@ -269,19 +269,33 @@ def test_phemex():
 def test_okex():
     # exchange = test.mn_okex_exchange
     exchange = test.tn_okex_exchange
-    pprint(exchange.fetch_balance())
+    result = exchange.create_order(
+        'BTC-USD-SWAP',
+        'limit',
+        'buy',
+        1,
+        35000,
+        {
+            'stopPrice': None,
+            'timeInForce': 'GTC',
+            'reduceOnly': None,
+            'closeOnTrigger': None,
+            'basePrice': None,
+            'trigger': None,
+        })
+    # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_markets())
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    test_binance()
+    # test_binance()
     # test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
-    # test_okex()
+    test_okex()
     # buy_stuff()
 
 if __name__ == "__main__":

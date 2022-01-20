@@ -67,6 +67,7 @@ class okex(Exchange, OkexTealstreetMixin):
             'version': 'v5',
             'rateLimit': 1000,  # up to 3000 requests per 5 minutes ≈ 600 requests per minute ≈ 10 requests per second ≈ 100 ms
             'pro': True,
+            'refCode': '4415b2ef965e42BC', # Tealstreet
             'has': {
                 'CORS': False,
                 'cancelOrder': True,
@@ -535,7 +536,7 @@ class okex(Exchange, OkexTealstreetMixin):
                 'fetchLedger': {
                     'method': 'privateGetAccountBills',  # privateGetAccountBillsArchive, privateGetAssetBills
                 },
-                'brokerId': 'e847386590ce4dBC',
+                'brokerId': '4415b2ef965e42BC',
             },
             'commonCurrencies': {
                 # OKEX refers to ERC20 version of Aeternity(AEToken)

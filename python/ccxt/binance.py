@@ -3222,7 +3222,7 @@ class binance(Exchange):
             'datetime': self.iso8601(timestamp),
             'initialMargin': initialMargin,
             'initialMarginPercentage': self.parse_number(initialMarginPercentageString),
-            'maintenanceMargin': maintenanceMargin,
+            'maintenanceMargin': initialMargin, # maintenanceMargin, # TEALSTREET
             'maintenanceMarginPercentage': maintenanceMarginPercentage,
             'entryPrice': entryPrice,
             'price': price,
