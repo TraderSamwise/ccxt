@@ -9,9 +9,9 @@ __test__ = True
 # start test stuff
 
 # SETTINGS
-exchange = te.tn_phemex_exchange
-symbol = 'LINK/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
-size = 1 # 0.001
+exchange = te.tn_bitmex_exchange
+symbol = 'BTC/USDT' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
+size = 0.001 # 0.001
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
@@ -74,6 +74,8 @@ def test_fetch_balance_for_api_key_authentication():
     except:
         assert False
     assert balance
+
+# TODO: edit / update order test
 
 def test_market_buy_not_post_only():
     print(exchange.name)
@@ -203,7 +205,88 @@ def test_limit_sell_above_last_not_post_only_not_reduce_only():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and  order['postOnly'] == False
 
-def test_stop_market_sell_below_last_close_on_trigger():
+def test_edit_order_size():
+    print('Edit order size.')
+    result = None
+    limit_orders = [x for x in orders if x['type'] == 'limit']
+    id = limit_orders.pop()['id']
+    new_amount = size * 7
+    try:
+        order = True
+        if exchange.id != 'ftx':
+            for x in limit_orders:
+                order = exchange.fetch_order(x['id'], symbol)
+                if order['status'] == 'open':
+                    id = order['id']
+                    break
+        if order: # wtf ftx
+            if order['status'] == 'open':
+                type = order['type']
+                side = order['side']
+                price = order['price']
+                stop_price = order['stopPrice']
+                time_in_force = order['timeInForce']
+                reduce_only = order['reduce']
+                trigger = order['trigger']
+                close_on_trigger = order['close']
+                result = exchange.edit_order(id, symbol, type, side, new_amount, price,
+                    params={
+                        'stopPrice': stop_price,
+                        'timeInForce': time_in_force,
+                        'reduceOnly': reduce_only,
+                        'trigger': trigger,
+                        'closeOnTrigger': close_on_trigger,
+                    })
+    except:
+        assert False
+    pprint(result)
+    print('༼ つ ◕_◕ ༽つ')
+    assert result['id'] == id and result['amount'] == new_amount
+
+def test_edit_order_price():
+    print('Edit order price.')
+    result = None
+    limit_orders = [x for x in orders if x['type'] == 'limit']
+    id = limit_orders.pop()['id']
+    new_price = last
+    try:
+        order = True
+        if exchange.id != 'ftx':
+            for x in limit_orders:
+                order = exchange.fetch_order(x['id'], symbol)
+                if order['status'] == 'open':
+                    id = order['id']
+                    break
+        if order: # wtf ftx
+            if order['status'] == 'open':
+                amount = order['amount']
+                type = order['type']
+                side = order['side']
+                price = order['price']
+                if price < last:
+                    new_price = last * 0.915
+                else:
+                    new_price = last * 1.085
+                stop_price = order['stopPrice']
+                time_in_force = order['timeInForce']
+                reduce_only = order['reduce']
+                trigger = order['trigger']
+                close_on_trigger = order['close']
+                result = exchange.edit_order(id, symbol, type, side, amount, new_price,
+                    params={
+                        'stopPrice': stop_price,
+                        'timeInForce': time_in_force,
+                        'reduceOnly': reduce_only,
+                        'trigger': trigger,
+                        'closeOnTrigger': close_on_trigger,
+                    })
+    except:
+        assert False
+    pprint(result)
+    print('༼ つ ◕_◕ ༽つ')
+    assert result['id'] == id and result['price'] == new_price
+
+def test_stop_market_sell_below_last_close_on_trigger(): # bitmex linear has a timing issue with this and sometimes fails
     print('Market sell stop below last. Close on trigger = true.')
     result = do_create_order([
        symbol,
@@ -224,7 +307,7 @@ def test_stop_market_sell_below_last_close_on_trigger():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and check_close_on_trigger_value(result, True)
 
-def test_stop_market_sell_below_last():
+def test_stop_market_sell_below_last(): #  bitmex linear has a timing issue with this and sometimes fails
     print('Market sell stop below last. Close on trigger = false.')
     result = do_create_order([
         symbol,
@@ -308,7 +391,7 @@ def test_stop_market_buy_above_last():
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and check_close_on_trigger_value(result, False)
 
-def test_stop_market_buy_below_last(): # should be take profit, TODO: bitmex is filling on this
+def test_stop_market_buy_below_last(): # should be take profit, bitmex linear has a timing issue with this and sometimes fails
     print('Market buy stop below last. Close on trigger = false.')
     result = do_create_order([
        symbol,
@@ -416,6 +499,49 @@ def test_stop_limit_sell_below_last():
     orders.append({'id': result['id'], 'type': 'stop'})
     order = fetch_order_unless_exchange_too_slow(result)
     assert order['status'] == 'open' and check_trigger_value(result, 'Last') and check_close_on_trigger_value(result, True)
+
+def test_edit_order_stop_price():
+    print('Edit order stop price.')
+    result = None
+    limit_orders = [x for x in orders if x['type'] == 'stop']
+    id = limit_orders.pop()['id']
+    new_stop_price = last
+    try:
+        order = True
+        if exchange.id != 'ftx':
+            for x in limit_orders:
+                order = exchange.fetch_order(x['id'], symbol)
+                if order['status'] == 'open':
+                    id = order['id']
+                    break
+        if order: # wtf ftx
+            if order['status'] == 'open':
+                amount = order['amount']
+                type = order['type']
+                side = order['side']
+                price = order['price']
+                stop_price = order['stopPrice']
+                if stop_price < last:
+                    new_stop_price = last * 0.915
+                else:
+                    new_stop_price = last * 1.085
+                time_in_force = order['timeInForce']
+                reduce_only = order['reduce']
+                trigger = order['trigger']
+                close_on_trigger = order['close']
+                result = exchange.edit_order(id, symbol, type, side, amount, price,
+                    params={
+                        'stopPrice': new_stop_price,
+                        'timeInForce': time_in_force,
+                        'reduceOnly': reduce_only,
+                        'trigger': trigger,
+                        'closeOnTrigger': close_on_trigger,
+                    })
+    except:
+        assert False
+    pprint(result)
+    print('༼ つ ◕_◕ ༽つ')
+    assert result['id'] == id and result['stopPrice'] == new_stop_price
 
 def test_cancel_order():
     print('Cancel a few limit orders.')
@@ -536,6 +662,8 @@ def test_close_position():
         position = exchange.fetch_positions(symbol, { 'code': code })[0]
     else:
         position = exchange.fetch_positions(symbol)
+    if isinstance(position, list):
+        position = position[0]
     close_size = position['contracts'] or position['size']
     side = 'buy' if position['side'] == 'sell' else 'sell'
     result = do_create_order([
