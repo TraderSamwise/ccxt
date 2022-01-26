@@ -36,7 +36,7 @@ class BitmexTealstreetMixin(object):
         hedged = False # trading in opposite direction will close the position
         side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
         rawContracts = self.safe_integer(position, 'currentQty')
-        contracts = Precise.string_div(rawContracts, precision) if currency == 'USDT' else rawContracts
+        contracts = float(Precise.string_div(rawContracts, precision) if currency == 'USDT' else rawContracts)
         price = self.safe_float(position, 'avgEntryPrice')
         markPrice = self.safe_float(position, 'markPrice')
         # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
@@ -1451,8 +1451,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         lastTradeTimestamp = self.parse8601(self.safe_string(order, 'transactTime'))
         price = self.safe_number(order, 'price')
         currency = self.safe_string(order, 'currency')
-        amount = Precise.string_div(self.safe_string(order, 'orderQty'), '1e6') if currency == 'USDT' else self.safe_number(order, 'orderQty')
-        filled = Precise.div(self.safe_number(order, 'cumQty', 0.0), '1e6') if currency == 'USDT' and self.safe_number(order, 'cumQty') else self.safe_number(order, 'cumQty', 0.0)
+        amount = float(Precise.string_div(self.safe_string(order, 'orderQty'), '1e6') if currency == 'USDT' else self.safe_number(order, 'orderQty'))
+        filled = float(Precise.string_div(self.safe_string(order, 'cumQty', 0.0), '1e6') if currency == 'USDT' and self.safe_number(order, 'cumQty') else self.safe_number(order, 'cumQty', 0.0))
         average = self.safe_number(order, 'avgPx')
         id = self.safe_string(order, 'orderID')
         type = self.safe_string_lower(order, 'ordType')
@@ -1488,6 +1488,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             'trades': None,
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
+            'trigger': None,  # TEALSTREET
         })
 
     def fetch_trades(self, symbol, since=None, limit=None, params={}):
@@ -1541,7 +1542,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         # TEALSTREET
         reduceOnly = self.safe_value(params, 'reduceOnly', False)
         orderType = self.api_order_type(type)
-        timeInForce = self.api_time_in_force(params['timeInpie :Force'])
+        timeInForce = self.api_time_in_force(params['timeInForce'])
         trigger = self.api_trigger_type(params['trigger'])
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = self.capitalize(side)
@@ -1600,10 +1601,10 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             request['clOrdID'] = clientOrderId
             params = self.omit(params, ['clOrdID', 'clientOrderId'])
 
-        request['orderType'] = orderType
+        request['ordType'] = orderType
 
         # default market close params from ts don't work
-        if request['orderType'] == 'Market' and request['execInst'] == 'ReduceOnly,Close':
+        if request['ordType'] == 'Market' and request['execInst'] == 'ReduceOnly,Close':
             request['execInst'] = 'ReduceOnly'
 
         params = self.omit(params, ['basePrice'])
@@ -1612,6 +1613,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
 
     def edit_order(self, id, symbol, type, side, amount=None, price=None, params={}):
         self.load_markets()
+        market = self.market(symbol)
+
         request = {}
         origClOrdID = self.safe_string_2(params, 'origClOrdID', 'clientOrderId')
         if origClOrdID is not None:
