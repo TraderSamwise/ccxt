@@ -25,7 +25,8 @@ class BitmexTealstreetMixin(object):
         positionCurrency = self.safe_string(position, 'currency')
         currency = 'USDT' if positionCurrency == 'USDt' else 'BTC'
         precision = '1e8' if currency == 'BTC' else '1e6'
-        collateral = balance.get('total').get(currency)
+        # collateral = balance.get('total').get(currency)
+        collateral = None
         marketId = self.safe_string(position, 'symbol')
         market = self.safe_market(marketId)
         symbol = market['symbol']
@@ -1629,7 +1630,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             orderMultiplier = market['orderMultiplier']
             request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
         if price is not None:
-            request['price'] = price
+            request['price'] = float(self.price_to_precision(symbol, price))
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice:
             request['stopPx'] = float(self.price_to_precision(symbol, stopPrice))

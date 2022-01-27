@@ -47,6 +47,12 @@ module.exports = class bitmex extends Exchange {
                 '1h': '1h',
                 '1d': '1d',
             },
+            'timeframeMap': {
+                '1m': '60',
+                '5m': '300',
+                '1h': '3600',
+                '1d': '86400',
+            },
             'urls': {
                 'test': {
                     'public': 'https://testnet.bitmex.com',
