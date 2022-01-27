@@ -466,7 +466,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             tickSize = self.safe_number(market, 'tickSize')
             rawUnderlyingToPositionMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier')
             orderMultiplier = rawUnderlyingToPositionMultiplier or 1 # TEALSTREET
-            lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            # lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            lotSize = self.safe_number(market, 'lotSize')
             contractSize = 1
             # if rawUnderlyingToPositionMultiplier:
             #     contractSize = Precise.string_div(str(rawUnderlyingToPositionMultiplier), '1e4')
@@ -1574,7 +1575,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         }
 
         orderMultiplier = market['orderMultiplier']
-        request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
+        # request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
+        request['orderQty'] = float(self.amount_to_precision(symbol, amount))
 
         request['execInst'] = ','.join(execInstValues)
 
@@ -1634,7 +1636,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             request['orderID'] = id
         if amount is not None:
             orderMultiplier = market['orderMultiplier']
-            request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
+            # request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
+            request['orderQty'] = float(self.amount_to_precision(symbol, amount))
         if price is not None:
             request['price'] = float(self.price_to_precision(symbol, price))
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
