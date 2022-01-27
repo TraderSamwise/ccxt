@@ -222,8 +222,19 @@ module.exports = class bitmex extends Exchange {
                 'amount': undefined,
                 'price': undefined,
             };
-            const lotSize = this.safeNumber (market, 'lotSize');
-            const tickSize = this.safeNumber (market, 'tickSize');
+            const tickSize = this.safeNumber(market, 'tickSize');
+            const rawUnderlyingToPositionMultiplier = this.safeNumber(market, 'underlyingToPositionMultiplier');
+            const orderMultiplier = rawUnderlyingToPositionMultiplier || 1 // TEALSTREET
+            // const lotSize = this.safeNumber(market, 'lotSize') / orderMultiplier; // TEALSTREET
+            const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
+            let contractSize = 1;
+            if (rawUnderlyingToPositionMultiplier) {
+                if (symbol === 'BTC/USDT') {
+                    contractSize = Precise.stringDiv(rawUnderlyingToPositionMultiplier.toString(), '1e12');
+                } else {
+                    contractSize = Precise.stringDiv(rawUnderlyingToPositionMultiplier.toString(), '1e4');
+                }
+            }
             if (lotSize !== undefined) {
                 precision['amount'] = lotSize;
             }
@@ -266,9 +277,13 @@ module.exports = class bitmex extends Exchange {
                 'spot': false,
                 'swap': swap,
                 'future': future,
-                'inverse': inverse,
                 'prediction': prediction,
                 'info': market,
+                'inverse': inverse,
+                'lotSize': lotSize, // TEALSTREET
+                'orderAmount': contractSize, // TEALSTREET
+                'orderMultiplier': orderMultiplier, // TEALSTREET
+                'contractSize': contractSize, // TEALSTREET
             });
         }
         return result;
