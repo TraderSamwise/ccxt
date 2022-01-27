@@ -188,6 +188,35 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'api-expires': 5,  # in seconds
                 'fetchOHLCVOpenTimestamp': True,
             },
+            # TEALSTREET
+            'orderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Stop',
+                'stoplimit': 'StopLimit',
+                'marketiftouched': 'MarketIfTouched',
+                'limitiftouched': 'LimitIfTouched',
+            },
+            'reverseOrderTypes': {
+                'market': 'Market',
+                'limit': 'Limit',
+                'stop': 'Stop',
+                'stopLimit': 'StopLimit',
+                'marketiftouched': 'Stop',
+                'limitiftouched': 'StopLimit'
+            },
+            'triggerTypes': {
+                'Mark': 'MarkPrice',
+                'Last': 'LastPrice',
+                'Index': 'IndexPrice',
+            },
+            'timeInForces': {
+                'GTC': 'GoodTillCancel',
+                'PO': 'ParticipateDoNotInitiate',
+                'IOC': 'ImmediateOrCancel',
+                'FOK': 'FillOrKill',
+                'D': 'Day',
+            }
         })
 
     async def fetch_markets(self, params={}):
@@ -227,13 +256,12 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             }
             tickSize = self.safe_number(market, 'tickSize')
             rawUnderlyingToPositionMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier')
-            orderMultiplier = rawUnderlyingToPositionMultiplier or 1 # TEALSTREET
-            lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            orderMultiplier = rawUnderlyingToPositionMultiplier or 1  # TEALSTREET
+            # lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            lotSize = self.safe_number(market, 'lotSize')  # TEALSTREET
             contractSize = 1
-            # if rawUnderlyingToPositionMultiplier:
-            #     contractSize = Precise.string_div(str(rawUnderlyingToPositionMultiplier), '1e4')
-            # else:
-            #     contractSize = 1
+            if rawUnderlyingToPositionMultiplier:
+                contractSize = 1 / rawUnderlyingToPositionMultiplier
             if lotSize is not None:
                 precision['amount'] = lotSize
             if tickSize is not None:
@@ -1218,11 +1246,13 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         lastTradeTimestamp = self.parse8601(self.safe_string(order, 'transactTime'))
         price = self.safe_number(order, 'price')
         currency = self.safe_string(order, 'currency')
-        amount = float(Precise.string_div(self.safe_string(order, 'orderQty'), '1e6') if currency == 'USDT' else self.safe_number(order, 'orderQty'))
-        filled = float(Precise.string_div(self.safe_string(order, 'cumQty', 0.0),  '1e6') if currency == 'USDT' and self.safe_number(order,  'cumQty') else self.safe_number(order, 'cumQty', 0.0))
+        # amount = float(Precise.string_div(self.safe_string(order, 'orderQty'), '1e6') if currency == 'USDT' else self.safe_number(order, 'orderQty'))
+        # filled = float(Precise.string_div(self.safe_string(order, 'cumQty', 0.0), '1e6') if currency == 'USDT' and self.safe_number(order, 'cumQty') else self.safe_number(order, 'cumQty', 0.0))
+        amount = self.safe_number(order, 'orderQty')
+        filled = self.safe_number(order, 'cumQty', 0.0)
         average = self.safe_number(order, 'avgPx')
         id = self.safe_string(order, 'orderID')
-        type = self.safe_string_lower(order, 'ordType')
+        type = self.reverse_api_order_type(self.safe_string_lower(order, 'ordType'))
         side = self.safe_string_lower(order, 'side')
         clientOrderId = self.safe_string(order, 'clOrdID')
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))

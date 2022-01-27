@@ -159,24 +159,25 @@ def test_bitmex():
 
     # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_positions())
-    # pprint(exchange.fetch_open_orders())
+    pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_my_trades())
     # pprint(exchange.fetch_positions())
-    result = exchange.create_order(
-        'ADA/USDT',
-        'market',
-        'buy',
-        10,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': None,
-            'reduceOnly': None,
-            'trigger': None,
-            'closeOnTrigger': False,
-            'basePrice': None
-        })
+    # pprint(exchange.fetch_markets())
 
+    # result = exchange.create_order(
+    #     'ADA/USDT',
+    #     'market',
+    #     'buy',
+    #     10,
+    #     None,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': None,
+    #         'reduceOnly': None,
+    #         'trigger': None,
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
+    #     })
     # result = exchange.create_order(
     #     'BTC/USD',
     #     'limit',

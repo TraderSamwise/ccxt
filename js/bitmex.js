@@ -229,11 +229,7 @@ module.exports = class bitmex extends Exchange {
             const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
             let contractSize = 1;
             if (rawUnderlyingToPositionMultiplier) {
-                if (symbol === 'BTC/USDT') {
-                    contractSize = Precise.stringDiv(rawUnderlyingToPositionMultiplier.toString(), '1e12');
-                } else {
-                    contractSize = Precise.stringDiv(rawUnderlyingToPositionMultiplier.toString(), '1e4');
-                }
+                contractSize = 1 / rawUnderlyingToPositionMultiplier;
             }
             if (lotSize !== undefined) {
                 precision['amount'] = lotSize;

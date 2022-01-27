@@ -1378,6 +1378,7 @@ class okex(Exchange, OkexTealstreetMixin):
         # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         side = side.lower()
+        posSide = 'long' if side == 'buy' else 'short'
 
         method = 'privatePostTradeOrder'
         if type in ['stop', 'stoplimit']:
@@ -1415,7 +1416,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #     buy with short means close short
             #
             'side': side,
-            # 'posSide': 'long',  # long, short,  # required in the long/short mode, and can only be long or short
+            'posSide': posSide,  # long, short,  # required in the long/short mode, and can only be long or short
             'ordType': orderType,  # market, limit, post_only, fok, ioc
             #
             #     for SPOT/MARGIN bought and sold at a limit price, sz refers to the amount of trading currency
