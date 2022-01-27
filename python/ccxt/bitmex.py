@@ -37,7 +37,8 @@ class BitmexTealstreetMixin(object):
         hedged = False # trading in opposite direction will close the position
         side = 'long' if self.safe_integer(position, 'currentQty') > 0 else 'short'
         rawContracts = self.safe_integer(position, 'currentQty')
-        contracts = float(Precise.string_div(rawContracts, precision) if currency == 'USDT' else rawContracts)
+        # contracts = float(Precise.string_div(rawContracts, precision) if currency == 'USDT' else rawContracts)
+        contracts = rawContracts
         price = self.safe_float(position, 'avgEntryPrice')
         markPrice = self.safe_float(position, 'markPrice')
         # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
@@ -462,10 +463,15 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'amount': None,
                 'price': None,
             }
-            lotSize = self.safe_number(market, 'lotSize') # TEALSTREET
-            contractSize = 1 # TEALSTREET
             tickSize = self.safe_number(market, 'tickSize')
-            orderMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier') or 1 # TEALSTREET
+            rawUnderlyingToPositionMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier')
+            orderMultiplier = rawUnderlyingToPositionMultiplier or 1 # TEALSTREET
+            lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            contractSize = 1
+            # if rawUnderlyingToPositionMultiplier:
+            #     contractSize = Precise.string_div(str(rawUnderlyingToPositionMultiplier), '1e4')
+            # else:
+            #     contractSize = 1
             if lotSize:
                 precision['amount'] = lotSize
             if tickSize:
@@ -507,11 +513,11 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'future': future,
                 'prediction': prediction,
                 'info': market,
-                'contractSize': contractSize, # TEALSTREET
                 'lotSize': lotSize, # TEALSTREET
                 'inverse': inverse, # TEALSTREET
                 'orderAmount': contractSize, # TEALSTREET
                 'orderMultiplier': orderMultiplier, # TEALSTREET
+                'contractSize': contractSize, # TEALSTREET
             })
         return result
 

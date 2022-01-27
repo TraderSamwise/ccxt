@@ -162,6 +162,21 @@ def test_bitmex():
     # pprint(exchange.fetch_open_orders())
     # pprint(exchange.fetch_my_trades())
     # pprint(exchange.fetch_positions())
+    result = exchange.create_order(
+        'ADA/USDT',
+        'market',
+        'buy',
+        10,
+        None,
+        {
+            'stopPrice': None,
+            'timeInForce': None,
+            'reduceOnly': None,
+            'trigger': None,
+            'closeOnTrigger': False,
+            'basePrice': None
+        })
+
     # result = exchange.create_order(
     #     'BTC/USD',
     #     'limit',
@@ -177,20 +192,20 @@ def test_bitmex():
     #         'basePrice': None
     #     })
     #
-    result = exchange.create_order(
-        'BTC/USDT',
-        'limit',
-        'buy',
-        0.001,
-        45000,
-        {
-            'stopPrice': None,
-            'timeInForce': 'GTC',
-            'reduceOnly': None,
-            'closeOnTrigger': None,
-            'basePrice': None,
-            'trigger': None,
-        })
+    # result = exchange.create_order(
+    #     'BTC/USDT',
+    #     'limit',
+    #     'buy',
+    #     0.001,
+    #     45000,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': 'GTC',
+    #         'reduceOnly': None,
+    #         'closeOnTrigger': None,
+    #         'basePrice': None,
+    #         'trigger': None,
+    #     })
     #
     # exchange.cancel_order('18748454326', 'BTC/USD', params={'type': 'limit'})
     # pprint(exchange.cancel_all_orders('BTC/USD'))
@@ -290,12 +305,12 @@ def test_okex():
 
 def main():
     # test_binance()
-    # test_bitmex()
+    test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
-    test_okex()
+    # test_okex()
     # buy_stuff()
 
 if __name__ == "__main__":

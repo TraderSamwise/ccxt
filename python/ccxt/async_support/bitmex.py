@@ -225,9 +225,15 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'amount': None,
                 'price': None,
             }
-            lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
-            contractSize = 1 # TEALSTREET
             tickSize = self.safe_number(market, 'tickSize')
+            rawUnderlyingToPositionMultiplier = self.safe_number(market, 'underlyingToPositionMultiplier')
+            orderMultiplier = rawUnderlyingToPositionMultiplier or 1 # TEALSTREET
+            lotSize = self.safe_number(market, 'lotSize') / orderMultiplier # TEALSTREET
+            contractSize = 1
+            # if rawUnderlyingToPositionMultiplier:
+            #     contractSize = Precise.string_div(str(rawUnderlyingToPositionMultiplier), '1e4')
+            # else:
+            #     contractSize = 1
             if lotSize is not None:
                 precision['amount'] = lotSize
             if tickSize is not None:
@@ -269,9 +275,11 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'future': future,
                 'prediction': prediction,
                 'info': market,
-                'contractSize': contractSize, # TEALSTREET
                 'lotSize': lotSize, # TEALSTREET
                 'inverse': inverse, # TEALSTREET
+                'orderAmount': contractSize, # TEALSTREET
+                'orderMultiplier': orderMultiplier, # TEALSTREET
+                'contractSize': contractSize, # TEALSTREET
             })
         return result
 
