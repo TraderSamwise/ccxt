@@ -373,8 +373,20 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             elif code == 'USDT':
                 free = Precise.string_div(free, '1e6')
                 total = Precise.string_div(total, '1e6')
-            account['free'] = free
-            account['total'] = total
+            if free:
+                account['free'] = free
+            else:
+                try:
+                    account['free'] = self.balance[code]['free']
+                except:
+                    account['free'] = 0
+            if total:
+                account['total'] = total
+            else:
+                try:
+                    account['total'] = self.balance[code]['total']
+                except:
+                    account['total'] = 0
             result[code] = account
         return self.parse_balance(result, False)
 
