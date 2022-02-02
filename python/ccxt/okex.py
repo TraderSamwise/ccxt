@@ -1508,6 +1508,8 @@ class okex(Exchange, OkexTealstreetMixin):
             request['orderPx'] =  self.price_to_precision(symbol, price)
 
         params = []
+
+        # TODO: send this information from the frontend to prevent a double request
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
