@@ -399,6 +399,7 @@ class okex(Exchange, OkexTealstreetMixin):
                     '51137': InvalidOrder,  # Your opening price has triggered the limit price, and the max buy price is {0}
                     '51138': InvalidOrder,  # Your opening price has triggered the limit price, and the min sell price is {0}
                     '51139': InvalidOrder,  # Reduce-only feature is unavailable for the spot transactions by simple account
+                    '51148': InvalidOrder,  # Reduce only means you can only reduce the positions you have. Please adjust your order, or cancel it and place a new one.
                     '51201': InvalidOrder,  # Value of per market order cannot exceed 100,000 USDT
                     '51202': InvalidOrder,  # Market - order amount exceeds the max amount
                     '51203': InvalidOrder,  # Order amount exceeds the limit {0}
@@ -1369,16 +1370,20 @@ class okex(Exchange, OkexTealstreetMixin):
         market = self.market(symbol)
 
         # TEALSTREET
-        reduceOnly = self.safe_value(params, 'reduceOnly', False)
+        reduceOnly = self.safe_boolean(params, 'reduceOnly', False)
         timeInForce = self.api_time_in_force(params['timeInForce'])
         orderType = self.api_order_type(type)
         if orderType not in ['conditional', 'trigger']: # no stop post only
             if timeInForce in ['post_only', 'fok', 'ioc']:
                 orderType = timeInForce
         # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
-        closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
+        closeOnTrigger = self.safe_boolean(params, 'closeOnTrigger', False)
         side = side.lower()
-        posSide = 'long' if side == 'buy' else 'short'
+        # posSide = 'long' if side == 'buy' else 'short'
+        if (side == 'buy' and reduceOnly) or (side == 'sell' and not reduceOnly):
+            posSide = 'short'
+        else:
+            posSide = 'long'
 
         method = 'privatePostTradeOrder'
         if type in ['stop', 'stoplimit']:
@@ -1503,7 +1508,16 @@ class okex(Exchange, OkexTealstreetMixin):
             request['orderPx'] =  self.price_to_precision(symbol, price)
 
         params = []
-        response = getattr(self, method)(self.extend(request, params))
+        try:
+            response = getattr(self, method)(self.extend(request, params))
+        except BaseException as e:
+            # order is in net mode, remove the posSide
+            # this is not really efficient, but in theory as efficient as GETting the margin mode and deciding to remove posSide
+            if 'posSide' in str(e):
+                nonLongShortRequest = self.omit(request, ['posSide'])
+                response = getattr(self, method)(self.extend(nonLongShortRequest, params))
+            else:
+                response = e
         #
         #     {
         #         "code": "0",
@@ -1757,8 +1771,8 @@ class okex(Exchange, OkexTealstreetMixin):
         clientOrderId = self.safe_string(order, 'clOrdId')
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
-        reduce = self.safe_value(order, 'reduceOnly')
-        close = self.safe_value(order, 'closeOnTrigger')
+        reduce = self.safe_boolean(order, 'reduceOnly')
+        close = self.safe_boolean(order, 'closeOnTrigger')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -2772,7 +2786,11 @@ class okex(Exchange, OkexTealstreetMixin):
         isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
         hedged = False  # TODO: not sure if you can hedge positions on okex
         contracts = self.safe_float(position, 'pos')
-        side = 'long' if contracts > 0 else 'short'
+        side = self.safe_string(position, 'posSide', 'net')
+        if side == 'net':
+            side = 'long' if contracts > 0 else 'short'
+        if side == 'short' and contracts > 0:
+            contracts = contracts * -1
         id = symbol + ":" + side
         price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
