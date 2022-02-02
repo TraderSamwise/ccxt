@@ -771,6 +771,16 @@ class Exchange(object):
     def safe_value(dictionary, key, default_value=None):
         return dictionary[key] if Exchange.key_exists(dictionary, key) else default_value
 
+    @staticmethod
+    def safe_boolean(dictionary, key, default_value=False):
+        result = dictionary[key] if Exchange.key_exists(dictionary, key) else default_value
+        if type(result) == bool:
+            return result
+        else:
+            if str(result).lower() in ['1', 'true', 't']:
+                return True
+        return default_value
+
     # we're not using safe_floats with a list argument as we're trying to save some cycles here
     # we're not using safe_float_3 either because those cases are too rare to deserve their own optimization
 

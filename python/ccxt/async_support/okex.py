@@ -361,6 +361,7 @@ class okex(Exchange, OkexTealstreetMixin):
                     '51137': InvalidOrder,  # Your opening price has triggered the limit price, and the max buy price is {0}
                     '51138': InvalidOrder,  # Your opening price has triggered the limit price, and the min sell price is {0}
                     '51139': InvalidOrder,  # Reduce-only feature is unavailable for the spot transactions by simple account
+                    '51148': InvalidOrder,  # Reduce only means you can only reduce the positions you have. Please adjust your order, or cancel it and place a new one.
                     '51201': InvalidOrder,  # Value of per market order cannot exceed 100,000 USDT
                     '51202': InvalidOrder,  # Market - order amount exceeds the max amount
                     '51203': InvalidOrder,  # Order amount exceeds the limit {0}
@@ -2105,8 +2106,8 @@ class okex(Exchange, OkexTealstreetMixin):
         clientOrderId = self.safe_string(order, 'clOrdId')
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None  # fix empty clientOrderId string
-        reduce = self.safe_value(order, 'reduceOnly')
-        close = self.safe_value(order, 'closeOnTrigger')
+        reduce = self.safe_boolean(order, 'reduceOnly')
+        close = self.safe_boolean(order, 'closeOnTrigger')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -3183,7 +3184,11 @@ class okex(Exchange, OkexTealstreetMixin):
         isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
         hedged = False  # TODO: not sure if you can hedge positions on okex
         contracts = self.safe_float(position, 'pos')
-        side = 'long' if contracts > 0 else 'short'
+        side = self.safe_string(position, 'posSide', 'net')
+        if side == 'net':
+            side = 'long' if contracts > 0 else 'short'
+        if side == 'short' and contracts > 0:
+            contracts = contracts * -1
         id = symbol + ":" + side
         price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
