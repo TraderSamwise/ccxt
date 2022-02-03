@@ -1363,6 +1363,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
         #         "timestamp": "2019-03-05T12:47:02.762Z"
         #     }
         #
+        print("hello")
         timestamp = self.parse8601(self.safe_string(trade, 'timestamp'))
         price = self.safe_number_2(trade, 'avgPx', 'price')
         amount = self.safe_number_2(trade, 'size', 'lastQty')

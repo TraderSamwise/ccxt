@@ -451,7 +451,13 @@ class bybit(Exchange):
     async def fetch_markets(self, params={}):
         if self.options['adjustForTimeDifference']:
             await self.load_time_difference()
+        # TEALSTREET: workaround because bybit broke testnet linear markets
+        is_testnet = 'apiBackup' in self.urls
+        if is_testnet:
+            self.set_sandbox_mode(False)
         response = await self.v2PublicGetSymbols(params)
+        if is_testnet:
+            self.set_sandbox_mode(True)
         #
         #     {
         #         "ret_code":0,
@@ -632,6 +638,7 @@ class bybit(Exchange):
             'symbol': market['id'],
         }
         response = await self.v2PublicGetTickers(self.extend(request, params))
+
         #
         #     {
         #         ret_code: 0,
