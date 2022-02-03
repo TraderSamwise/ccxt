@@ -451,7 +451,6 @@ class bybit(Exchange):
     def fetch_markets(self, params={}):
         if self.options['adjustForTimeDifference']:
             self.load_time_difference()
-        response = self.v2PublicGetSymbols(params)
         # TEALSTREET: workaround because bybit broke testnet linear markets
         is_testnet = 'apiBackup' in self.urls
         if is_testnet:
