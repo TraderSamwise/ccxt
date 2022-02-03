@@ -381,6 +381,7 @@ class Exchange(object):
         self.first_my_trades = True
         self.first_balance = True
         self.first_orders = True
+        self.second_orders = False
         self.first_positions = True
 
         # version = '.'.join(map(str, sys.version_info[:3]))
