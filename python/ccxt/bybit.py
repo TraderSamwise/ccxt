@@ -1374,6 +1374,7 @@ class bybit(Exchange):
         closeOnTrigger = self.safe_value(params, 'closeOnTrigger', False)
         params = self.omit(params, ['timeInForce', 'trigger', 'reduceOnly', 'closeOnTrigger'])
         type = 'stoplimit' if type == 'stop' and price else type
+        tradeMode = self.safe_value(params, 'tradeMode')
 
         if market['inverse']:
             qty = int(qty)
@@ -1405,6 +1406,15 @@ class bybit(Exchange):
             # 'tp_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
             # 'sl_trigger_by': trigger,  # IndexPrice, MarkPrice, LastPrice
         }
+
+        if tradeMode == 'oneway':
+            request['position_idx'] = 0  # One-Way Mode
+        elif tradeMode == 'hedged':
+            if (side == 'buy' and not reduceOnly) or (side == 'sell' and reduceOnly):
+                request['position_idx'] = 1  # Buy side of both side mode
+            elif (side == 'sell' and not reduceOnly) or (side == 'buy' and reduceOnly):
+                request['position_idx'] = 2  # Sell side of both side mode
+
         priceIsRequired = False
         if type == 'limit': # this?
             priceIsRequired = True
@@ -1491,7 +1501,12 @@ class bybit(Exchange):
         # {'side': 'Buy', 'symbol': 'BTCUSD', 'order_type': 'Limit', 'qty': 1, 'time_in_force': 'PostOnly',
         #  'reduce_only': True, 'trigger_by': None, 'tp_trigger_by': None, 'sl_trigger_by': None, 'price': 36000.0}
         params = self.omit(params, ['stopPrice', 'basePrice'])
-        response = getattr(self, method)(self.extend(request, params))
+        try:
+            response = getattr(self, method)(self.extend(request, params))
+        except BaseException as ex:
+            if not self.safe_value(request,'position_idx', None):
+                request['position_idx'] = 0
+                response = getattr(self, method)(self.extend(request, params))
         #
         #     {
         #         "ret_code": 0,

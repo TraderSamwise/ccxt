@@ -2338,7 +2338,8 @@ class bybit(Exchange):
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
                 side = 'long' if self.safe_string(position, 'side').lower() == 'buy' else 'short'
-                id = symbol + ':' + side
+                mode = 'oneway' if self.safe_string(position, 'position_idx') == '0' else 'hedged'
+                id = symbol + ':' + side if mode == 'hedged' else symbol
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
                 ticker = tickers.get(symbol)
@@ -2360,7 +2361,6 @@ class bybit(Exchange):
                 marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
                 marginType = 'isolated' if isolated else 'cross'
                 percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
-                mode = 'hedged' if self.safe_string(position, 'mode') == 'MergedSingle' else 'oneway'
 
                 unifiedResult.append({
                     'info': info,
