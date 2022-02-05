@@ -2321,11 +2321,14 @@ class bybit(Exchange):
             # 'auto_add_margin': '0', 'is_isolated': False, 'position_margin': '4972.957274', 'occ_closing_fee': '9.352125',
             # 'realised_pnl': '-13.0816875', 'cum_realised_pnl': '-13.0816875', 'free_qty': '0.5', 'tp_sl_mode': 'Full',
             # 'unrealised_pnl': '102.54', 'deleverage_indicator': '3', 'risk_id': '1'}
-            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
-                        d['size'] != '0']
-
-            for i in range(0, len(response)):
-                position = response[i]
+            # response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
+            #             d['size'] != '0']
+            responses = self.safe_value(unfilteredResponse, 'result')
+            # responses = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')]]
+            for i in range(0, len(responses)):
+                response = responses[i]
+                position = self.safe_value(response, 'data')
+                # position = responses[i]
                 info = position
                 marketId = self.safe_string(position, 'symbol')
                 market = self.safe_market(marketId)
@@ -2334,7 +2337,7 @@ class bybit(Exchange):
                 timestamp = self.parse8601(datetime)
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
-                side = 'long' if self.safe_string(position, "side").lower() == 'buy' else 'short'
+                side = 'long' if self.safe_string(position, 'side').lower() == 'buy' else 'short'
                 id = symbol + ':' + side
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
@@ -2357,6 +2360,7 @@ class bybit(Exchange):
                 marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
                 marginType = 'isolated' if isolated else 'cross'
                 percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+                mode = 'hedged' if self.safe_string(position, 'mode') == 'MergedSingle' else 'oneway'
 
                 unifiedResult.append({
                     'info': info,
@@ -2385,6 +2389,7 @@ class bybit(Exchange):
                     'collateral': collateral,
                     'marginType': marginType,
                     'percentage': percentage,  # not important
+                    'tradeMode': mode,
                 })
 
         if type == 'inverse' or type == 'all':
