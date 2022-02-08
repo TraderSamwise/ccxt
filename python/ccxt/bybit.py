@@ -1410,10 +1410,16 @@ class bybit(Exchange):
         if tradeMode == 'oneway':
             request['position_idx'] = 0  # One-Way Mode
         elif tradeMode == 'hedged':
-            if (side == 'buy' and not reduceOnly) or (side == 'sell' and reduceOnly):
-                request['position_idx'] = 1  # Buy side of both side mode
-            elif (side == 'sell' and not reduceOnly) or (side == 'buy' and reduceOnly):
-                request['position_idx'] = 2  # Sell side of both side mode
+            if type == 'stop' or type == 'stoplimit':
+                if (side == 'buy' and not closeOnTrigger) or (side == 'sell' and closeOnTrigger):
+                    request['position_idx'] = 1  # Buy side of both side mode
+                elif (side == 'sell' and not closeOnTrigger) or (side == 'buy' and closeOnTrigger):
+                    request['position_idx'] = 2  # Sell side of both side mode
+            else:
+                if (side == 'buy' and not reduceOnly) or (side == 'sell' and reduceOnly):
+                    request['position_idx'] = 1  # Buy side of both side mode
+                elif (side == 'sell' and not reduceOnly) or (side == 'buy' and reduceOnly):
+                    request['position_idx'] = 2  # Sell side of both side mode
 
         priceIsRequired = False
         if type == 'limit': # this?
@@ -1504,10 +1510,20 @@ class bybit(Exchange):
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
-            # try submitting the other direction
-            old_pos_idx = self.safe_value(request,'position_idx', None)
-            request['position_idx'] = 1 if old_pos_idx == 0 else 0
-            response = getattr(self, method)(self.extend(request, params))
+            if request['position_idx']:
+                try:
+                    # remove position_idx, works for both sides of hedge mode so has 66% odds of working
+                    request = self.omit(request, ['position_idx'])
+                    response = getattr(self, method)(self.extend(request, params))
+                except BaseException as e:
+                    # must be oneway cause it yells when no position_idx on oneway
+                    request['position_idx'] = 0
+                    response = getattr(self, method)(self.extend(request, params))
+            else:
+                # erroring when there's no position_idx means it's oneway
+                request['position_idx'] = 0
+                response = getattr(self, method)(self.extend(request, params))
+
 
         #
         #     {
