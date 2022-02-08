@@ -247,6 +247,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             'userAgent': None,
             'rateLimit': 2000,
             'pro': True,
+            'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelAllOrders': True,
                 'cancelOrder': True,
@@ -1594,6 +1595,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             'symbol': market['id'],
             'side': self.capitalize(side),
             'timeInForce': timeInForce,
+            'text': self.refCode,
+            'clOrdID': self.refCode + self.uuid22(),
         }
 
         orderMultiplier = market['orderMultiplier']
@@ -1652,7 +1655,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             request['origClOrdID'] = origClOrdID
             clientOrderId = self.safe_string(params, 'clOrdID', 'clientOrderId')
             if clientOrderId is not None:
-                request['clOrdID'] = clientOrderId
+                request['clOrdID'] = self.refCode + clientOrderId
             params = self.omit(params, ['origClOrdID', 'clOrdID', 'clientOrderId'])
         else:
             request['orderID'] = id

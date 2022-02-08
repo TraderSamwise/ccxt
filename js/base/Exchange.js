@@ -510,7 +510,6 @@ module.exports = class Exchange {
     }
 
     async fetch2 (path, type = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
-
         if (this.enableRateLimit) {
             await this.throttle (this.rateLimit)
         }

@@ -29,6 +29,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             'userAgent': None,
             'rateLimit': 2000,
             'pro': True,
+            'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelAllOrders': True,
                 'cancelOrder': True,
