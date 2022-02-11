@@ -3172,6 +3172,10 @@ class binance(Exchange):
                     truncatedLiquidationPrice = None
                 liquidationPrice = self.parse_number(truncatedLiquidationPrice)
         price = entryPrice
+        tradeMode = None
+        positionSide = self.safe_string_2(position, 'positionSide', 'ps')
+        if positionSide:
+            tradeMode = 'oneway' if positionSide == 'BOTH' else 'hedged'
         return {
             'info': position,
             'symbol': symbol,
@@ -3194,6 +3198,7 @@ class binance(Exchange):
             'marginType': marginType,
             'side': side,
             'percentage': percentage,
+            'tradeMode': tradeMode
         }
 
     def parse_position_risk(self, position, market=None):

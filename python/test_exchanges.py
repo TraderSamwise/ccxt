@@ -25,6 +25,14 @@ mn_binance_coinm_exchange = ccxt.binancecoinm(mn_binance_params)
 mn_binance_usdm_exchange = ccxt.binanceusdm(mn_binance_params)
 
 # BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
+mn_bitmex_params = {
+    'apiKey': os.environ.get('mn_bitmex_key'),
+    'secret': os.environ.get('mn_bitmex_secret'),
+    # 'enableRateLimit': True,
+    # 'wsproxy': proxy,
+}
+mn_bitmex_exchange_pro = ccxtpro.bitmex(mn_bitmex_params)
+mn_bitmex_exchange = ccxt.bitmex(mn_bitmex_params)
 tn_bitmex_params = {
     'apiKey': os.environ.get('tn_bitmex_key'),
     'secret': os.environ.get('tn_bitmex_secret'),

@@ -2075,8 +2075,49 @@ class binance(Exchange):
 
         else:
             params = self.omit(params, 'stopPrice')
+
+        tradeMode = self.safe_string(params, 'tradeMode')
+        if tradeMode:
+            params = self.omit(params, ['tradeMode'])
+        else:
+            tradeMode = 'hedged'
+
+        if tradeMode == 'hedged':
+            request = self.omit(request, ['reduceOnly'])
+            if type == 'stop' or type == 'stoplimit':
+                if (side == 'BUY' and not closeOnTrigger) or (side == 'SELL' and closeOnTrigger):
+                    request['positionSide'] = 'LONG'  # Buy side of both side mode
+                elif (side == 'SELL' and not closeOnTrigger) or (side == 'BUY' and closeOnTrigger):
+                    request['positionSide'] = 'SHORT'  # Sell side of both side mode
+            else:
+                if (side == 'BUY' and not reduceOnly) or (side == 'SELL' and reduceOnly):
+                    request['positionSide'] = 'LONG'  # Buy side of both side mode
+                elif (side == 'SELL' and not reduceOnly) or (side == 'BUY' and reduceOnly):
+                    request['positionSide'] = 'SHORT'  # Sell side of both side mode
+
         params = self.omit(params, ['closeOnTrigger', 'basePrice', 'timeInForce', 'trigger', 'reduceOnly'])
-        response = getattr(self, method)(self.extend(request, params))
+        # try, add reduce only back if hedge mode error
+        response = None
+        try:
+            response = getattr(self, method)(self.extend(request, params))
+        except BaseException as ex:
+            if tradeMode == 'hedged': # assume user may be on oneway mode instead
+                if reduceOnly:
+                    request['reduceOnly'] = reduceOnly
+                request = self.omit(request, ['positionSide'])
+            elif tradeMode == 'oneway': # assume user should have hedged instead
+                request = self.omit(request, ['reduceOnly'])
+                if type == 'stop' or type == 'stoplimit':
+                    if (side == 'BUY' and not closeOnTrigger) or (side == 'SELL' and closeOnTrigger):
+                        request['positionSide'] = 'LONG'  # Buy side of both side mode
+                    elif (side == 'SELL' and not closeOnTrigger) or (side == 'BUY' and closeOnTrigger):
+                        request['positionSide'] = 'SHORT'  # Sell side of both side mode
+                else:
+                    if (side == 'BUY' and not reduceOnly) or (side == 'SELL' and reduceOnly):
+                        request['positionSide'] = 'LONG'  # Buy side of both side mode
+                    elif (side == 'SELL' and not reduceOnly) or (side == 'BUY' and reduceOnly):
+                        request['positionSide'] = 'SHORT'  # Sell side of both side mode
+            response = getattr(self, method)(self.extend(request, params))
         return self.parse_order(response, market)
 
     def fetch_order(self, id, symbol=None, params={}):
