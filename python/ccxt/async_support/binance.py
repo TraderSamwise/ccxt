@@ -1299,9 +1299,9 @@ class binance(Exchange):
                 currencyId = self.safe_string(balance, 'asset')
                 code = self.safe_currency_code(currencyId)
                 account = self.account()
-                account['free'] = self.safe_string(balance, 'availableBalance')
-                account['used'] = self.safe_string(balance, 'initialMargin')
-                account['total'] = self.safe_string_2(balance, 'marginBalance', 'balance')
+                account['free'] = self.safe_string(balance, 'marginBalance')
+                account['used'] = self.safe_string(balance, 'maintMargin')
+                account['total'] = self.safe_string_2(balance, 'walletBalance', 'marginBalance')
                 result[code] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
@@ -3183,7 +3183,7 @@ class binance(Exchange):
             'datetime': self.iso8601(timestamp),
             'initialMargin': initialMargin,
             'initialMarginPercentage': self.parse_number(initialMarginPercentageString),
-            'maintenanceMargin': initialMargin, # maintenanceMargin, # TEALSTREET
+            'maintenanceMargin': maintenanceMargin, # maintenanceMargin, # TEALSTREET
             'maintenanceMarginPercentage': maintenanceMarginPercentage,
             'price': price,
             'entryPrice': entryPrice,
