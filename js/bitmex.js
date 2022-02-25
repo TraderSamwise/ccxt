@@ -227,6 +227,9 @@ module.exports = class bitmex extends Exchange {
             const orderMultiplier = rawUnderlyingToPositionMultiplier || 1 // TEALSTREET
             // const lotSize = this.safeNumber(market, 'lotSize') / orderMultiplier; // TEALSTREET
             const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
+            const inverse = market.get('isInverse');
+            const quanto = market.get('isQuanto');
+            const linear = !inverse && !quanto;
             let contractSize = 1;
             if (rawUnderlyingToPositionMultiplier) {
                 contractSize = 1 / rawUnderlyingToPositionMultiplier;
@@ -256,7 +259,6 @@ module.exports = class bitmex extends Exchange {
                 'min': lotSize,
                 'max': this.safeNumber (market, 'maxOrderQty'),
             };
-            const inverse = market['isInverse']; // TEALSTREET
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -275,7 +277,9 @@ module.exports = class bitmex extends Exchange {
                 'future': future,
                 'prediction': prediction,
                 'info': market,
-                'inverse': inverse,
+                'inverse': inverse, // TEALSTREET
+                'linear': linear, // TEALSTREET
+                'quanto': quanto, // TEALSTREET
                 'lotSize': lotSize, // TEALSTREET
                 'orderAmount': contractSize, // TEALSTREET
                 'orderMultiplier': orderMultiplier, // TEALSTREET
