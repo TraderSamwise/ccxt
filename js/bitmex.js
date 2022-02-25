@@ -227,8 +227,8 @@ module.exports = class bitmex extends Exchange {
             const orderMultiplier = rawUnderlyingToPositionMultiplier || 1 // TEALSTREET
             // const lotSize = this.safeNumber(market, 'lotSize') / orderMultiplier; // TEALSTREET
             const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
-            const inverse = market.get('isInverse');
-            const quanto = market.get('isQuanto');
+            const inverse = market['isInverse'];
+            const quanto = market['isQuanto'];
             const linear = !inverse && !quanto;
             let contractSize = 1;
             if (rawUnderlyingToPositionMultiplier) {
