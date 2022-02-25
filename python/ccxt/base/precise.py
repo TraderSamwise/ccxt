@@ -13,6 +13,10 @@
 
 class Precise:
     def __init__(self, number, decimals=0):
+        # TEALSTREET
+        if isinstance(number, float):
+            number = str(number)
+
         is_string = isinstance(number, str)
         is_int = isinstance(number, int)
         if not (is_string or is_int):
