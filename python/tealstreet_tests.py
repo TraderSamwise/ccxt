@@ -17,6 +17,7 @@ last = ticker['last']
 # /SETTINGS
 orders = []
 actions = []
+exchange.enableRateLimit = False
 
 # trigger_types = {v: k for k, v in exchange['triggerTypes'].items()}
 
@@ -241,7 +242,7 @@ def test_edit_order_size():
         assert False
     pprint(result)
     print('༼ つ ◕_◕ ༽つ')
-    assert result['id'] == id and result['amount'] == new_amount
+    assert result['id'] == id and exchange.amount_to_precision(symbol, result['amount']) == exchange.amount_to_precision(symbol, new_amount)
 
 def test_edit_order_price():
     print('Edit order price.')
@@ -284,7 +285,7 @@ def test_edit_order_price():
         assert False
     pprint(result)
     print('༼ つ ◕_◕ ༽つ')
-    assert result['id'] == id and result['price'] == new_price
+    assert result['id'] == id and exchange.price_to_precision(symbol, result['price']) == exchange.price_to_precision(symbol, new_price)
 
 def test_stop_market_sell_below_last_close_on_trigger(): # bitmex linear has a timing issue with this and sometimes fails
     print('Market sell stop below last. Close on trigger = true.')
@@ -541,7 +542,7 @@ def test_edit_order_stop_price():
         assert False
     pprint(result)
     print('༼ つ ◕_◕ ༽つ')
-    assert result['id'] == id and result['stopPrice'] == new_stop_price
+    assert result['id'] == id and exchange.price_to_precision(symbol, result['stopPrice'] ) == exchange.price_to_precision(symbol, new_stop_price)
 
 def test_cancel_order():
     print('Cancel a few limit orders.')
