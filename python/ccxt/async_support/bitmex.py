@@ -234,6 +234,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             quote = self.safe_currency_code(quoteId)
             swap = (id == basequote)
             inverse = self.safe_value(market, 'isInverse')
+            quanto = self.safe_value(market, 'isQuanto')
+            linear = not inverse and not quanto
             # 'positionCurrency' may be empty("", as Bitmex currently returns for ETHUSD)
             # so let's take the quote currency first and then adjust if needed
             positionId = self.safe_string_2(market, 'positionCurrency', 'quoteCurrency')
@@ -306,6 +308,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'info': market,
                 'lotSize': lotSize, # TEALSTREET
                 'inverse': inverse, # TEALSTREET
+                'linear': linear, # TEALSTREET
+                'quanto': quanto, # TEALSTREET
                 'orderAmount': contractSize, # TEALSTREET
                 'orderMultiplier': orderMultiplier, # TEALSTREET
                 'contractSize': contractSize, # TEALSTREET

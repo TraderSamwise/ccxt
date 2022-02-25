@@ -1,4 +1,5 @@
 import os
+cwd = os.getcwd()
 from pprint import pprint
 import test_exchanges as test
 import ccxt
@@ -164,11 +165,12 @@ def test_bitmex():
     # pprint(exchange.fetch_positions())
     # pprint(exchange.fetch_markets())
 
+    print('sending order')
     result = exchange.create_order(
-        'ADA/USDT',
+        'BTC/USDT',
         'market',
         'buy',
-        1,
+        10000,
         None,
         {
             'stopPrice': None,
@@ -178,6 +180,23 @@ def test_bitmex():
             'closeOnTrigger': False,
             'basePrice': None
         })
+    print('got result', result)
+    print('sending order 2')
+    result = exchange.create_order(
+        'BTC/USDT',
+        'market',
+        'buy',
+        10000,
+        None,
+        {
+            'stopPrice': None,
+            'timeInForce': None,
+            'reduceOnly': None,
+            'trigger': None,
+            'closeOnTrigger': False,
+            'basePrice': None
+        })
+    print('got result 2', result)
     # result = exchange.create_order(
     #     'BTC/USD',
     #     'limit',
@@ -215,9 +234,9 @@ def test_bitmex():
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
     # exchange = test.mn_bybit_inverse_exchange
-    exchange = test.mn_bybit_linear_exchange
+    # exchange = test.mn_bybit_linear_exchange
     # exchange = test.tn_bybit_inverse_exchange
-    # exchange = test.tn_bybit_linear_exchange
+    exchange = test.tn_bybit_linear_exchange
 
     # symbol = 'BTC/USD'
     symbol = 'BTC/USDT'
@@ -251,7 +270,7 @@ def test_bybit():
     #     'basePrice': last
     # })
     # pprint(exchange.fetch_open_orders('BTC/USDT'))
-    pprint(exchange.fetch_open_orders_v3('BTC/USDT'))
+    pprint(exchange.fetch_open_orders('BTC/USDT'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
@@ -307,8 +326,8 @@ def test_okex():
 
 def main():
     # test_binance()
-    # test_bitmex()
-    test_bybit()
+    test_bitmex()
+    # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()

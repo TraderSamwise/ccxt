@@ -9,9 +9,9 @@ __test__ = True
 # start test stuff
 
 # SETTINGS
-exchange = te.tn_bitmex_exchange
-symbol = 'BTC/USDT' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
-size = 0.001 # 0.001
+exchange = te.tn_bybit_inverse_exchange
+symbol = 'BTC/USD' # 'BTC-PERP' # OKEX: future: 'BTC-USD-211231' coin 'BTC-USD-SWAP' 'BTC-USDT-SWAP' 'BTC/USD:BTC'
+size = 1
 ticker = exchange.fetch_ticker(symbol)
 last = ticker['last']
 # /SETTINGS
