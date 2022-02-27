@@ -175,28 +175,28 @@ def test_bitmex():
         {
             'stopPrice': None,
             'timeInForce': None,
-            'reduceOnly': None,
+            'reduceOnly': True,
             'trigger': None,
             'closeOnTrigger': False,
             'basePrice': None
         })
     print('got result', result)
-    print('sending order 2')
-    result = exchange.create_order(
-        'BTC/USDT',
-        'market',
-        'buy',
-        10000,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': None,
-            'reduceOnly': None,
-            'trigger': None,
-            'closeOnTrigger': False,
-            'basePrice': None
-        })
-    print('got result 2', result)
+    # print('sending order 2')
+    # result = exchange.create_order(
+    #     'BTC/USDT',
+    #     'market',
+    #     'buy',
+    #     10000,
+    #     None,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': None,
+    #         'reduceOnly': None,
+    #         'trigger': None,
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
+    #     })
+    # print('got result 2', result)
     # result = exchange.create_order(
     #     'BTC/USD',
     #     'limit',
@@ -235,27 +235,29 @@ def test_bitmex():
 def test_bybit():
     # exchange = test.mn_bybit_inverse_exchange
     # exchange = test.mn_bybit_linear_exchange
-    # exchange = test.tn_bybit_inverse_exchange
-    exchange = test.tn_bybit_linear_exchange
+    exchange = test.tn_bybit_inverse_exchange
+    # exchange = test.tn_bybit_linear_exchange
 
     # symbol = 'BTC/USD'
     symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # exchange.create_order(symbol,
-    #                       'stop',
-    #                       'sell',
-    #                       0.001,
-    #                       51001,
-    #                       {
-    #                           'stopPrice': 51000,
-    #                           'timeInForce': 'PO',
-    #                           'reduceOnly': None,
-    #                           'trigger': 'Last',
-    #                           'closeOnTrigger': False,
-    #                           'basePrice': last
-    #                       })
+    # orders = exchange.fetch_orders(symbol)
+
+    exchange.create_order(symbol,
+                          'stop',
+                          'sell',
+                          0.001,
+                          51001,
+                          {
+                              'stopPrice': 51000,
+                              'timeInForce': 'PO',
+                              'reduceOnly': None,
+                              'trigger': 'Last',
+                              'closeOnTrigger': False,
+                              'basePrice': last
+                          })
     # # exchange.create_order(symbol,
     # 'stoplimit',
     # 'buy',
@@ -326,8 +328,8 @@ def test_okex():
 
 def main():
     # test_binance()
-    test_bitmex()
-    # test_bybit()
+    # test_bitmex()
+    test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()

@@ -68,6 +68,7 @@ class bybit(Exchange):
             'userAgent': None,
             'rateLimit': 100,
             'hostname': 'bybit.com',  # bybit.com, bytick.com
+            'refCode': 'Tealstreet', # Tealstreet
             'has': {
                 'cancelOrder': True,
                 'CORS': True,
@@ -1394,7 +1395,7 @@ class bybit(Exchange):
             # when creating a closing order, bybit recommends a True value for
             # close_on_trigger to avoid failing due to insufficient available margin
             'close_on_trigger': closeOnTrigger, # required for linear orders
-            # 'order_link_id': 'string',  # unique client order id, max 36 characters
+            'order_link_id': self.refCode + self.uuid22(),  # unique client order id, max 36 characters
             # conditional orders ---------------------------------------------
             # base_price is used to compare with the value of stop_px, to decide
             # whether your conditional order will be triggered by crossing trigger
@@ -1823,7 +1824,7 @@ class bybit(Exchange):
         elif futures:
             defaultMethod = 'futuresPrivateGetOrderList'
         query = params
-        if ('stop_order_id' in params) or ('stop_order_status' in params):
+        if ('stop_order_id' not in params) or ('stop_order_status' in params):
             stopOrderStatus = self.safe_value(params, 'stopOrderStatus')
             if stopOrderStatus is not None:
                 if isinstance(stopOrderStatus, list):
