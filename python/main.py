@@ -108,20 +108,20 @@ def test_binance():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    exchange.edit_order('37677901237',
-         'BTC/USD',
-         'limit',
-         'buy',
-         1.0,
-         40000.0,
-         {
-            'closeOnTrigger': None,
-              'reduceOnly': None,
-              'stopPrice': 0.0,
-              'timeInForce': 'GTC',
-              'trigger': 'Last'
-        }
-    )
+    # exchange.edit_order('37677901237',
+    #      'BTC/USD',
+    #      'limit',
+    #      'buy',
+    #      1.0,
+    #      40000.0,
+    #      {
+    #         'closeOnTrigger': None,
+    #           'reduceOnly': None,
+    #           'stopPrice': 0.0,
+    #           'timeInForce': 'GTC',
+    #           'trigger': 'Last'
+    #     }
+    # )
 
     # exchange.create_order(symbol,
     #                       'stop',
@@ -149,7 +149,8 @@ def test_binance():
     #     'closeOnTrigger': False,
     #     'basePrice': last
     # })
-    pprint(exchange.fetch_open_orders('BTC/USD'))
+    # pprint(exchange.fetch_open_orders('BTC/USD'))
+    pprint(exchange.fetch_orders('BTC/USD'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
@@ -327,9 +328,9 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    # test_binance()
+    test_binance()
     # test_bitmex()
-    test_bybit()
+    # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
