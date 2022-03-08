@@ -2417,7 +2417,9 @@ class bybit(Exchange):
                 notional = contracts  # because is usd already
                 leverage = self.safe_float(position, 'leverage')  # notional / collateral # TODO calculate actual leverage
                 initialMargin = 0  # TODO
-                maintenanceMargin = self.safe_float(position, 'position_margin')
+                # maintenanceMargin = self.safe_float(position, 'position_margin')
+                positionValue = self.safe_float(position, 'position_value')
+                maintenanceMargin = positionValue / leverage
                 initialMarginPercentage = 0
                 maintenanceMarginPercentage = 0
                 unrealizedPnl = self.safe_float(position, 'unrealised_pnl')  # currently USD
