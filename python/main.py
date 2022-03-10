@@ -236,17 +236,18 @@ def test_bitmex():
 def test_bybit():
     # exchange = test.mn_bybit_inverse_exchange
     # exchange = test.mn_bybit_linear_exchange
-    exchange = test.tn_bybit_inverse_exchange
-    # exchange = test.tn_bybit_linear_exchange
+    # exchange = test.tn_bybit_inverse_exchange
+    exchange = test.tn_bybit_linear_exchange
 
-    symbol = 'BTC/USD'
+    symbol = 'BTC/USDT'
     # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
     # orders = exchange.fetch_orders(symbol)
 
-    leverageResponse = exchange.switch_isolated(symbol, False, 10, 10)
+    # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
+    leverageResponse = exchange.set_leverage(symbol, 12, 12)
 
     # exchange.create_order(symbol,
     #                       'stop',

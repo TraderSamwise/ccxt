@@ -449,6 +449,39 @@ class bybit(Exchange):
         #
         return self.safe_timestamp(response, 'time_now')
 
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id'],
+        }
+
+        # buy and sell leverage must be same under cross
+        if not buyLeverage:
+            buyLeverage = sellLeverage
+        if not sellLeverage:
+            sellLeverage = buyLeverage
+
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostPositionSetLeverage'
+                request['buy_leverage'] = buyLeverage
+                request['sell_leverage'] = sellLeverage
+            elif market['inverse']:
+                method = 'v2PrivatePostPositionLeverageSave'
+                request['leverage'] = buyLeverage
+        elif market['futures']:
+            method = 'futuresPrivatePostPositionLeverageSave'
+            request['buy_leverage'] = buyLeverage
+            request['sell_leverage'] = sellLeverage
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
     def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
         self.load_markets()
         market = self.market(symbol)
