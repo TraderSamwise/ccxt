@@ -2395,11 +2395,13 @@ class bybit(Exchange):
 
         if type == 'inverse' or type == 'all':
             unfilteredResponse = await self.v2PrivateGetPositionList(self.extend(request, params))
-            response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
-                        d['size'] != '0']
+            responses = self.safe_value(unfilteredResponse, 'result')
+            # response = [d for d in [r.get('data') for r in self.safe_value(unfilteredResponse, 'result')] if
+            #             d['size'] != '0']
 
-            for i in range(0, len(response)):
-                position = response[i]
+            for i in range(0, len(responses)):
+                response = responses[i]
+                position = self.safe_value(response, 'data')
                 info = position
                 marketId = self.safe_string(position, 'symbol')
                 market = self.safe_market(marketId)
@@ -2408,7 +2410,7 @@ class bybit(Exchange):
                 timestamp = self.parse8601(datetime)
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
-                side = 'long' if self.safe_string(position, "side").lower() == 'buy' else 'short'
+                side = 'long' if self.safe_string(position, 'side').lower() == 'buy' else 'short'
                 id = symbol
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
