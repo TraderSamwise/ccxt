@@ -239,26 +239,28 @@ def test_bybit():
     exchange = test.tn_bybit_inverse_exchange
     # exchange = test.tn_bybit_linear_exchange
 
-    # symbol = 'BTC/USD'
-    symbol = 'BTC/USDT'
+    symbol = 'BTC/USD'
+    # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
     # orders = exchange.fetch_orders(symbol)
 
-    exchange.create_order(symbol,
-                          'stop',
-                          'sell',
-                          0.001,
-                          51001,
-                          {
-                              'stopPrice': 51000,
-                              'timeInForce': 'PO',
-                              'reduceOnly': None,
-                              'trigger': 'Last',
-                              'closeOnTrigger': False,
-                              'basePrice': last
-                          })
+    leverageResponse = exchange.switch_isolated(symbol, False, 10, 10)
+
+    # exchange.create_order(symbol,
+    #                       'stop',
+    #                       'sell',
+    #                       0.001,
+    #                       51001,
+    #                       {
+    #                           'stopPrice': 51000,
+    #                           'timeInForce': 'PO',
+    #                           'reduceOnly': None,
+    #                           'trigger': 'Last',
+    #                           'closeOnTrigger': False,
+    #                           'basePrice': last
+    #                       })
     # # exchange.create_order(symbol,
     # 'stoplimit',
     # 'buy',
@@ -328,9 +330,9 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    test_binance()
+    # test_binance()
     # test_bitmex()
-    # test_bybit()
+    test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
