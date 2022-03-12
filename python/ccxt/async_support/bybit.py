@@ -2362,6 +2362,8 @@ class bybit(Exchange):
                 marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
                 marginType = 'isolated' if isolated else 'cross'
                 percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+                # active = True if self.safe_string(position, 'position_status') == 'Normal' else False
+                active = True
 
                 unifiedResult.append({
                     'info': info,
@@ -2391,6 +2393,7 @@ class bybit(Exchange):
                     'marginType': marginType,
                     'percentage': percentage,  # not important
                     'tradeMode': mode,
+                    'active': active,
                 })
 
         if type == 'inverse' or type == 'all':
@@ -2435,6 +2438,7 @@ class bybit(Exchange):
                 marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
                 marginType = 'isolated' if isolated else 'cross'
                 percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+                active = True if self.safe_string(position, 'position_status') == 'Normal' else False
 
                 unifiedResult.append({
                     'info': info,
@@ -2464,6 +2468,7 @@ class bybit(Exchange):
                     'marginType': marginType,
                     'percentage': percentage,  # not important
                     'tradeMode': mode,
+                    'active': active,
                 })
 
         # TEALSTREET making inverse fetch bot perpetual and linear positions
@@ -2505,6 +2510,7 @@ class bybit(Exchange):
                 marginRatio = maintenanceMargin / collateral if collateral != 0 else 1  # not sure what this is, followed binance calc
                 marginType = 'isolated' if isolated else 'cross'
                 percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+                active = True if self.safe_string(position, 'position_status') == 'Normal' else False
 
                 unifiedResult.append({
                     'info': info,
@@ -2533,8 +2539,10 @@ class bybit(Exchange):
                     'collateral': collateral,
                     'marginType': marginType,
                     'percentage': percentage,  # not important
+                    'active': active,
                 })
 
+        unifiedResult = [x for x in unifiedResult if x['active']]
         return unifiedResult
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
