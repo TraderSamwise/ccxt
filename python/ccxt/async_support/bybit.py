@@ -2542,7 +2542,6 @@ class bybit(Exchange):
                     'active': active,
                 })
 
-        unifiedResult = [x for x in unifiedResult if x['active']]
         return unifiedResult
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
