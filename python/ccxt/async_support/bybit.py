@@ -2411,6 +2411,7 @@ class bybit(Exchange):
                 isolated = self.safe_value(position, 'is_isolated')
                 hedged = False  # trading in opposite direction will close the position
                 side = 'long' if self.safe_string(position, 'side').lower() == 'buy' else 'short'
+                mode = 'oneway' if self.safe_string(position, 'position_idx') == '0' else 'hedged'
                 id = symbol
                 contracts = self.safe_float(position, 'size')
                 price = self.safe_float(position, 'entry_price')  # average open price according to bybit doc
@@ -2462,6 +2463,7 @@ class bybit(Exchange):
                     'collateral': collateral,
                     'marginType': marginType,
                     'percentage': percentage,  # not important
+                    'tradeMode': mode,
                 })
 
         # TEALSTREET making inverse fetch bot perpetual and linear positions
