@@ -16,6 +16,7 @@ from ccxt.base.errors import RateLimitExceeded
 from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+import datetime
 
 
 class bybit(Exchange):
@@ -472,6 +473,7 @@ class bybit(Exchange):
             elif market['inverse']:
                 method = 'v2PrivatePostPositionLeverageSave'
                 request['leverage'] = buyLeverage
+                request['leverage_only'] = True
         elif market['futures']:
             method = 'futuresPrivatePostPositionLeverageSave'
             request['buy_leverage'] = buyLeverage
@@ -1251,11 +1253,15 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        timestamp = self.parse8601(self.safe_string(order, 'created_at') or self.safe_string(order, 'timestamp') or self.safe_string(order, 'created_time'))
+        timestamp = self.parse8601(
+            self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp',
+                                                                                        'created_time') or self.iso8601(
+                self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
         id = self.safe_string_2(order, 'stop_order_id', 'order_id')
-        status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'), self.safe_string(order, 'cancel_type'))
+        status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'),
+                                         self.safe_string(order, 'cancel_type'))
         type = self.safe_string_lower_2(order, 'order_type', 'stop_order_type')
-        stopType = self.safe_string_lower(order,  'stop_order_type')
+        stopType = self.safe_string_lower(order, 'stop_order_type')
         rawOrderStatus = self.safe_string_2(order, 'order_status', 'stop_order_status')
         if rawOrderStatus == 'Untriggered' or rawOrderStatus == 'Triggered' or stopType == 'TakeProfit' or stopType == 'StopLoss' or stopType == 'TrailingStop' or stopType == 'Stop':
             if type == 'limit' or type == 'limitiftouched':
@@ -1265,10 +1271,10 @@ class bybit(Exchange):
         price = self.safe_number(order, 'price')
         if price == 0.0:
             price = None
-        average = self.safe_number_2(order, 'average_price', 'price')
+        average = self.safe_number_2(order, 'average_price', 'last_exec_price')
         amount = self.safe_number(order, 'qty')
         cost = self.safe_number(order, 'cum_exec_value')
-        filled = self.safe_number(order, 'cum_exec_qty')
+        filled = self.safe_number(order, 'cum_exec_qty', 0)
         remaining = self.safe_number(order, 'leaves_qty')
         marketTypes = self.safe_value(self.options, 'marketTypes', {})
         marketType = self.safe_string(marketTypes, symbol)
@@ -1293,11 +1299,16 @@ class bybit(Exchange):
         if (clientOrderId is not None) and (len(clientOrderId) < 1):
             clientOrderId = None
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'time_in_force'))
-        stopPrice = self.safe_number(order, 'stop_px')
+        stopPrice = self.safe_number(order, 'trigger_price') or self.safe_number(order, 'stop_px') or self.safe_number(
+            order, 'stop_loss')
         postOnly = (timeInForce == 'PO')
         reduce = self.safe_value(order, 'reduce_only')
         close = self.safe_value(order, 'close_on_trigger')
-        trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger_by') != 'UNKNOWN' and self.safe_string(order, 'trigger_by') or self.safe_string(order, 'sl_trigger_by') != 'UNKNOWN' and self.safe_string(order, 'sl_trigger_by') or self.safe_string(order, 'tp_trigger_by') != 'UNKNOWN' and self.safe_string(order, 'tp_trigger_by'))
+        trigger = self.reverse_api_trigger_type(
+            self.safe_string(order, 'trigger_by') != 'UNKNOWN' and self.safe_string(order,
+                                                                                    'trigger_by') or self.safe_string(
+                order, 'sl_trigger_by') != 'UNKNOWN' and self.safe_string(order, 'sl_trigger_by') or self.safe_string(
+                order, 'tp_trigger_by') != 'UNKNOWN' and self.safe_string(order, 'tp_trigger_by'))
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1320,9 +1331,9 @@ class bybit(Exchange):
             'status': status,
             'fee': fee,
             'trades': None,
-            'reduce': reduce, # TEALSTREET
-            'close' : close, # TEALSTREET
-            'trigger': trigger # TEALSTREET
+            'reduce': reduce,  # TEALSTREET
+            'close': close,  # TEALSTREET
+            'trigger': trigger  # TEALSTREET
         })
 
     def fetch_order(self, id, symbol=None, params={}):
