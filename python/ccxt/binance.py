@@ -899,7 +899,7 @@ class binance(Exchange):
             'marginType': marginType,
             'timestamp': self.nonce()
         }
-        method = 'privateGetOrder'
+        method = None
         if type == 'future':
             method = 'fapiPrivatePostMarginType'
         elif type == 'delivery':
@@ -915,44 +915,18 @@ class binance(Exchange):
     def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
         self.load_markets()
         market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
 
         request = {
-            'symbol': market['id'],
+            'dualSidePosition': isHedgeMode,
             'timestamp': self.nonce()
         }
         method = None
-        if market['swap']:
-            if market['linear']:
-                method = 'privateLinearPostPositionSwitchMode'
-                request['mode'] = 'BothSide' if isHedgeMode else 'MergedSingle'
-            elif market['inverse']:
-                return {'ret_msg': 'ok'}
-        elif market['futures']:
-            method = 'futuresPrivatePostPositionSwitchMode'
-            request['mode'] = 3 if isHedgeMode else 0
-
-        response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
-
-        return unifiedResponse
-
-    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
-        self.load_markets()
-        market = self.market(symbol)
-
-        request = {
-            'symbol': market['id']
-        }
-        method = None
-        if market['swap']:
-            if market['linear']:
-                method = 'privateLinearPostPositionSwitchMode'
-                request['mode'] = 'BothSide' if isHedgeMode else 'MergedSingle'
-            elif market['inverse']:
-                return { 'ret_msg': 'ok' }
-        elif market['futures']:
-            method = 'futuresPrivatePostPositionSwitchMode'
-            request['mode'] = 3 if isHedgeMode else 0
+        if type == 'future':
+            method = 'fapiPrivatePostPositionSideDual'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostPositionSideDual'
 
         response = getattr(self, method)(self.extend(request, params))
         unifiedResponse = response

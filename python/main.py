@@ -108,8 +108,8 @@ def test_binance():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    # leverageResponse = exchange.switch_hedge_mode(symbol, False)
+    # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
+    leverageResponse = exchange.switch_hedge_mode(symbol, False)
     # leverageResponse = exchange.set_leverage(symbol, 12, 12)
     hi = True
 
