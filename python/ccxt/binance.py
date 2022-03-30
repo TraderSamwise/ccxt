@@ -852,6 +852,113 @@ class binance(Exchange):
             }
         return result
 
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id'],
+        }
+
+        # buy and sell leverage must be same under cross
+        if not buyLeverage:
+            buyLeverage = sellLeverage
+        if not sellLeverage:
+            sellLeverage = buyLeverage
+
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostPositionSetLeverage'
+                request['buy_leverage'] = buyLeverage
+                request['sell_leverage'] = sellLeverage
+            elif market['inverse']:
+                method = 'v2PrivatePostPositionLeverageSave'
+                request['leverage'] = buyLeverage
+                request['leverage_only'] = True
+        elif market['futures']:
+            method = 'futuresPrivatePostPositionLeverageSave'
+            request['buy_leverage'] = buyLeverage
+            request['sell_leverage'] = sellLeverage
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
+
+        marginType = 'ISOLATED' if isIsolated else 'CROSSED'
+
+        request = {
+            'symbol': market['id'],
+            'marginType': marginType,
+            'timestamp': self.nonce()
+        }
+        method = 'privateGetOrder'
+        if type == 'future':
+            method = 'fapiPrivatePostMarginType'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostMarginType'
+        # elif type == 'margin':
+        #     method = 'sapiGetMarginOrder'
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id'],
+            'timestamp': self.nonce()
+        }
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostPositionSwitchMode'
+                request['mode'] = 'BothSide' if isHedgeMode else 'MergedSingle'
+            elif market['inverse']:
+                return {'ret_msg': 'ok'}
+        elif market['futures']:
+            method = 'futuresPrivatePostPositionSwitchMode'
+            request['mode'] = 3 if isHedgeMode else 0
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id']
+        }
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostPositionSwitchMode'
+                request['mode'] = 'BothSide' if isHedgeMode else 'MergedSingle'
+            elif market['inverse']:
+                return { 'ret_msg': 'ok' }
+        elif market['futures']:
+            method = 'futuresPrivatePostPositionSwitchMode'
+            request['mode'] = 3 if isHedgeMode else 0
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
     def fetch_markets(self, params={}):
         defaultType = self.safe_string_2(self.options, 'fetchMarkets', 'defaultType', 'spot')
         type = self.safe_string(params, 'type', defaultType)

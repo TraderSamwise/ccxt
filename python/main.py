@@ -101,12 +101,17 @@ def buy_stuff():
         
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
 def test_binance():
-    # exchange = test.mn_binance_usdm_exchange
-    exchange = test.mn_binance_coinm_exchange
+    exchange = test.mn_binance_usdm_exchange
+    # exchange = test.mn_binance_coinm_exchange
 
-    symbol = 'BTC/USD'
+    symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
+
+    leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
+    # leverageResponse = exchange.switch_hedge_mode(symbol, False)
+    # leverageResponse = exchange.set_leverage(symbol, 12, 12)
+    hi = True
 
     # exchange.edit_order('37677901237',
     #      'BTC/USD',
@@ -334,9 +339,9 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    # test_binance()
+    test_binance()
     # test_bitmex()
-    test_bybit()
+    # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
