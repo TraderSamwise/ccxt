@@ -258,7 +258,7 @@ class bybit(Exchange):
                             'stop-order/replace',
                             'position/set-auto-add-margin',
                             'position/switch-isolated',
-                            'tpsl/switch-mode',
+                            'position/switch-mode',
                             'position/add-margin',
                             'position/set-leverage',
                             'position/trading-stop',
@@ -509,6 +509,29 @@ class bybit(Exchange):
                 method = 'v2PrivatePostPositionSwitchIsolated'
         elif market['futures']:
             method = 'futuresPrivatePostPositionSwitchIsolated'
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id']
+        }
+        method = None
+        if market['swap']:
+            if market['linear']:
+                method = 'privateLinearPostPositionSwitchMode'
+                request['mode'] = 'BothSide' if isHedgeMode else 'MergedSingle'
+            elif market['inverse']:
+                return { 'ret_msg': 'ok' }
+        elif market['futures']:
+            method = 'futuresPrivatePostPositionSwitchMode'
+            request['mode'] = 3 if isHedgeMode else 0
 
         response = getattr(self, method)(self.extend(request, params))
         unifiedResponse = response

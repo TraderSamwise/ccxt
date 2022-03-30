@@ -244,10 +244,13 @@ def test_bybit():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # orders = exchange.fetch_orders(symbol)
+    orders = exchange.fetch_orders(symbol)
 
+
+    leverageResponse = exchange.switch_hedge_mode(symbol, False)
+    hi = True
     # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    leverageResponse = exchange.set_leverage(symbol, 12, 12)
+    # leverageResponse = exchange.set_leverage(symbol, 12, 12)
 
     # exchange.create_order(symbol,
     #                       'stop',
