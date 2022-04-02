@@ -853,33 +853,38 @@ class binance(Exchange):
         return result
 
     def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
         self.load_markets()
         market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
 
         request = {
             'symbol': market['id'],
+            'timestamp': self.nonce()
         }
 
-        # buy and sell leverage must be same under cross
+        # set the leverage to whichever is set, default buyLeverage
         if not buyLeverage:
             buyLeverage = sellLeverage
         if not sellLeverage:
             sellLeverage = buyLeverage
 
+        leverage = buyLeverage
+
+        if (leverage < 1) or (leverage > 125):
+            raise BadRequest(self.id + ' leverage should be between 1 and 125')
+
+        request['leverage'] = leverage
+
         method = None
-        if market['swap']:
-            if market['linear']:
-                method = 'privateLinearPostPositionSetLeverage'
-                request['buy_leverage'] = buyLeverage
-                request['sell_leverage'] = sellLeverage
-            elif market['inverse']:
-                method = 'v2PrivatePostPositionLeverageSave'
-                request['leverage'] = buyLeverage
-                request['leverage_only'] = True
-        elif market['futures']:
-            method = 'futuresPrivatePostPositionLeverageSave'
-            request['buy_leverage'] = buyLeverage
-            request['sell_leverage'] = sellLeverage
+        if type == 'future':
+            method = 'fapiPrivatePostLeverage'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostLeverage'
+        # elif type == 'margin':
+        #     method = 'sapiGetMarginOrder'
 
         response = getattr(self, method)(self.extend(request, params))
         unifiedResponse = response

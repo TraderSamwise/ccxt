@@ -213,18 +213,18 @@ class binanceusdm(binance):
         response = self.fapiPrivateGetIncome(self.extend(request, params))
         return self.parse_incomes(response, market, since, limit)
 
-    def set_leverage(self, symbol, leverage, params={}):
-        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
-        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
-        if (leverage < 1) or (leverage > 125):
-            raise BadRequest(self.id + ' leverage should be between 1 and 125')
-        self.load_markets()
-        market = self.market(symbol)
-        request = {
-            'symbol': market['id'],
-            'leverage': leverage,
-        }
-        return self.fapiPrivatePostLeverage(self.extend(request, params))
+    # def set_leverage(self, symbol, leverage, params={}):
+    #     # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+    #     # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+    #     if (leverage < 1) or (leverage > 125):
+    #         raise BadRequest(self.id + ' leverage should be between 1 and 125')
+    #     self.load_markets()
+    #     market = self.market(symbol)
+    #     request = {
+    #         'symbol': market['id'],
+    #         'leverage': leverage,
+    #     }
+    #     return self.fapiPrivatePostLeverage(self.extend(request, params))
 
     def set_mode(self, symbol, marginType, params={}):
         #

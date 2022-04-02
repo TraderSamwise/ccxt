@@ -101,16 +101,16 @@ def buy_stuff():
         
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
 def test_binance():
-    exchange = test.mn_binance_usdm_exchange
-    # exchange = test.mn_binance_coinm_exchange
+    # exchange = test.mn_binance_usdm_exchange
+    exchange = test.mn_binance_coinm_exchange
 
-    symbol = 'BTC/USDT'
+    symbol = 'BTC/USD'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
     # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    leverageResponse = exchange.switch_hedge_mode(symbol, False)
-    # leverageResponse = exchange.set_leverage(symbol, 12, 12)
+    # leverageResponse = exchange.switch_hedge_mode(symbol, False)
+    leverageResponse = exchange.set_leverage(symbol, 50, 50)
     hi = True
 
     # exchange.edit_order('37677901237',
@@ -155,7 +155,7 @@ def test_binance():
     #     'basePrice': last
     # })
     # pprint(exchange.fetch_open_orders('BTC/USD'))
-    pprint(exchange.fetch_orders('BTC/USD'))
+    # pprint(exchange.fetch_orders('BTC/USD'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
@@ -240,16 +240,17 @@ def test_bitmex():
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
     # exchange = test.mn_bybit_inverse_exchange
-    # exchange = test.mn_bybit_linear_exchange
+    exchange = test.mn_bybit_linear_exchange
     # exchange = test.tn_bybit_inverse_exchange
-    exchange = test.tn_bybit_linear_exchange
+    # exchange = test.tn_bybit_linear_exchange
 
     symbol = 'BTC/USDT'
     # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    orders = exchange.fetch_orders(symbol)
+    orders = exchange.fetch_orders(symbol, limit=100)
+    trades = exchange.fetch_my_trades(symbol)
 
 
     leverageResponse = exchange.switch_hedge_mode(symbol, False)
