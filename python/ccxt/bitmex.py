@@ -21,16 +21,11 @@ from ccxt.base.precise import Precise
 class BitmexTealstreetMixin(object):
 
     def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
-        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
-        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
         self.load_markets()
         market = self.market(symbol)
-        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
-        type = self.safe_string(params, 'type', defaultType)
 
         request = {
             'symbol': market['id'],
-            'timestamp': self.nonce()
         }
 
         # set the leverage to whichever is set, default buyLeverage
@@ -41,18 +36,12 @@ class BitmexTealstreetMixin(object):
 
         leverage = buyLeverage
 
-        if (leverage < 1) or (leverage > 125):
-            raise BadRequest(self.id + ' leverage should be between 1 and 125')
+        if (leverage < 0.1) or (leverage > 100):
+            raise BadRequest(self.id + ' leverage should be between 0.1 and 100')
 
         request['leverage'] = leverage
 
-        method = None
-        if type == 'future':
-            method = 'fapiPrivatePostLeverage'
-        elif type == 'delivery':
-            method = 'dapiPrivatePostLeverage'
-        # elif type == 'margin':
-        #     method = 'sapiGetMarginOrder'
+        method = 'privatePostPositionLeverage'
 
         response = getattr(self, method)(self.extend(request, params))
         unifiedResponse = response

@@ -173,9 +173,9 @@ def test_bitmex():
 
     symbol = 'BTC/USD'
 
-    print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
-    # print(exchange.set_leverage(symbol, 25, 25))
+    print(exchange.set_leverage(symbol, 50, 50))
 
     # print('sending order')
     # result = exchange.create_order(
