@@ -2464,3 +2464,7 @@ class Exchange(object):
     def api_order_type(self, unifiedOrderType):
         if unifiedOrderType:
             return self.safe_string(self.orderTypes, unifiedOrderType, self.capitalize(unifiedOrderType))
+
+    def hedge_leverage_to_one_way_leverage(self, buyLeverage, sellLeverage):
+        # prioritize buyLeverage over sellLeverage
+        return buyLeverage or sellLeverage

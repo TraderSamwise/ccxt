@@ -28,13 +28,7 @@ class BitmexTealstreetMixin(object):
             'symbol': market['id'],
         }
 
-        # set the leverage to whichever is set, default buyLeverage
-        if not buyLeverage:
-            buyLeverage = sellLeverage
-        if not sellLeverage:
-            sellLeverage = buyLeverage
-
-        leverage = buyLeverage
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
         if (leverage < 0.1) or (leverage > 100):
             raise BadRequest(self.id + ' leverage should be between 0.1 and 100')
@@ -64,7 +58,7 @@ class BitmexTealstreetMixin(object):
         return unifiedResponse
 
     def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
-        pass
+        pass # not applicable to bitmex
 
     def parse_position(self: 'bitmex', position, balance = {}):
         info = position

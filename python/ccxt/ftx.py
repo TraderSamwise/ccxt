@@ -2035,3 +2035,23 @@ class ftx(Exchange, FTXTealstreetMixin):
             self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], error, feedback)
             raise ExchangeError(feedback)  # unknown message
+
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        if leverage != 1.0 or leverage != 2.0 or leverage != 3 or leverage != 5 or leverage != 10 or leverage != 20:
+            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
+        request = {
+            'leverage': leverage,
+        }
+
+        return self.privatePostAccountLeverage(self.extend(request, params))
+
+    def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        pass # not applicable to ftx
+
+    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
+        pass # not applicable to ftx

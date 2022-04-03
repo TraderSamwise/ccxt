@@ -170,7 +170,6 @@ def test_bitmex():
     # pprint(exchange.fetch_positions())
     # pprint(exchange.fetch_markets())
 
-
     symbol = 'BTC/USD'
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
@@ -298,7 +297,16 @@ def test_bybit():
 def test_ftx():
     exchange = test.mn_ftx_exchange
 
-    pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
+    symbol = 'BTC-PERP'
+    # symbol = 'BTC/USDT'
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    print(exchange.switch_isolated(symbol, False, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 4, 15))
+
+    # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.api_referral_success())
 # FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
@@ -345,9 +353,9 @@ def test_okex():
 
 def main():
     # test_binance()
-    test_bitmex()
+    # test_bitmex()
     # test_bybit()
-    # test_ftx()
+    test_ftx()
     # test_kucoin()
     # test_phemex()
     # test_okex()

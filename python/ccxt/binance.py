@@ -865,13 +865,7 @@ class binance(Exchange):
             'timestamp': self.nonce()
         }
 
-        # set the leverage to whichever is set, default buyLeverage
-        if not buyLeverage:
-            buyLeverage = sellLeverage
-        if not sellLeverage:
-            sellLeverage = buyLeverage
-
-        leverage = buyLeverage
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
         if (leverage < 1) or (leverage > 125):
             raise BadRequest(self.id + ' leverage should be between 1 and 125')
