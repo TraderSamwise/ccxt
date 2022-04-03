@@ -20,6 +20,63 @@ from ccxt.base.precise import Precise
 
 class BitmexTealstreetMixin(object):
 
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        self.load_markets()
+        market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
+
+        request = {
+            'symbol': market['id'],
+            'timestamp': self.nonce()
+        }
+
+        # set the leverage to whichever is set, default buyLeverage
+        if not buyLeverage:
+            buyLeverage = sellLeverage
+        if not sellLeverage:
+            sellLeverage = buyLeverage
+
+        leverage = buyLeverage
+
+        if (leverage < 1) or (leverage > 125):
+            raise BadRequest(self.id + ' leverage should be between 1 and 125')
+
+        request['leverage'] = leverage
+
+        method = None
+        if type == 'future':
+            method = 'fapiPrivatePostLeverage'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostLeverage'
+        # elif type == 'margin':
+        #     method = 'sapiGetMarginOrder'
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+
+        request = {
+            'symbol': market['id'],
+            'enabled': isIsolated,
+        }
+        method = 'privatePostPositionIsolate'
+
+        response = getattr(self, method)(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
+
+    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
+        pass
+
     def parse_position(self: 'bitmex', position, balance = {}):
         info = position
         positionCurrency = self.safe_string(position, 'currency')

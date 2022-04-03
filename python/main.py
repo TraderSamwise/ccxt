@@ -108,10 +108,9 @@ def test_binance():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    # leverageResponse = exchange.switch_hedge_mode(symbol, False)
-    leverageResponse = exchange.set_leverage(symbol, 50, 50)
-    hi = True
+    print(exchange.switch_isolated(symbol, False, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 25, 25))
 
     # exchange.edit_order('37677901237',
     #      'BTC/USD',
@@ -171,22 +170,29 @@ def test_bitmex():
     # pprint(exchange.fetch_positions())
     # pprint(exchange.fetch_markets())
 
-    print('sending order')
-    result = exchange.create_order(
-        'BTC/USDT',
-        'market',
-        'buy',
-        10000,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': None,
-            'reduceOnly': True,
-            'trigger': None,
-            'closeOnTrigger': False,
-            'basePrice': None
-        })
-    print('got result', result)
+
+    symbol = 'BTC/USD'
+
+    print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 25, 25))
+
+    # print('sending order')
+    # result = exchange.create_order(
+    #     'BTC/USDT',
+    #     'market',
+    #     'buy',
+    #     10000,
+    #     None,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': None,
+    #         'reduceOnly': True,
+    #         'trigger': None,
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
+    #     })
+    # print('got result', result)
     # print('sending order 2')
     # result = exchange.create_order(
     #     'BTC/USDT',
@@ -252,11 +258,9 @@ def test_bybit():
     orders = exchange.fetch_orders(symbol, limit=100)
     trades = exchange.fetch_my_trades(symbol)
 
-
-    leverageResponse = exchange.switch_hedge_mode(symbol, False)
-    hi = True
-    # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    # leverageResponse = exchange.set_leverage(symbol, 12, 12)
+    print(exchange.switch_isolated(symbol, False, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 25, 25))
 
     # exchange.create_order(symbol,
     #                       'stop',
@@ -340,8 +344,8 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    test_binance()
-    # test_bitmex()
+    # test_binance()
+    test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_kucoin()
