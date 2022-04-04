@@ -2640,20 +2640,30 @@ class okex(Exchange, OkexTealstreetMixin):
             },
         }
 
+    def handle_market_type_and_params(self, methodName, market=None, params={}):
+        instType = self.safe_string(params, 'instType')
+        params = self.omit(params, 'instType')
+        type = self.safe_string(params, 'type')
+        if (type is None) and (instType is not None):
+            params['type'] = instType
+        return super(okex, self).handle_market_type_and_params(methodName, market, params)
+
+    def convert_to_instrument_type(self, type):
+        exchangeTypes = self.safe_value(self.options, 'exchangeType', {})
+        return self.safe_string(exchangeTypes, type, type)
+
     def fetch_position(self, symbol, params={}):
         self.load_markets()
         market = self.market(symbol)
-        type = self.safe_string(params, 'type')
-        params = self.omit(params, 'type')
+        type, query = self.handle_market_type_and_params('fetchPosition', market, params)
         request = {
             # instType String No Instrument type, MARGIN, SWAP, FUTURES, OPTION
             'instId': market['id'],
             # posId String No Single position ID or multiple position IDs(no more than 20) separated with comma
         }
         if type is not None:
-            request['instType'] = type.upper()
-        params = self.omit(params, 'type')
-        response = self.privateGetAccountPositions(params)
+            request['instType'] = self.convert_to_instrument_type(type)
+        response = self.privateGetAccountPositions(query)
         #
         #     {
         #         "code": "0",
@@ -2702,7 +2712,8 @@ class okex(Exchange, OkexTealstreetMixin):
         #
         data = self.safe_value(response, 'data', [])
         position = self.safe_value(data, 0)
-
+        if position is None:
+            return position
         return self.parse_position(position)
 
     def fetch_positions(self, symbols=None, params={}):
@@ -2896,3 +2907,98 @@ class okex(Exchange, OkexTealstreetMixin):
                 self.throw_broadly_matched_exception(self.exceptions['broad'], message, feedback)
             self.throw_exactly_matched_exception(self.exceptions['exact'], code, feedback)
             raise ExchangeError(feedback)  # unknown message
+
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+        if (leverage < 1) or (leverage > 125):
+            raise BadRequest(self.id + ' setLeverage leverage should be between 1 and 125')
+        self.load_markets()
+        market = self.market(symbol)
+        marginMode = self.safe_string_lower(params, 'marginMode')
+        params = self.omit(params, ['mgnMode'])
+        if (marginMode != 'cross') and (marginMode != 'isolated'):
+            raise BadRequest(self.id + ' setLeverage params["marginMode"] must be either cross or isolated')
+        request = {
+            'lever': leverage,
+            'mgnMode': marginMode,
+            'instId': market['id'],
+        }
+        response = self.privatePostAccountSetLeverage(self.extend(request, params))
+        #
+        #     {
+        #       "code": "0",
+        #       "data": [
+        #         {
+        #           "instId": "BTC-USDT-SWAP",
+        #           "lever": "5",
+        #           "mgnMode": "isolated",
+        #           "posSide": "long"
+        #         }
+        #       ],
+        #       "msg": ""
+        #     }
+        #
+        return response
+
+    def set_position_mode(self, hedged, symbol=None, params={}):
+        hedgeMode = None
+        if hedged:
+            hedgeMode = 'long_short_mode'
+        else:
+            hedgeMode = 'net_mode'
+        request = {
+            'posMode': hedgeMode,
+        }
+        response = self.privatePostAccountSetPositionMode(self.extend(request, params))
+        #
+        #     {
+        #       "code": "0",
+        #       "data": [
+        #         {
+        #           "posMode": "net_mode"
+        #         }
+        #       ],
+        #       "msg": ""
+        #     }
+        #
+        return response
+
+    def set_margin_mode(self, marginType, symbol=None, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        marginType = marginType.lower()
+        if (marginType != 'cross') and (marginType != 'isolated'):
+            raise BadRequest(self.id + ' setMarginMode marginType must be either cross or isolated')
+        self.load_markets()
+        market = self.market(symbol)
+        lever = self.safe_integer(params, 'lever')
+        if (lever is None) or (lever < 1) or (lever > 125):
+            raise BadRequest(self.id + ' setMarginMode params["lever"] should be between 1 and 125')
+        params = self.omit(params, ['lever'])
+        request = {
+            'lever': lever,
+            'mgnMode': marginType,
+            'instId': market['id'],
+        }
+        response = self.privatePostAccountSetLeverage(self.extend(request, params))
+        #
+        #     {
+        #       "code": "0",
+        #       "data": [
+        #         {
+        #           "instId": "BTC-USDT-SWAP",
+        #           "lever": "5",
+        #           "mgnMode": "isolated",
+        #           "posSide": "long"
+        #         }
+        #       ],
+        #       "msg": ""
+        #     }
+        #
+        return response

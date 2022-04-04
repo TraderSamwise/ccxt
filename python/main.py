@@ -342,6 +342,17 @@ def test_phemex():
 def test_okex():
     # exchange = test.mn_okex_exchange
     exchange = test.tn_okex_exchange
+
+    symbol = 'BTC-USD-SWAP'
+    # exchange.load_markets()
+    # symbol = exchange.markets[symbol]['id']
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
+
     # result = exchange.create_order(
     #     'BTC-USD-SWAP',
     #     'limit',
@@ -367,8 +378,8 @@ def main():
     # test_bybit()
     # test_ftx()
     # test_kucoin()
-    test_phemex()
-    # test_okex()
+    # test_phemex()
+    test_okex()
     # buy_stuff()
 
 if __name__ == "__main__":

@@ -2042,7 +2042,7 @@ class ftx(Exchange, FTXTealstreetMixin):
 
         leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
-        if leverage != 1.0 or leverage != 2.0 or leverage != 3 or leverage != 5 or leverage != 10 or leverage != 20:
+        if leverage != 1 or leverage != 2 or leverage != 3 or leverage != 5 or leverage != 10 or leverage != 20:
             raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
         request = {
             'leverage': leverage,
