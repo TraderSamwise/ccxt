@@ -349,8 +349,8 @@ def test_okex():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # print(exchange.switch_isolated(symbol, False, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, True))
+    print(exchange.switch_isolated(symbol, True, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, True))
     # print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
 
     # result = exchange.create_order(

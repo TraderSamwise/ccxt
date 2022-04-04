@@ -2944,7 +2944,7 @@ class okex(Exchange, OkexTealstreetMixin):
         #
         return response
 
-    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
         hedgeMode = None
         if isHedgeMode:
             hedgeMode = 'long_short_mode'
@@ -2967,26 +2967,49 @@ class okex(Exchange, OkexTealstreetMixin):
         #
         return response
 
-    def set_margin_mode(self, marginType, symbol=None, params={}):
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
         if symbol is None:
             raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
         # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
         # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        marginType = None
+        if isIsolated:
+            marginType = 'isolated'
+        else:
+            marginType = 'cross'
         marginType = marginType.lower()
         if (marginType != 'cross') and (marginType != 'isolated'):
             raise BadRequest(self.id + ' setMarginMode marginType must be either cross or isolated')
         self.load_markets()
         market = self.market(symbol)
-        lever = self.safe_integer(params, 'lever')
-        if (lever is None) or (lever < 1) or (lever > 125):
-            raise BadRequest(self.id + ' setMarginMode params["lever"] should be between 1 and 125')
-        params = self.omit(params, ['lever'])
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+        if (leverage is None) or (leverage < 1) or (leverage > 125):
+            raise BadRequest(self.id + ' leverage should be between 1 and 125')
         request = {
-            'lever': lever,
+            'lever': leverage,
             'mgnMode': marginType,
             'instId': market['id'],
         }
-        response = self.privatePostAccountSetLeverage(self.extend(request, params))
+        response = None
+        if marginType == 'cross':
+            response = self.privatePostAccountSetLeverage(self.extend(request, params))
+        else:
+            response = []
+            longRequest = {
+                'lever': buyLeverage or sellLeverage,
+                'mgnMode': marginType,
+                'instId': market['id'],
+                'posSide': 'long',
+            }
+            shortRequest = {
+                'lever': sellLeverage or buyLeverage,
+                'mgnMode': marginType,
+                'instId': market['id'],
+                'posSide': 'short',
+            }
+            response.append(self.privatePostAccountSetLeverage(self.extend(longRequest, params)))
+            response.append(self.privatePostAccountSetLeverage(self.extend(shortRequest, params)))
+
         #
         #     {
         #       "code": "0",
