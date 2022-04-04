@@ -350,8 +350,8 @@ def test_okex():
     last = ticker['last']
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
+    print(exchange.switch_hedge_mode(symbol, True))
+    # print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
 
     # result = exchange.create_order(
     #     'BTC-USD-SWAP',

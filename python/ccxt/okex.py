@@ -2944,9 +2944,9 @@ class okex(Exchange, OkexTealstreetMixin):
         #
         return response
 
-    def set_position_mode(self, hedged, symbol=None, params={}):
+    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
         hedgeMode = None
-        if hedged:
+        if isHedgeMode:
             hedgeMode = 'long_short_mode'
         else:
             hedgeMode = 'net_mode'
