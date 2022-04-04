@@ -2725,3 +2725,44 @@ class phemex(Exchange, PhemexTealstreetMixin):
             self.throw_exactly_matched_exception(self.exceptions['exact'], errorCode, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], message, feedback)
             raise ExchangeError(feedback)  # unknown message
+
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
+
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        if (leverage < 1) or (leverage > 100):
+            raise BadRequest(self.id + ' leverage should be between 1 and 100')
+        self.load_markets()
+        market = self.market(symbol)
+        request = {
+            'symbol': market['id'],
+            'leverage': leverage,
+        }
+        return self.privatePutPositionsLeverage(self.extend(request, params))
+
+    def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
+
+        leverage = 0 # sets to cross
+        if isIsolated:
+            leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        if (leverage < 0) or (leverage > 100):
+            raise BadRequest(self.id + ' leverage should be between 0 (cross) and 100')
+        self.load_markets()
+        market = self.market(symbol)
+        request = {
+            'symbol': market['id'],
+            'leverage': leverage,
+        }
+        return self.privatePutPositionsLeverage(self.extend(request, params))
+
+    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
+        pass # not applicable to ftx

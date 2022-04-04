@@ -322,9 +322,19 @@ def test_kucoin():
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 def test_phemex():
     # exchange = test.mn_phemex_exchange
-    exchange = test.mn_phemex_exchange
+    exchange = test.tn_phemex_exchange
 
-    pprint(exchange.fetch_balance())
+    symbol = 'LINK/USD'
+    # exchange.load_markets()
+    # symbol = exchange.markets[symbol]['id']
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 4, 15))
+
+    # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
@@ -355,9 +365,9 @@ def main():
     # test_binance()
     # test_bitmex()
     # test_bybit()
-    test_ftx()
+    # test_ftx()
     # test_kucoin()
-    # test_phemex()
+    test_phemex()
     # test_okex()
     # buy_stuff()
 
