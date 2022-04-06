@@ -295,6 +295,7 @@ def test_bybit():
 
 # FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
 def test_ftx():
+    # exchange = test.mn_ftx_exchange
     exchange = test.mn_ftx_exchange
 
     symbol = 'BTC-PERP'
@@ -302,9 +303,9 @@ def test_ftx():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.switch_isolated(symbol, False, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 4, 15))
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 4, 15))
 
     # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
