@@ -296,7 +296,6 @@ def test_bybit():
 
 # GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
 def test_gateio():
-    # exchange = test.mn_GATE.IO_exchange
     exchange = test.mn_gateio_exchange
 
     symbol = 'BTC/USDT'
@@ -304,7 +303,7 @@ def test_gateio():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    result = exchange.fetch_currencies()
+    print(exchange.fetch_currencies())
 
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))

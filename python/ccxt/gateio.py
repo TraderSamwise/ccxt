@@ -21,9 +21,205 @@ from ccxt.base.errors import RateLimitExceeded
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+import re
+import time
+from numbers import Number
+import functools
 
+# TODO: update Exchange.py / all exchanges to these newer methods and remove
+class GateIOTEalstreetMixin(object):
+    def define_rest_api_endpoint(self, method_name, uppercase_method, lowercase_method, camelcase_method, path, paths,
+                                 config={}):
+        cls = type(self)
+        entry = getattr(cls, method_name)  # returns a function (instead of a bound method)
+        delimiters = re.compile('[^a-zA-Z0-9]')
+        split_path = delimiters.split(path)
+        lowercase_path = [x.strip().lower() for x in split_path]
+        camelcase_suffix = ''.join([Exchange.capitalize(x) for x in split_path])
+        underscore_suffix = '_'.join([x for x in lowercase_path if len(x)])
+        camelcase_prefix = ''
+        underscore_prefix = ''
+        if len(paths):
+            camelcase_prefix = paths[0]
+            underscore_prefix = paths[0]
+            if len(paths) > 1:
+                camelcase_prefix += ''.join([Exchange.capitalize(x) for x in paths[1:]])
+                underscore_prefix += '_' + '_'.join([x.strip() for p in paths[1:] for x in delimiters.split(p)])
+                api_argument = paths
+            else:
+                api_argument = paths[0]
+        camelcase = camelcase_prefix + camelcase_method + Exchange.capitalize(camelcase_suffix)
+        underscore = underscore_prefix + '_' + lowercase_method + '_' + underscore_suffix.lower()
 
-class gateio(Exchange):
+        def partialer():
+            outer_kwargs = {'path': path, 'api': api_argument, 'method': uppercase_method, 'config': config}
+
+            @functools.wraps(entry)
+            def inner(_self, params=None, context=None):
+                """
+                Inner is called when a generated method (publicGetX) is called.
+                _self is a reference to self created by function.__get__(exchange, type(exchange))
+                https://en.wikipedia.org/wiki/Closure_(computer_programming) equivalent to functools.partial
+                """
+                inner_kwargs = dict(outer_kwargs)  # avoid mutation
+                if params is not None:
+                    inner_kwargs['params'] = params
+                if context is not None:
+                    inner_kwargs['context'] = params
+                return entry(_self, **inner_kwargs)
+
+            return inner
+
+        to_bind = partialer()
+        setattr(cls, camelcase, to_bind)
+        setattr(cls, underscore, to_bind)
+
+    def define_rest_api(self, api, method_name, paths=[]):
+        for key, value in api.items():
+            uppercase_method = key.upper()
+            lowercase_method = key.lower()
+            camelcase_method = lowercase_method.capitalize()
+            if isinstance(value, list):
+                for path in value:
+                    self.define_rest_api_endpoint(method_name, uppercase_method, lowercase_method, camelcase_method,
+                                                  path, paths)
+            # the options HTTP method conflicts with the 'options' API url path
+            # elif re.search(r'^(?:get|post|put|delete|options|head|patch)$', key, re.IGNORECASE) is not None:
+            elif re.search(r'^(?:get|post|put|delete|head|patch)$', key, re.IGNORECASE) is not None:
+                for [endpoint, config] in value.items():
+                    path = endpoint.strip()
+                    if isinstance(config, dict):
+                        self.define_rest_api_endpoint(method_name, uppercase_method, lowercase_method, camelcase_method,
+                                                      path, paths, config)
+                    elif isinstance(config, Number):
+                        self.define_rest_api_endpoint(method_name, uppercase_method, lowercase_method, camelcase_method,
+                                                      path, paths, {'cost': config})
+                    else:
+                        raise NotSupported(
+                            self.id + ' define_rest_api() API format not supported, API leafs must strings, objects or numbers')
+            else:
+                self.define_rest_api(value, method_name, paths + [key])
+
+    def throttle(self, cost=None):
+        now = float(self.milliseconds())
+        elapsed = now - self.lastRestRequestTimestamp
+        cost = 1 if cost is None else cost
+        sleep_time = self.rateLimit * cost
+        if elapsed < sleep_time:
+            delay = sleep_time - elapsed
+            time.sleep(delay / 1000.0)
+
+    def calculate_rate_limiter_cost(self, api, method, path, params, config={}, context={}):
+        return self.safe_value(config, 'cost', 1)
+
+    def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
+        """A better wrapper over request for deferred signing"""
+        if self.enableRateLimit:
+            cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
+            self.throttle(cost)
+        self.lastRestRequestTimestamp = self.milliseconds()
+        request = self.sign(path, api, method, params, headers, body)
+        return self.fetch(request['url'], request['method'], request['headers'], request['body'])
+
+    def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
+        """Exchange.request is the entry point for all generated methods"""
+        return self.fetch2(path, api, method, params, headers, body, config, context)
+
+    def safe_ticker(self, ticker, market=None, legacy=True):
+        if legacy:
+            symbol = self.safe_value(ticker, 'symbol')
+            if symbol is None:
+                symbol = self.safe_symbol(None, market)
+            timestamp = self.safe_integer(ticker, 'timestamp')
+            baseVolume = self.safe_value(ticker, 'baseVolume')
+            quoteVolume = self.safe_value(ticker, 'quoteVolume')
+            vwap = self.safe_value(ticker, 'vwap')
+            if vwap is None:
+                vwap = self.vwap(baseVolume, quoteVolume)
+            open = self.safe_value(ticker, 'open')
+            close = self.safe_value(ticker, 'close')
+            last = self.safe_value(ticker, 'last')
+            change = self.safe_value(ticker, 'change')
+            percentage = self.safe_value(ticker, 'percentage')
+            average = self.safe_value(ticker, 'average')
+            if (last is not None) and (close is None):
+                close = last
+            elif (last is None) and (close is not None):
+                last = close
+            if (last is not None) and (open is not None):
+                if change is None:
+                    change = last - open
+                if average is None:
+                    average = self.sum(last, open) / 2
+            if (percentage is None) and (change is not None) and (open is not None) and (open > 0):
+                percentage = change / open * 100
+            if (change is None) and (percentage is not None) and (last is not None):
+                change = percentage / 100 * last
+            if (open is None) and (last is not None) and (change is not None):
+                open = last - change
+            if (vwap is not None) and (baseVolume is not None) and (quoteVolume is None):
+                quoteVolume = vwap / baseVolume
+            if (vwap is not None) and (quoteVolume is not None) and (baseVolume is None):
+                baseVolume = quoteVolume / vwap
+            ticker['symbol'] = symbol
+            ticker['timestamp'] = timestamp
+            ticker['datetime'] = self.iso8601(timestamp)
+            ticker['open'] = open
+            ticker['close'] = close
+            ticker['last'] = last
+            ticker['vwap'] = vwap
+            ticker['change'] = change
+            ticker['percentage'] = percentage
+            ticker['average'] = average
+            return ticker
+        else:
+            open = self.safe_value(ticker, 'open')
+            close = self.safe_value(ticker, 'close')
+            last = self.safe_value(ticker, 'last')
+            change = self.safe_value(ticker, 'change')
+            percentage = self.safe_value(ticker, 'percentage')
+            average = self.safe_value(ticker, 'average')
+            vwap = self.safe_value(ticker, 'vwap')
+            baseVolume = self.safe_value(ticker, 'baseVolume')
+            quoteVolume = self.safe_value(ticker, 'quoteVolume')
+            if vwap is None:
+                vwap = Precise.string_div(quoteVolume, baseVolume)
+            if (last is not None) and (close is None):
+                close = last
+            elif (last is None) and (close is not None):
+                last = close
+            if (last is not None) and (open is not None):
+                if change is None:
+                    change = Precise.string_sub(last, open)
+                if average is None:
+                    average = Precise.string_div(Precise.string_add(last, open), '2')
+            if (percentage is None) and (change is not None) and (open is not None) and (Precise.string_gt(open, '0')):
+                percentage = Precise.string_mul(Precise.string_div(change, open), '100')
+            if (change is None) and (percentage is not None) and (last is not None):
+                change = Precise.string_div(Precise.string_mul(percentage, last), '100')
+            if (open is None) and (last is not None) and (change is not None):
+                open = Precise.string_sub(last, change)
+            # timestamp and symbol operations don't belong in safeTicker
+            # they should be done in the derived classes
+            return self.extend(ticker, {
+                'bid': self.safe_number(ticker, 'bid'),
+                'bidVolume': self.safe_number(ticker, 'bidVolume'),
+                'ask': self.safe_number(ticker, 'ask'),
+                'askVolume': self.safe_number(ticker, 'askVolume'),
+                'high': self.safe_number(ticker, 'high'),
+                'low': self.safe_number(ticker, 'low'),
+                'open': self.parse_number(open),
+                'close': self.parse_number(close),
+                'last': self.parse_number(last),
+                'change': self.parse_number(change),
+                'percentage': self.parse_number(percentage),
+                'average': self.parse_number(average),
+                'vwap': self.parse_number(vwap),
+                'baseVolume': self.parse_number(baseVolume),
+                'quoteVolume': self.parse_number(quoteVolume),
+            })
+
+class gateio(GateIOTEalstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(gateio, self).describe(), {
