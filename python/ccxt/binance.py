@@ -881,7 +881,10 @@ class binance(Exchange):
         #     method = 'sapiGetMarginOrder'
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        unifiedResponse = {
+            'symbol': self.safe_symbol(symbol, market),
+            'leverage': self.safe_number(response, 'leverage')
+        }
 
         return unifiedResponse
 
