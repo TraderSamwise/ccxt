@@ -881,6 +881,18 @@ class binance(Exchange):
         #     method = 'sapiGetMarginOrder'
 
         response = getattr(self, method)(self.extend(request, params))
+        # coinm
+        # {
+        #     "symbol": "BTCUSD_PERP",
+        #     "timestamp": 1649353553822,
+        #     "leverage": 24
+        # }
+        # usdm
+        # {
+        #     "symbol": "BTCUSDT",
+        #     "leverage": "24",
+        #     "maxNotionalValue": "1000000"
+        # }
         unifiedResponse = {
             'symbol': self.safe_symbol(symbol, market),
             'leverage': self.safe_number(response, 'leverage')

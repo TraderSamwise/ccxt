@@ -101,10 +101,11 @@ def buy_stuff():
         
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
 def test_binance():
-    exchange = test.mn_binance_usdm_exchange
-    # exchange = test.mn_binance_coinm_exchange
+    # exchange = test.mn_binance_usdm_exchange
+    exchange = test.mn_binance_coinm_exchange
 
-    symbol = 'BTC/USDT'
+    # symbol = 'BTC/USDT'
+    symbol = 'BTC/USD'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
