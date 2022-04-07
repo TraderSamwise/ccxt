@@ -58,7 +58,8 @@ class BitmexTealstreetMixin(object):
         return unifiedResponse
 
     def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
-        pass # not applicable to bitmex
+        unifiedResponse = {}
+        return unifiedResponse
 
     def parse_position(self: 'bitmex', position, balance = {}):
         info = position

@@ -108,8 +108,8 @@ def test_binance():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.switch_isolated(symbol, False, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
     print(exchange.set_leverage(symbol, 25, 25))
 
     # exchange.edit_order('37677901237',
@@ -254,11 +254,11 @@ def test_bybit():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    orders = exchange.fetch_orders(symbol, limit=100)
-    trades = exchange.fetch_my_trades(symbol)
-
-    print(exchange.switch_isolated(symbol, False, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, False))
+    # orders = exchange.fetch_orders(symbol, limit=100)
+    # trades = exchange.fetch_my_trades(symbol)
+    #
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
     print(exchange.set_leverage(symbol, 25, 25))
 
     # exchange.create_order(symbol,
@@ -288,7 +288,7 @@ def test_bybit():
     #     'basePrice': last
     # })
     # pprint(exchange.fetch_open_orders('BTC/USDT'))
-    pprint(exchange.fetch_open_orders('BTC/USDT'))
+    # pprint(exchange.fetch_open_orders('BTC/USDT'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
@@ -305,7 +305,7 @@ def test_ftx():
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
-    # print(exchange.set_leverage(symbol, 4, 15))
+    print(exchange.set_leverage(symbol, 4, 15))
 
     # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
@@ -350,9 +350,9 @@ def test_okex():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.switch_isolated(symbol, True, 10, 20))
+    # print(exchange.switch_isolated(symbol, True, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, True))
-    # print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
+    print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
 
     # result = exchange.create_order(
     #     'BTC-USD-SWAP',
@@ -374,12 +374,12 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    # test_binance()
-    # test_bitmex()
-    # test_bybit()
-    # test_ftx()
+    test_binance()
+    test_bitmex()
+    test_bybit()
+    test_ftx()
     # test_kucoin()
-    # test_phemex()
+    test_phemex()
     test_okex()
     # buy_stuff()
 

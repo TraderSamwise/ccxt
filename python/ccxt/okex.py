@@ -2942,7 +2942,8 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
-        return response
+        unifiedResponse = response
+        return unifiedResponse
 
     def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
         hedgeMode = None
@@ -2965,7 +2966,8 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
-        return response
+        unifiedResponse = response
+        return unifiedResponse
 
     def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
         if symbol is None:
@@ -3024,4 +3026,5 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
+        unifiedResponse = response
         return response

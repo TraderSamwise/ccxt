@@ -2742,7 +2742,11 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'symbol': market['id'],
             'leverage': leverage,
         }
-        return self.privatePutPositionsLeverage(self.extend(request, params))
+
+        response = self.privatePutPositionsLeverage(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
 
     def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
         # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
@@ -2762,7 +2766,12 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'symbol': market['id'],
             'leverage': leverage,
         }
-        return self.privatePutPositionsLeverage(self.extend(request, params))
+
+        response = self.privatePutPositionsLeverage(self.extend(request, params))
+        unifiedResponse = response
+
+        return unifiedResponse
 
     def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
-        pass # not applicable to ftx
+        unifiedResponse = {}
+        return unifiedResponse

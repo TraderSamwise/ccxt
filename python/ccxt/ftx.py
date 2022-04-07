@@ -2047,11 +2047,15 @@ class ftx(Exchange, FTXTealstreetMixin):
         request = {
             'leverage': leverage,
         }
+        resposnse = self.privatePostAccountLeverage(self.extend(request, params))
+        unifiedResponse = response
 
-        return self.privatePostAccountLeverage(self.extend(request, params))
+        return unifiedResponse
 
-    def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
-        pass # not applicable to ftx
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        unifiedResponse = {}
+        return unifiedResponse
 
-    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
-        pass # not applicable to ftx
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        unifiedResponse = {}
+        return unifiedResponse
