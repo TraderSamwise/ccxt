@@ -95,6 +95,16 @@ mnc_ftx_params = {
 mnc_ftx_exchange_pro = ccxtpro.ftx(mnc_ftx_params)
 mnc_ftx_exchange = ccxt.ftx(mnc_ftx_params)
 
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+mn_gateio_params = {
+    'apiKey': os.environ.get('mn_gateio_key'),
+    'secret': os.environ.get('mn_gateio_secret'),
+    'enableRateLimit': True,
+    # 'proxy': 'http://localhost/api/proxy/',
+}
+mn_gateio_exchange_pro = ccxtpro.gateio(mn_gateio_params)
+mn_gateio_exchange = ccxt.gateio(mn_gateio_params)
+
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 mn_kucoin_params = {
     'apiKey': os.environ.get('mn_kucoin_key'),

@@ -245,13 +245,13 @@ def test_bitmex():
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
-    # exchange = test.mn_bybit_inverse_exchange
-    exchange = test.mn_bybit_linear_exchange
+    exchange = test.mn_bybit_inverse_exchange
+    # exchange = test.mn_bybit_linear_exchange
     # exchange = test.tn_bybit_inverse_exchange
     # exchange = test.tn_bybit_linear_exchange
 
+    # symbol = 'BTC/USD'
     symbol = 'BTC/USDT'
-    # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
@@ -294,24 +294,29 @@ def test_bybit():
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 
-# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
-def test_ftx():
-    # exchange = test.mn_ftx_exchange
-    exchange = test.mn_ftx_exchange
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+def test_gateio():
+    # exchange = test.mn_GATE.IO_exchange
+    exchange = test.mn_gateio_exchange
 
-    symbol = 'BTC-PERP'
+    symbol = 'BTC/USDT'
     # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
+    result = exchange.fetch_currencies()
+
+
     # print(exchange.switch_isolated(symbol, False, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 4, 15))
+    # print(exchange.set_leverage(symbol, 4, 15))
 
     # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.api_referral_success())
-# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+
+
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 def test_kucoin():
@@ -376,9 +381,10 @@ def test_okex():
 
 def main():
     # test_binance()
-    test_bitmex()
+    # test_bitmex()
     # test_bybit()
     # test_ftx()
+    test_gateio()
     # test_kucoin()
     # test_phemex()
     # test_okex()
