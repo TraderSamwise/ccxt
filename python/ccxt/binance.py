@@ -893,8 +893,10 @@ class binance(Exchange):
         #     "leverage": "24",
         #     "maxNotionalValue": "1000000"
         # }
+        marketId = self.safe_string(response, 'symbol')
+        market = self.safe_market(marketId)
         unifiedResponse = {
-            'symbol': self.safe_symbol(symbol, market),
+            'symbol': market['symbol'],
             'leverage': self.safe_number(response, 'leverage')
         }
 

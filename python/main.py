@@ -175,7 +175,7 @@ def test_bitmex():
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 50, 50))
+    print(exchange.set_leverage(symbol, 40, 40))
 
     # print('sending order')
     # result = exchange.create_order(
@@ -375,8 +375,8 @@ def test_okex():
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
 def main():
-    test_binance()
-    # test_bitmex()
+    # test_binance()
+    test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_kucoin()
