@@ -27,7 +27,7 @@ from numbers import Number
 import functools
 
 # TODO: update Exchange.py / all exchanges to these newer methods and remove
-class GateIOTEalstreetMixin(object):
+class GateIOTealstreetMixin(object):
     def define_rest_api_endpoint(self, method_name, uppercase_method, lowercase_method, camelcase_method, path, paths,
                                  config={}):
         cls = type(self)
@@ -219,7 +219,7 @@ class GateIOTEalstreetMixin(object):
                 'quoteVolume': self.parse_number(quoteVolume),
             })
 
-class gateio(GateIOTEalstreetMixin, Exchange):
+class gateio(GateIOTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(gateio, self).describe(), {
