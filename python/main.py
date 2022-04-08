@@ -303,7 +303,7 @@ def test_gateio():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.fetch_currencies())
+    print(exchange.fetch_orders())
 
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
