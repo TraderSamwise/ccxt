@@ -21,9 +21,10 @@ from ccxt.base.errors import RateLimitExceeded
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
+from ccxt.gateio import GateIOTealstreetMixin
 
 
-class gateio(Exchange):
+class gateio(GateIOTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(gateio, self).describe(), {
