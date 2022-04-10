@@ -2042,13 +2042,22 @@ class ftx(Exchange, FTXTealstreetMixin):
 
         leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
-        if leverage != 1 or leverage != 2 or leverage != 3 or leverage != 5 or leverage != 10 or leverage != 20:
+        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20:
             raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
         request = {
             'leverage': leverage,
         }
-        resposnse = self.privatePostAccountLeverage(self.extend(request, params))
-        unifiedResponse = response
+        response = self.privatePostAccountLeverage(self.extend(request, params))
+        # {
+        #     "success": true,
+        #     "result": "None"
+        # }
+        unifiedResponse = {
+            'symbol': None
+        }
+        success = self.safe_value(response, 'success')
+        if success:
+            unifiedResponse['leverage'] = leverage
 
         return unifiedResponse
 
