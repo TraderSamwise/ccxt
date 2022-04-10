@@ -480,7 +480,32 @@ class bybit(Exchange):
             request['sell_leverage'] = sellLeverage
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        # inverse
+        # {
+        #     "ret_code": "0",
+        #     "ret_msg": "OK",
+        #     "ext_code": "",
+        #     "ext_info": "",
+        #     "result": "None",
+        #     "time_now": "1649354132.652735",
+        #     "rate_limit_status": "74",
+        #     "rate_limit_reset_ms": "1649354132643",
+        #     "rate_limit": "75"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        status = self.safe_string(response, 'ret_msg')
+        if status == 'OK':
+            if market['swap']:
+                if market['linear']:
+                    unifiedResponse['buyLeverage'] = buyLeverage
+                    unifiedResponse['sellLeverage'] = sellLeverage
+                elif market['inverse']:
+                    unifiedResponse['leverage'] = buyLeverage
+            elif market['futures']:
+                unifiedResponse['buyLeverage'] = buyLeverage
+                unifiedResponse['sellLeverage'] = sellLeverage
 
         return unifiedResponse
 
