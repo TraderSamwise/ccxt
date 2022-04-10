@@ -2942,7 +2942,15 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
-        unifiedResponse = response
+        data = self.safe_value(response, 'data')
+        if data:
+            data = data[0]
+        marketId = self.safe_string(data, 'instId')
+        market = self.safe_market(marketId)
+        unifiedResponse = {
+            'symbol': market['symbol'],
+            'leverage': self.safe_number(data, 'lever')
+        }
         return unifiedResponse
 
     def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
