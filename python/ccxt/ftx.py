@@ -2069,5 +2069,8 @@ class ftx(Exchange, FTXTealstreetMixin):
         return unifiedResponse
 
     def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
-        unifiedResponse = {}
+        unifiedResponse = {
+            'symbol': None,
+            'tradeMode': 'oneway'
+        }
         return unifiedResponse
