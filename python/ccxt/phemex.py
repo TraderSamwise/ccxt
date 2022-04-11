@@ -2778,7 +2778,18 @@ class phemex(Exchange, PhemexTealstreetMixin):
         }
 
         response = self.privatePutPositionsLeverage(self.extend(request, params))
-        unifiedResponse = response
+        # {
+        #     "code": "0",
+        #     "msg": "",
+        #     "data": "OK"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        data = self.safe_string(response, 'data')
+        if data == 'OK':
+            unifiedResponse['leverage'] = leverage
+            unifiedResponse['marginType'] = 'isolated' if isIsolated else 'cross'
 
         return unifiedResponse
 
