@@ -2974,7 +2974,17 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
-        unifiedResponse = response
+        data = self.safe_value(response, 'data')
+        if data:
+            data = data[0]
+        posMode = self.safe_string(data, 'posMode')
+        tradeMode = 'oneway' if posMode == 'net_mode' else 'hedged'
+
+        unifiedResponse = {
+            'symbol': None,
+            'tradeMode': tradeMode
+        }
+
         return unifiedResponse
 
     def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
