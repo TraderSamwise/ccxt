@@ -2062,7 +2062,10 @@ class ftx(Exchange, FTXTealstreetMixin):
         return unifiedResponse
 
     def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
-        unifiedResponse = {}
+        unifiedResponse = {
+            'symbol': None,
+            'marginType': 'cross'
+        }
         return unifiedResponse
 
     def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
