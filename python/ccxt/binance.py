@@ -954,7 +954,16 @@ class binance(Exchange):
             method = 'dapiPrivatePostPositionSideDual'
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        # {
+        #     "code": "200",
+        #     "msg": "success"
+        # }
+        unifiedResponse = {
+            'symbol': None
+        }
+        code = self.safe_string(response, 'code')
+        if code == '200':
+            unifiedResponse['tradeMode'] = 'hedged' if isHedgeMode else 'oneway'
 
         return unifiedResponse
 
