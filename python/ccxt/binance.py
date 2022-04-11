@@ -924,7 +924,16 @@ class binance(Exchange):
         #     method = 'sapiGetMarginOrder'
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        # {
+        #     "code": "200",
+        #     "msg": "success"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        code = self.safe_string(response, 'code')
+        if code == '200':
+            unifiedResponse['marginType'] = 'isolated' if isIsolated else 'cross'
 
         return unifiedResponse
 
