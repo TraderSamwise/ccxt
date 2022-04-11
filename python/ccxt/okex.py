@@ -3000,11 +3000,11 @@ class okex(Exchange, OkexTealstreetMixin):
             'mgnMode': marginType,
             'instId': market['id'],
         }
-        response = None
+        responses = []
         if marginType == 'cross':
-            response = self.privatePostAccountSetLeverage(self.extend(request, params))
+            responses.append(self.privatePostAccountSetLeverage(self.extend(request, params)))
         else:
-            response = []
+            responses = []
             longRequest = {
                 'lever': buyLeverage or sellLeverage,
                 'mgnMode': marginType,
@@ -3017,8 +3017,8 @@ class okex(Exchange, OkexTealstreetMixin):
                 'instId': market['id'],
                 'posSide': 'short',
             }
-            response.append(self.privatePostAccountSetLeverage(self.extend(longRequest, params)))
-            response.append(self.privatePostAccountSetLeverage(self.extend(shortRequest, params)))
+            responses.append(self.privatePostAccountSetLeverage(self.extend(longRequest, params)))
+            responses.append(self.privatePostAccountSetLeverage(self.extend(shortRequest, params)))
 
         #
         #     {
@@ -3034,5 +3034,25 @@ class okex(Exchange, OkexTealstreetMixin):
         #       "msg": ""
         #     }
         #
-        unifiedResponse = response
-        return response
+        unifiedResponse = {}
+        for response in responses:
+            data = self.safe_value(response, 'data')[0]
+            marketId = self.safe_string(data, 'instId')
+            market = self.safe_market(marketId)
+            marginType = self.safe_string(data, 'mgnMode')
+
+            unifiedResponse['symbol'] = market['symbol']
+            unifiedResponse['marginType'] = marginType
+
+            leverage = self.safe_number(data, 'lever')
+            posSide = self.safe_string(data, 'posSide')
+
+            if posSide:
+                if posSide == 'long':
+                    unifiedResponse['buyLeverage'] = leverage
+                elif posSide == 'short':
+                    unifiedResponse['sellLeverage'] = leverage
+            else:
+                unifiedResponse['leverage'] = leverage
+
+        return unifiedResponse
