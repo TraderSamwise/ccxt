@@ -536,7 +536,25 @@ class bybit(Exchange):
             method = 'futuresPrivatePostPositionSwitchIsolated'
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        # {
+        #     "ret_code": "0",
+        #     "ret_msg": "OK",
+        #     "ext_code": "",
+        #     "ext_info": "",
+        #     "result": "None",
+        #     "time_now": "1649690516.462911",
+        #     "rate_limit_status": "72",
+        #     "rate_limit_reset_ms": "1649690516461",
+        #     "rate_limit": "75"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        status = self.safe_string(response, 'ret_msg')
+        if status == 'OK':
+            unifiedResponse['buyLeverage'] = buyLeverage
+            unifiedResponse['sellLeverage'] = sellLeverage
+            unifiedResponse['marginType'] = 'isolated' if isIsolated else 'cross'
 
         return unifiedResponse
 
