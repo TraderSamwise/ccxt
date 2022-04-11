@@ -577,7 +577,23 @@ class bybit(Exchange):
             request['mode'] = 3 if isHedgeMode else 0
 
         response = getattr(self, method)(self.extend(request, params))
-        unifiedResponse = response
+        # {
+        #     "ret_code": "0",
+        #     "ret_msg": "OK",
+        #     "ext_code": "",
+        #     "ext_info": "",
+        #     "result": "None",
+        #     "time_now": "1649714487.556459",
+        #     "rate_limit_status": "73",
+        #     "rate_limit_reset_ms": "1649714487553",
+        #     "rate_limit": "75"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        status = self.safe_string(response, 'ret_msg')
+        if status == 'OK':
+            unifiedResponse['tradeMode'] = 'hedged' if isHedgeMode else 'oneway'
 
         return unifiedResponse
 
