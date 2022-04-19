@@ -28,8 +28,7 @@ import functools
 
 # TODO: update Exchange.py / all exchanges to these newer methods and remove
 class GateIOTealstreetMixin(object):
-    def define_rest_api_endpoint(self, method_name, uppercase_method, lowercase_method, camelcase_method, path, paths,
-                                 config={}):
+    def define_rest_api_endpoint(self, method_name, uppercase_method, lowercase_method, camelcase_method, path, paths, config={}):
         cls = type(self)
         entry = getattr(cls, method_name)  # returns a function (instead of a bound method)
         delimiters = re.compile('[^a-zA-Z0-9]')

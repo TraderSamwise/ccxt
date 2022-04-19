@@ -55,6 +55,16 @@ mn_bybit_linear_exchange = ccxt.bybitlinear(mn_bybit_params)
 mn_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(mn_bybit_params)
 mn_bybit_linear_exchange_pro = ccxtpro.bybitlinear(mn_bybit_params)
 
+mn_sub_bybit_params = {
+    'apiKey': os.environ.get('mn_sub_bybit_key'),
+    'secret': os.environ.get('mn_sub_bybit_secret'),
+    'enableRateLimit': False,
+}
+mn_sub_bybit_inverse_exchange = ccxt.bybitinverse(mn_sub_bybit_params)
+mn_sub_bybit_linear_exchange = ccxt.bybitlinear(mn_sub_bybit_params)
+mn_sub_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(mn_sub_bybit_params)
+mn_sub_bybit_linear_exchange_pro = ccxtpro.bybitlinear(mn_sub_bybit_params)
+
 tn_bybit_params = {
     'apiKey': os.environ.get('tn_bybit_key'),
     'secret': os.environ.get('tn_bybit_secret'),
