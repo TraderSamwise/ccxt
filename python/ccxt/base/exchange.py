@@ -119,6 +119,7 @@ class Exchange(object):
     enableRateLimit = True
     rateLimit = 2000  # milliseconds = seconds * 1000
     timeout = 10000   # milliseconds = seconds * 1000
+
     asyncio_loop = None
     aiohttp_proxy = None
     aiohttp_trust_env = False
@@ -513,11 +514,21 @@ class Exchange(object):
 
     def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None):
         """A better wrapper over request for deferred signing"""
+        # TEALSTREET
+        self.check_rate_limits()
+
         if self.enableRateLimit:
             self.throttle()
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
-        return self.fetch(request['url'], request['method'], request['headers'], request['body'])
+        try:
+            res = self.fetch(request['url'], request['method'], request['headers'], request['body'])
+            self.set_rate_limit_status(False)
+            return res
+        except Exception as e:
+            if self.is_rate_limit_error(e):
+                self.set_rate_limit_status(True)
+            raise e
 
     def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
         """Exchange.request is the entry point for all generated methods"""
@@ -536,6 +547,47 @@ class Exchange(object):
     # TEALSTREET
     def resolve_error_message_future(self, message):
         pass
+
+    # TEALSTREET
+    def get_is_rate_limited(self):
+        get_is_rate_limitted = self.options.get("get_is_rate_limited")
+        if get_is_rate_limitted:
+            return get_is_rate_limitted()
+        else:
+            return False
+
+    # TEALSTREET
+    def check_rate_limits(self):
+        rate_limit_count = 0
+        rate_limit_timeout = self.options.get("rate_limit_timeout", 3)
+        max_rate_limit_checks = self.options.get("max_rate_limit_checks", 2)
+        while self.get_is_rate_limited():
+            if rate_limit_count >= max_rate_limit_checks:
+                raise RateLimitExceeded(f'Still rate limited after {max_rate_limit_checks} attempts.')
+            rate_limit_count += 1
+            time.sleep(rate_limit_timeout)
+
+    # TEALSTREET
+    def set_rate_limit_status(self, status):
+        _set_rate_limit_status = self.options.get("set_rate_limit_status")
+        if _set_rate_limit_status:
+            _set_rate_limit_status(self.apiKey, status)
+
+
+    rate_limit_keywords = [
+        "too many requests",
+        "rate limit",
+        "ratelimit",
+        "slow down",
+        "try later"
+    ]
+
+    def is_rate_limit_error(self, e):
+        error_str = str(e).lower().replace("_", " ")
+        for k in self.rate_limit_keywords:
+            if k in error_str:
+                return True
+        return False
 
     def throw_exactly_matched_exception(self, exact, string, message):
         if string in exact:

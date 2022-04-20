@@ -333,12 +333,13 @@ def test_okex():
 def main():
     # test_binance()
     # test_bitmex()
-    test_bybit()
+    # test_bybit()
     # test_ftx()
     # test_kucoin()
     # test_phemex()
     # test_okex()
     # buy_stuff()
+    test_kucoin()
 
 if __name__ == "__main__":
     main()

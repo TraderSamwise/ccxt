@@ -329,4 +329,4 @@ class SigningKey:
 
         assert 1 <= _k < order
         sig = self.privkey.sign(number, _k)
-        return sig.r, sig.s, sig.recovery_param
+        return sig.redis_client, sig.s, sig.recovery_param

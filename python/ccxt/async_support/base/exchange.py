@@ -130,11 +130,21 @@ class Exchange(BaseExchange, ExchangeTealstreetMixin):
 
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None):
         """A better wrapper over request for deferred signing"""
+        # TEALSTREET
+        self.check_rate_limits()
+
         if self.enableRateLimit:
             await self.throttle(self.rateLimit)
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
-        return await self.fetch(request['url'], request['method'], request['headers'], request['body'])
+        try:
+            res = await self.fetch(request['url'], request['method'], request['headers'], request['body'])
+            self.set_rate_limit_status(False)
+            return res
+        except Exception as e:
+            if self.is_rate_limit_error(e):
+                self.set_rate_limit_status(True)
+            raise e
 
     async def fetch(self, url, method='GET', headers=None, body=None):
         """Perform a HTTP request and return decoded JSON data"""

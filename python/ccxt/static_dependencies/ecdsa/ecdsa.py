@@ -129,7 +129,7 @@ class Public_key(object):
 
         G = self.generator
         n = G.order()
-        r = signature.r
+        r = signature.redis_client
         s = signature.s
         if r < 1 or r > n - 1:
             return False
