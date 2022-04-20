@@ -2035,3 +2035,42 @@ class ftx(Exchange, FTXTealstreetMixin):
             self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], error, feedback)
             raise ExchangeError(feedback)  # unknown message
+
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20:
+            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
+        request = {
+            'leverage': leverage,
+        }
+        response = self.privatePostAccountLeverage(self.extend(request, params))
+        # {
+        #     "success": true,
+        #     "result": "None"
+        # }
+        unifiedResponse = {
+            'symbol': None
+        }
+        success = self.safe_value(response, 'success')
+        if success:
+            unifiedResponse['leverage'] = leverage
+
+        return unifiedResponse
+
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        unifiedResponse = {
+            'symbol': None,
+            'marginType': 'cross'
+        }
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        unifiedResponse = {
+            'symbol': None,
+            'tradeMode': 'oneway'
+        }
+        return unifiedResponse

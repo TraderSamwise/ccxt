@@ -852,6 +852,121 @@ class binance(Exchange):
             }
         return result
 
+    def set_leverage(self, symbol, buyLeverage, sellLeverage, params={}):
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        self.load_markets()
+        market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
+
+        request = {
+            'symbol': market['id'],
+            'timestamp': self.nonce()
+        }
+
+        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        if (leverage < 1) or (leverage > 125):
+            raise BadRequest(self.id + ' leverage should be between 1 and 125')
+
+        request['leverage'] = leverage
+
+        method = None
+        if type == 'future':
+            method = 'fapiPrivatePostLeverage'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostLeverage'
+        # elif type == 'margin':
+        #     method = 'sapiGetMarginOrder'
+
+        response = getattr(self, method)(self.extend(request, params))
+        # coinm
+        # {
+        #     "symbol": "BTCUSD_PERP",
+        #     "timestamp": 1649353553822,
+        #     "leverage": 24
+        # }
+        # usdm
+        # {
+        #     "symbol": "BTCUSDT",
+        #     "leverage": "24",
+        #     "maxNotionalValue": "1000000"
+        # }
+        marketId = self.safe_string(response, 'symbol')
+        market = self.safe_market(marketId)
+        unifiedResponse = {
+            'symbol': market['symbol'],
+            'leverage': self.safe_number(response, 'leverage')
+        }
+
+        return unifiedResponse
+
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
+
+        marginType = 'ISOLATED' if isIsolated else 'CROSSED'
+
+        request = {
+            'symbol': market['id'],
+            'marginType': marginType,
+            'timestamp': self.nonce()
+        }
+        method = None
+        if type == 'future':
+            method = 'fapiPrivatePostMarginType'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostMarginType'
+        # elif type == 'margin':
+        #     method = 'sapiGetMarginOrder'
+
+        response = getattr(self, method)(self.extend(request, params))
+        # {
+        #     "code": "200",
+        #     "msg": "success"
+        # }
+        unifiedResponse = {
+            'symbol': symbol
+        }
+        code = self.safe_string(response, 'code')
+        if code == '200':
+            unifiedResponse['marginType'] = 'isolated' if isIsolated else 'cross'
+
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        self.load_markets()
+        market = self.market(symbol)
+        defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
+        type = self.safe_string(params, 'type', defaultType)
+
+        request = {
+            'dualSidePosition': isHedgeMode,
+            'timestamp': self.nonce()
+        }
+        method = None
+        if type == 'future':
+            method = 'fapiPrivatePostPositionSideDual'
+        elif type == 'delivery':
+            method = 'dapiPrivatePostPositionSideDual'
+
+        response = getattr(self, method)(self.extend(request, params))
+        # {
+        #     "code": "200",
+        #     "msg": "success"
+        # }
+        unifiedResponse = {
+            'symbol': None
+        }
+        code = self.safe_string(response, 'code')
+        if code == '200':
+            unifiedResponse['tradeMode'] = 'hedged' if isHedgeMode else 'oneway'
+
+        return unifiedResponse
+
     def fetch_markets(self, params={}):
         defaultType = self.safe_string_2(self.options, 'fetchMarkets', 'defaultType', 'spot')
         type = self.safe_string(params, 'type', defaultType)
@@ -2051,9 +2166,10 @@ class binance(Exchange):
         if stopPriceIsRequired:
             stopPrice = self.safe_number(params, 'stopPrice')
             request['workingType'] = workingType
-            request['closePosition'] = closeOnTrigger
+            # request['closePosition'] = closeOnTrigger
             if closeOnTrigger:
-                request = self.omit(request, 'reduceOnly') # binance yells about it not being necessary
+                request['reduceOnly'] = closeOnTrigger
+                # request = self.omit(request, 'reduceOnly') # binance yells about it not being necessary
             if stopPrice is None:
                 raise InvalidOrder(self.id + ' createOrder() requires a stopPrice extra param for a ' + type + ' order')
             else:

@@ -82,30 +82,28 @@ mn_ftx_params = {
 }
 mn_ftx_exchange_pro = ccxtpro.ftx(mn_ftx_params)
 mn_ftx_exchange = ccxt.ftx(mn_ftx_params)
-mns_ftx_params = {
-    'apiKey': os.environ.get('mns_ftx_key'),
-    'secret': os.environ.get('mns_ftx_secret'),
+mnc_ftx_params = {
+    'apiKey': os.environ.get('mnc_ftx_key'),
+    'secret': os.environ.get('mnc_ftx_secret'),
     'headers': {
-        'FTX-SUBACCOUNT': os.environ.get('mns_ftx_subaccount_name'),
+        'FTX-SUBACCOUNT': os.environ.get('mnc_ftx_subaccount_name'),
         # 'authorization': 'jwt eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyfGt5bGVqc2lta29AZ21haWwuY29tIiwiaXNzIjoiZnR4LmNvbSIsIm5iZiI6MTYyOTkwMDY1MSwiZXhwIjoxNjMyNDkyNzExLCJhdWQiOiJodHRwczovL2Z0ZXhjaGFuZ2UuY29tL2FwaS8iLCJpYXQiOjE2Mjk5MDA3MTEsIm1mYSI6dHJ1ZSwib25seUFsbG93U3VwcG9ydE9ubHkiOmZhbHNlLCJ3aXRoZHJhd2Fsc0Rpc2FibGVkIjpmYWxzZSwiaW50ZXJuYWxUcmFuc2ZlcnNEaXNhYmxlZCI6ZmFsc2UsInJlYWRPbmx5IjpudWxsfQ.WDJ1g7f52Ph6lOkedbDggRaXESolfmh0fmaYo8F3JNWSCdjPPVL8XsM1173wVa-fuPohHNl3TecfJ-tQ4IruG0aSQ7nQeZQxYExe35p7xaIZ6u_ecQfpwUwuHM2GXoieedvTWqXJzYwxvtLx8u0Zb49guCPFNbJ7McDsaFxLgZvynmbyPIj_YLuYqZkZ-KWrj-QkuyJY_o3XfUQflAxPmCzlbZgHtKaF_4BalAM6hsRqWX4qcSX9eY9V55NVGUmFHEVocV84XqsA_0fSo5tLga0WjebVfJ1ZIHT6qauOpgcH5sTqy7qkDV7tDnWi1E-EQbzOboSElPrZLgV5CnldQg'
     },
     'enableRateLimit': True,
     # 'proxy': 'http://localhost/api/proxy/',
 }
-mns_ftx_exchange_pro = ccxtpro.ftx(mns_ftx_params)
-mns_ftx_exchange = ccxt.ftx(mns_ftx_params)
-mngz_ftx_params = {
-    'apiKey': os.environ.get('mngz_ftx_key'),
-    'secret': os.environ.get('mngz_ftx_secret'),
-    'headers': {
-        'FTX-SUBACCOUNT': os.environ.get('mngz_ftx_subaccount_name'),
-        # 'authorization': 'jwt eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyfGt5bGVqc2lta29AZ21haWwuY29tIiwiaXNzIjoiZnR4LmNvbSIsIm5iZiI6MTYyOTkwMDY1MSwiZXhwIjoxNjMyNDkyNzExLCJhdWQiOiJodHRwczovL2Z0ZXhjaGFuZ2UuY29tL2FwaS8iLCJpYXQiOjE2Mjk5MDA3MTEsIm1mYSI6dHJ1ZSwib25seUFsbG93U3VwcG9ydE9ubHkiOmZhbHNlLCJ3aXRoZHJhd2Fsc0Rpc2FibGVkIjpmYWxzZSwiaW50ZXJuYWxUcmFuc2ZlcnNEaXNhYmxlZCI6ZmFsc2UsInJlYWRPbmx5IjpudWxsfQ.WDJ1g7f52Ph6lOkedbDggRaXESolfmh0fmaYo8F3JNWSCdjPPVL8XsM1173wVa-fuPohHNl3TecfJ-tQ4IruG0aSQ7nQeZQxYExe35p7xaIZ6u_ecQfpwUwuHM2GXoieedvTWqXJzYwxvtLx8u0Zb49guCPFNbJ7McDsaFxLgZvynmbyPIj_YLuYqZkZ-KWrj-QkuyJY_o3XfUQflAxPmCzlbZgHtKaF_4BalAM6hsRqWX4qcSX9eY9V55NVGUmFHEVocV84XqsA_0fSo5tLga0WjebVfJ1ZIHT6qauOpgcH5sTqy7qkDV7tDnWi1E-EQbzOboSElPrZLgV5CnldQg'
-    },
+mnc_ftx_exchange_pro = ccxtpro.ftx(mnc_ftx_params)
+mnc_ftx_exchange = ccxt.ftx(mnc_ftx_params)
+
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+mn_gateio_params = {
+    'apiKey': os.environ.get('mn_gateio_key'),
+    'secret': os.environ.get('mn_gateio_secret'),
     'enableRateLimit': True,
     # 'proxy': 'http://localhost/api/proxy/',
 }
-mngz_ftx_exchange_pro = ccxtpro.ftx(mngz_ftx_params)
-mngz_ftx_exchange = ccxt.ftx(mngz_ftx_params)
+mn_gateio_exchange_pro = ccxtpro.gateio(mn_gateio_params)
+mn_gateio_exchange = ccxt.gateio(mn_gateio_params)
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 mn_kucoin_params = {

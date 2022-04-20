@@ -2483,6 +2483,79 @@ class Exchange(object):
             return None
         return string_number
 
+    def handle_withdraw_tag_and_params(self, tag, params):
+        if isinstance(tag, dict):
+            params = self.extend(tag, params)
+            tag = None
+        if tag is None:
+            tag = self.safe_string(params, 'tag')
+            if tag is not None:
+                params = self.omit(params, 'tag')
+        return [tag, params]
+
+    def get_supported_mapping(self, key, mapping={}):
+        # Takes a key and a dictionary, and returns the dictionary's value for that key
+        # :throws:
+        #      NotSupported if the dictionary does not contain the key
+        if (key in mapping):
+            return mapping[key]
+        else:
+            raise NotSupported(self.id + ' ' + key + ' does not have a value in mapping')
+
+    def fetch_borrow_rate(self, code, params={}):
+        self.load_markets()
+        if not self.has['fetchBorrowRates']:
+            raise NotSupported(self.id + 'fetchBorrowRate() is not supported yet')
+        borrow_rates = self.fetch_borrow_rates(params)
+        rate = self.safe_value(borrow_rates, code)
+        if rate is None:
+            raise ExchangeError(self.id + 'fetchBorrowRate() could not find the borrow rate for currency code ' + code)
+        return rate
+
+    def handle_market_type_and_params(self, method_name, market=None, params={}):
+        default_type = self.safe_string_2(self.options, 'defaultType', 'type', 'spot')
+        method_options = self.safe_value(self.options, method_name)
+        method_type = default_type
+        if method_options is not None:
+            if isinstance(method_options, str):
+                method_type = method_options
+            else:
+                method_type = self.safe_string_2(method_options, 'defaultType', 'type', method_type)
+        market_type = method_type if market is None else market['type']
+        type = self.safe_string_2(params, 'defaultType', 'type', market_type)
+        params = self.omit(params, ['defaultType', 'type'])
+        return [type, params]
+
+    def load_time_difference(self, params={}):
+        server_time = self.fetch_time(params)
+        after = self.milliseconds()
+        self.options['timeDifference'] = after - server_time
+        return self.options['timeDifference']
+
+    def parse_leverage_tiers(self, response, symbols, market_id_key):
+        tiers = {}
+        for item in response:
+            id = self.safe_string(item, market_id_key)
+            market = self.safe_market(id)
+            symbol = market['symbol']
+            symbols_length = 0
+            if (symbols is not None):
+                symbols_length = len(symbols)
+            contract = self.safe_value(market, 'contract', False)
+            if (contract and (symbols_length == 0 or symbol in symbols)):
+                tiers[symbol] = self.parse_market_leverage_tiers(item, market)
+        return tiers
+
+    def fetch_market_leverage_tiers(self, symbol, params={}):
+        if self.has['fetchLeverageTiers']:
+            market = self.market(symbol)
+            if (not market['contract']):
+                raise BadRequest(self.id + ' fetch_leverage_tiers() supports contract markets only')
+            tiers = self.fetch_leverage_tiers([symbol])
+            return self.safe_value(tiers, symbol)
+        else:
+            raise NotSupported(self.id + 'fetch_market_leverage_tiers() is not supported yet')
+
     # TEALSTREET: takes unified order type and translates to API's
     def api_time_in_force(self, unifiedTimeInForce):
         if unifiedTimeInForce:
@@ -2516,3 +2589,21 @@ class Exchange(object):
     def api_order_type(self, unifiedOrderType):
         if unifiedOrderType:
             return self.safe_string(self.orderTypes, unifiedOrderType, self.capitalize(unifiedOrderType))
+
+    def hedge_leverage_to_one_way_leverage(self, buyLeverage, sellLeverage):
+        # prioritize buyLeverage over sellLeverage
+        return buyLeverage or sellLeverage
+
+    def handle_market_type_and_params(self, method_name, market=None, params={}):
+        default_type = self.safe_string_2(self.options, 'defaultType', 'type', 'spot')
+        method_options = self.safe_value(self.options, method_name)
+        method_type = default_type
+        if method_options is not None:
+            if isinstance(method_options, str):
+                method_type = method_options
+            else:
+                method_type = self.safe_string_2(method_options, 'defaultType', 'type', method_type)
+        market_type = method_type if market is None else market['type']
+        type = self.safe_string_2(params, 'defaultType', 'type', market_type)
+        params = self.omit(params, ['defaultType', 'type'])
+        return [type, params]

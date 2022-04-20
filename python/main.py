@@ -104,9 +104,14 @@ def test_binance():
     # exchange = test.mn_binance_usdm_exchange
     exchange = test.mn_binance_coinm_exchange
 
+    # symbol = 'BTC/USDT'
     symbol = 'BTC/USD'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 24, 25))
 
     # exchange.edit_order('37677901237',
     #      'BTC/USD',
@@ -150,7 +155,7 @@ def test_binance():
     #     'basePrice': last
     # })
     # pprint(exchange.fetch_open_orders('BTC/USD'))
-    pprint(exchange.fetch_orders('BTC/USD'))
+    # pprint(exchange.fetch_orders('BTC/USD'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
@@ -166,22 +171,28 @@ def test_bitmex():
     # pprint(exchange.fetch_positions())
     # pprint(exchange.fetch_markets())
 
-    print('sending order')
-    result = exchange.create_order(
-        'BTC/USDT',
-        'market',
-        'buy',
-        10000,
-        None,
-        {
-            'stopPrice': None,
-            'timeInForce': None,
-            'reduceOnly': True,
-            'trigger': None,
-            'closeOnTrigger': False,
-            'basePrice': None
-        })
-    print('got result', result)
+    symbol = 'BTC/USD'
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 40, 40))
+
+    # print('sending order')
+    # result = exchange.create_order(
+    #     'BTC/USDT',
+    #     'market',
+    #     'buy',
+    #     10000,
+    #     None,
+    #     {
+    #         'stopPrice': None,
+    #         'timeInForce': None,
+    #         'reduceOnly': True,
+    #         'trigger': None,
+    #         'closeOnTrigger': False,
+    #         'basePrice': None
+    #     })
+    # print('got result', result)
     # print('sending order 2')
     # result = exchange.create_order(
     #     'BTC/USDT',
@@ -234,20 +245,22 @@ def test_bitmex():
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
-    # exchange = test.mn_bybit_inverse_exchange
+    exchange = test.mn_bybit_inverse_exchange
     # exchange = test.mn_bybit_linear_exchange
     # exchange = test.tn_bybit_inverse_exchange
-    exchange = test.tn_bybit_linear_exchange
+    # exchange = test.tn_bybit_linear_exchange
 
+    # symbol = 'BTC/USD'
     symbol = 'BTC/USDT'
-    # symbol = 'BTC/USDT'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # orders = exchange.fetch_orders(symbol)
-
-    # leverageResponse = exchange.switch_isolated(symbol, False, 10, 20)
-    leverageResponse = exchange.set_leverage(symbol, 12, 12)
+    # orders = exchange.fetch_orders(symbol, limit=100)
+    # trades = exchange.fetch_my_trades(symbol)
+    #
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 25, 25))
 
     # exchange.create_order(symbol,
     #                       'stop',
@@ -276,19 +289,33 @@ def test_bybit():
     #     'basePrice': last
     # })
     # pprint(exchange.fetch_open_orders('BTC/USDT'))
-    pprint(exchange.fetch_open_orders('BTC/USDT'))
+    # pprint(exchange.fetch_open_orders('BTC/USDT'))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 
-# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
-def test_ftx():
-    exchange = test.mn_ftx_exchange
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+def test_gateio():
+    exchange = test.mn_gateio_exchange
 
-    pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
+    symbol = 'BTC/USDT'
+    # symbol = 'BTC/USDT'
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    print(exchange.fetch_orders())
+
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 4, 15))
+
+    # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
     # pprint(exchange.fetch_positions())
     # pprint(exchange.api_referral_success())
-# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
+# GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
+
+
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 def test_kucoin():
@@ -301,9 +328,19 @@ def test_kucoin():
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 def test_phemex():
     # exchange = test.mn_phemex_exchange
-    exchange = test.mn_phemex_exchange
+    exchange = test.tn_phemex_exchange
 
-    pprint(exchange.fetch_balance())
+    symbol = 'LINK/USD'
+    # exchange.load_markets()
+    # symbol = exchange.markets[symbol]['id']
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 4, 15))
+
+    # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
@@ -311,6 +348,17 @@ def test_phemex():
 def test_okex():
     # exchange = test.mn_okex_exchange
     exchange = test.tn_okex_exchange
+
+    symbol = 'BTC-USD-SWAP'
+    # exchange.load_markets()
+    # symbol = exchange.markets[symbol]['id']
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, True, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, True))
+    print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
+
     # result = exchange.create_order(
     #     'BTC-USD-SWAP',
     #     'limit',
@@ -335,6 +383,7 @@ def main():
     # test_bitmex()
     # test_bybit()
     # test_ftx()
+    test_gateio()
     # test_kucoin()
     # test_phemex()
     # test_okex()
