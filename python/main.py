@@ -388,6 +388,7 @@ def main():
     # test_phemex()
     # test_okex()
     # buy_stuff()
+    test_kucoin()
 
 if __name__ == "__main__":
     main()

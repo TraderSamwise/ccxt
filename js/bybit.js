@@ -896,12 +896,12 @@ module.exports = class bybit extends Exchange {
         if (cost === undefined) {
             cost = this.parseNumber (Precise.stringMul (priceString, amountString));
         }
-        let timestamp = this.parse8601 (this.safeString (trade, 'time'));
+        let timestamp = this.parse8601 (this.safeString (trade, 'exec_time'));
         if (timestamp === undefined) {
             timestamp = this.safeInteger (trade, 'trade_time_ms');
         }
         if (timestamp === undefined) {
-            timestamp = this.safeInteger (trade, 'exec_time');
+            timestamp = this.parse8601 (this.safeString (trade, 'time'));
         }
         const side = this.safeStringLower (trade, 'side');
         const lastLiquidityInd = this.safeString (trade, 'last_liquidity_ind');

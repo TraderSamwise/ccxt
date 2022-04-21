@@ -173,3 +173,12 @@ tn_okex_exchange_pro = ccxtpro.okex(tn_okex_params)
 tn_okex_exchange_pro.set_sandbox_mode(True)
 tn_okex_exchange = ccxt.okex(tn_okex_params)
 tn_okex_exchange.set_sandbox_mode(True)
+
+tn_kucoin_params = {
+    'apiKey': os.environ.get('tn_kucoin_key'),
+    'secret': os.environ.get('tn_kucoin_secret'),
+    'enableRateLimit': True,
+}
+
+tn_kucoin_exchange = ccxt.kucoin(tn_kucoin_params)
+tn_kucoin_exchange.set_sandbox_mode(True)
