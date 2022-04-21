@@ -148,7 +148,7 @@ class binanceusdm(binance):
         return self.filter_by_array(result, 'symbol', symbols)
 
     def load_leverage_brackets(self, reload=False, params={}):
-        self.load_markets()
+        # self.load_markets()
         # by default cache the leverage bracket
         # it contains useful stuff like the maintenance margin and initial margin for positions
         if (self.options['leverageBrackets'] is None) or (reload):
@@ -158,14 +158,15 @@ class binanceusdm(binance):
                 entry = response[i]
                 marketId = self.safe_string(entry, 'symbol')
                 symbol = self.safe_symbol(marketId)
-                brackets = self.safe_value(entry, 'brackets')
+                brackets = sorted(self.safe_value(entry, 'brackets'), key=lambda d: self.safe_float(d, 'initialLeverage'), reverse=True)
                 result = []
                 for j in range(0, len(brackets)):
                     bracket = brackets[j]
                     # we use floats here internally on purpose
                     notionalFloor = self.safe_float(bracket, 'notionalFloor')
                     maintenanceMarginPercentage = self.safe_string(bracket, 'maintMarginRatio')
-                    result.append([notionalFloor, maintenanceMarginPercentage])
+                    initialLeverage = self.safe_float(bracket, 'initialLeverage')
+                    result.append([notionalFloor, maintenanceMarginPercentage, initialLeverage])
                 self.options['leverageBrackets'][symbol] = result
         return self.options['leverageBrackets']
 
