@@ -732,6 +732,7 @@ class okex(Exchange, OkexTealstreetMixin):
         fees = self.safe_value_2(self.fees, type, 'trading', {})
         contractSize = self.safe_number(market, 'ctVal', 1) # TEALSTREET
         lotSize = self.safe_number(market, 'lotSz', 1) # TEALSTREET
+        maxLeverage = self.safe_float(market, 'lever')
         return self.extend(fees, {
             'id': id,
             'symbol': symbol,
@@ -762,7 +763,8 @@ class okex(Exchange, OkexTealstreetMixin):
                 },
             },
             'contractSize': contractSize, # TEALSTREET
-            'lotSize': lotSize # TEALSTREET
+            'lotSize': lotSize, # TEALSTREET
+            'maxLeverage': maxLeverage, # TEALSTREET
         })
 
     def fetch_markets_by_type(self, type, params={}):
@@ -1385,6 +1387,8 @@ class okex(Exchange, OkexTealstreetMixin):
         else:
             posSide = 'long'
 
+        marginType = self.safe_string(params, 'marginType', 'cross')
+
         method = 'privatePostTradeOrder'
         if type in ['stop', 'stoplimit']:
             method = 'privatePostTradeOrderAlgo'
@@ -1408,7 +1412,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #     - Cross FUTURES/SWAP/OPTION: cross
             #     - Isolated FUTURES/SWAP/OPTION: isolated
             #
-            'tdMode': 'cross',  # cash, cross, isolated # TODO
+            'tdMode': marginType,  # cash, cross, isolated
             # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
             'clOrdId': self.refCode + self.uuid16(),  # up to 32 characters, must be unique
             # 'tag': tag,  # up to 8 characters
