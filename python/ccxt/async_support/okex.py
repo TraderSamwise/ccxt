@@ -38,24 +38,82 @@ from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
 class OkexTealstreetMixin(object):
-    async def fetch_account_configuration(self: 'okex'):
-        response = await self.privateGetAccountConfig()
-        data = self.safe_value(response, 'data')
-        return data
+    async def fetch_account_configuration(self: 'okex', symbol, params={}):
+        await self.load_markets()
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a marginType ("cross" or "isolated")')
+
+        marginType = self.safe_string(params, 'marginType', 'cross')
+        if marginType is None:
+            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a marginType ("cross" or "isolated")')
+
+        accountResponse = await self.privateGetAccountConfig()
+        data = self.safe_value(accountResponse, 'data')[0]
+        posMode = self.safe_string(data, 'posMode')
+        tradeMode = 'oneway' if posMode == 'net_mode' else 'hedged'
+        acctLv = self.safe_string(data, 'acctLv')
+
+        marginMode = 'simple'
+        if acctLv == '1':
+            marginMode =  'simple'
+        elif acctLv == '2':
+            marginMode = 'single-currency margin'
+        elif acctLv == '3':
+            marginMode = 'multi-currency margin'
+        elif acctLv == '4':
+            marginMode = 'portfolio margin'
+
+        marketConfig = {}
+        if symbol:
+            market = self.market(symbol)
+            request = {
+                'instId': market['id'],
+                'mgnMode': marginType,
+            }
+            leverageInfo = await self.privateGetAccountLeverageInfo(self.extend(request, params))
+            leverageResponses = self.safe_value(leverageInfo, 'data')
+
+            for leverageResponse in leverageResponses:
+                marketId = self.safe_string(data, 'instId')
+                levMarket = self.safe_market(marketId)
+                levSymbol = levMarket['symbol']
+                marketConfig['symbol'] = symbol
+
+                posSide = self.safe_string(leverageResponse, 'posSide')
+                leverage = self.safe_float(leverageResponse, 'lever')
+                marketConfig['marginMode'] = self.safe_string(leverageResponse, 'mgnMode')
+
+                if posSide == 'long':
+                    marketConfig['buyLeverage'] = leverage
+                elif posSide == 'short':
+                    marketConfig['sellLeverage'] = leverage
+                else:
+                    marketConfig['leverage'] = leverage
+
+        unifiedResponse = {
+            'tradeMode': tradeMode,
+            'marginMode': marginMode,
+            'markets': marketConfig,
+        }
+
+        return unifiedResponse
 
     async def fetch_margin_mode(self: 'okex'):
-        accountConfig = await self.fetch_account_configuration()
-        marginMode = self.safe_string(accountConfig[0], 'acctLv')
+        accountResponse = await self.privateGetAccountConfig()
+        data = self.safe_value(accountResponse, 'data')[0]
+        acctLv = self.safe_string(data, 'acctLv')
 
-        if marginMode == '1':
-            return 'simple'
-        elif marginMode == '2':
-            return 'single-currency margin'
-        elif marginMode == '3':
-            return 'multi-currency margin'
-        elif marginMode == '4':
-            return 'portfolio margin'
-        return 'simple'
+        marginMode = 'simple'
+        if acctLv == '1':
+            marginMode =  'simple'
+        elif acctLv == '2':
+            marginMode = 'single-currency margin'
+        elif acctLv == '3':
+            marginMode = 'multi-currency margin'
+        elif acctLv == '4':
+            marginMode = 'portfolio margin'
+
+        return marginMode
 
 class okex(Exchange, OkexTealstreetMixin):
 
@@ -3204,6 +3262,7 @@ class okex(Exchange, OkexTealstreetMixin):
             side = 'long' if contracts > 0 else 'short'
         if side == 'short' and contracts > 0:
             contracts = contracts * -1
+        tradeMode = 'oneway' if side == 'net' else 'hedged'
         id = symbol + ":" + side
         price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
@@ -3253,6 +3312,7 @@ class okex(Exchange, OkexTealstreetMixin):
             'marginType': marginType,
             'percentage': percentage,
             'maxLeverage': maxLeverage,
+            'tradeMode': tradeMode,
         }
 
     async def fetch_ledger(self, code=None, since=None, limit=None, params={}):
