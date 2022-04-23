@@ -1408,7 +1408,7 @@ class okex(Exchange, OkexTealstreetMixin):
             #     - Cross FUTURES/SWAP/OPTION: cross
             #     - Isolated FUTURES/SWAP/OPTION: isolated
             #
-            'tdMode': 'cross',  # cash, cross, isolated
+            'tdMode': 'cross',  # cash, cross, isolated # TODO
             # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
             'clOrdId': self.refCode + self.uuid16(),  # up to 32 characters, must be unique
             # 'tag': tag,  # up to 8 characters
@@ -1507,17 +1507,23 @@ class okex(Exchange, OkexTealstreetMixin):
             request['triggerPx'] = self.price_to_precision(symbol, stopPrice)
             request['orderPx'] =  self.price_to_precision(symbol, price)
 
+        tradeMode = self.safe_string(params, 'tradeMode', 'hedged')
         params = []
+        if tradeMode:
+            params = self.omit(params, ['tradeMode'])
+            if tradeMode == 'oneway':
+                request = self.omit(request, ['posSide'])
 
-        # TODO: send this information from the frontend to prevent a double request
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
-            # order is in net mode, remove the posSide
-            # this is not really efficient, but in theory as efficient as GETting the margin mode and deciding to remove posSide
             if 'posSide' in str(e):
-                nonLongShortRequest = self.omit(request, ['posSide'])
-                response = getattr(self, method)(self.extend(nonLongShortRequest, params))
+                if tradeMode == 'oneway': # try doing the opposite aka sending as hedge mode
+                    request['posSide'] = posSide
+                else: # send as oneway
+                    request = self.omit(request, ['posSide'])
+
+                response = getattr(self, method)(self.extend(request, params))
             else:
                 response = e
         #
