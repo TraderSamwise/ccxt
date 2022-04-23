@@ -530,7 +530,7 @@ class okex(Exchange, OkexTealstreetMixin):
                 },
                 'createMarketBuyOrderRequiresPrice': True,
                 'fetchMarkets': ['spot', 'futures', 'swap', 'option'],  # spot, futures, swap, option
-                'defaultType': 'spot',  # 'funding', 'spot', 'margin', 'futures', 'swap', 'option'
+                'defaultType': 'FUTURES',  # 'funding', 'spot', 'margin', 'futures', 'swap', 'option'
                 'fetchBalance': {
                     'type': 'spot',  # 'funding', 'trading', 'spot'
                 },
@@ -632,6 +632,7 @@ class okex(Exchange, OkexTealstreetMixin):
         fees = self.safe_value_2(self.fees, type, 'trading', {})
         contractSize = self.safe_number(market, 'ctVal', 1) # TEALSTREET
         lotSize = self.safe_number(market, 'lotSz', 1) # TEALSTREET
+        maxLeverage = self.safe_float(market, 'lever')
         return self.extend(fees, {
             'id': id,
             'symbol': symbol,
@@ -662,7 +663,8 @@ class okex(Exchange, OkexTealstreetMixin):
                 },
             },
             'contractSize': contractSize, # TEALSTREET
-            'lotSize': lotSize # TEALSTREET
+            'lotSize': lotSize, # TEALSTREET
+            'maxLeverage': maxLeverage, # TEALSTREET
         })
 
     async def fetch_markets_by_type(self, type, params={}):
@@ -3098,74 +3100,87 @@ class okex(Exchange, OkexTealstreetMixin):
 
         return self.parse_position(position)
 
+    def handle_market_type_and_params(self, methodName, market=None, params={}):
+        instType = self.safe_string(params, 'instType')
+        params = self.omit(params, 'instType')
+        type = self.safe_string(params, 'type')
+        if (type is None) and (instType is not None):
+            params['type'] = instType
+        return super(okex, self).handle_market_type_and_params(methodName, market, params)
+
+    def convert_to_instrument_type(self, type):
+        exchangeTypes = self.safe_value(self.options, 'exchangeType', {})
+        return self.safe_string(exchangeTypes, type, type)
+
     async def fetch_positions(self, symbols=None, params={}):
         await self.load_markets()
-        method = None
-        defaultType = self.safe_string_2(self.options, 'fetchPositions', 'defaultType')
-        type = self.safe_string(params, 'type', defaultType)
-        if (type == 'futures') or (type == 'swap'):
-            method = type + 'GetPosition'
-        elif type == 'option':
-            underlying = self.safe_string(params, 'underlying')
-            if underlying is None:
-                raise ArgumentsRequired(self.id + ' fetchPositions() requires an underlying parameter for ' + type + ' markets')
-            method = type + 'GetUnderlyingPosition'
-        else:
-            raise NotSupported(self.id + ' fetchPositions() does not support ' + type + ' markets, supported market types are futures, swap or option')
-        params = self.omit(params, 'type')
-        response = await getattr(self, method)(params)
-        #
-        # futures
-        #
-        #     ...
-        #
-        #
-        # swap
-        #
-        #     ...
-        #
-        # option
+        # defaultType = self.safe_string_2(self.options, 'fetchPositions', 'defaultType')
+        # type = self.safe_string(params, 'type', defaultType)
+        request = {
+            # instType String No Instrument type, MARGIN, SWAP, FUTURES, OPTION, instId will be checked against instType when both parameters are passed, and the position information of the instId will be returned.
+            # instId String No Instrument ID, e.g. BTC-USD-190927-5000-C
+            # posId String No Single position ID or multiple position IDs(no more than 20) separated with comma
+        }
+        type, query = self.handle_market_type_and_params('fetchPositions', None, params)
+        # if type is not None:
+        #     if (type == 'SWAP') or (type == 'FUTURES'):
+        #         request['instType'] = self.convert_to_instrument_type(type)
+
+        response = awaitself.privateGetAccountPositions(self.extend(request, query))
         #
         #     {
-        #         "holding":[
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
         #             {
-        #                 "instrument_id":"BTC-USD-190927-12500-C",
-        #                 "position":"20",
-        #                 "avg_cost":"3.26",
-        #                 "avail_position":"20",
-        #                 "settlement_price":"0.017",
-        #                 "total_pnl":"50",
-        #                 "pnl_ratio":"0.3",
-        #                 "realized_pnl":"40",
-        #                 "unrealized_pnl":"10",
-        #                 "pos_margin":"100",
-        #                 "option_value":"70",
-        #                 "created_at":"2019-08-30T03:09:20.315Z",
-        #                 "updated_at":"2019-08-30T03:40:18.318Z"
-        #             },
-        #             {
-        #                 "instrument_id":"BTC-USD-190927-12500-P",
-        #                 "position":"20",
-        #                 "avg_cost":"3.26",
-        #                 "avail_position":"20",
-        #                 "settlement_price":"0.019",
-        #                 "total_pnl":"50",
-        #                 "pnl_ratio":"0.3",
-        #                 "realized_pnl":"40",
-        #                 "unrealized_pnl":"10",
-        #                 "pos_margin":"100",
-        #                 "option_value":"70",
-        #                 "created_at":"2019-08-30T03:09:20.315Z",
-        #                 "updated_at":"2019-08-30T03:40:18.318Z"
+        #                 "adl": "1",
+        #                 "availPos": "1",
+        #                 "avgPx": "2566.31",
+        #                 "cTime": "1619507758793",
+        #                 "ccy": "ETH",
+        #                 "deltaBS": "",
+        #                 "deltaPA": "",
+        #                 "gammaBS": "",
+        #                 "gammaPA": "",
+        #                 "imr": "",
+        #                 "instId": "ETH-USD-210430",
+        #                 "instType": "FUTURES",
+        #                 "interest": "0",
+        #                 "last": "2566.22",
+        #                 "lever": "10",
+        #                 "liab": "",
+        #                 "liabCcy": "",
+        #                 "liqPx": "2352.8496681818233",
+        #                 "margin": "0.0003896645377994",
+        #                 "mgnMode": "isolated",
+        #                 "mgnRatio": "11.731726509588816",
+        #                 "mmr": "0.0000311811092368",
+        #                 "optVal": "",
+        #                 "pTime": "1619507761462",
+        #                 "pos": "1",
+        #                 "posCcy": "",
+        #                 "posId": "307173036051017730",
+        #                 "posSide": "long",
+        #                 "thetaBS": "",
+        #                 "thetaPA": "",
+        #                 "tradeId": "109844",
+        #                 "uTime": "1619507761462",
+        #                 "upl": "-0.0000009932766034",
+        #                 "uplRatio": "-0.0025490556801078",
+        #                 "vegaBS": "",
+        #                 "vegaPA": ""
         #             }
         #         ]
         #     }
         #
-        # todo unify parsePosition/parsePositions
         positions = self.safe_value(response, 'data', [])
-        unifiedPositions = self.parse_positions(positions)
-
-        return unifiedPositions
+        result = []
+        for i in range(0, len(positions)):
+            entry = positions[i]
+            instrument = self.safe_string(entry, 'instType')
+            if (instrument == 'FUTURES') or (instrument == 'SWAP'):
+                result.append(self.parse_position(positions[i]))
+        return result
 
     def parse_positions(self, positions):
         result = []
@@ -3208,6 +3223,7 @@ class okex(Exchange, OkexTealstreetMixin):
         marginType = 'isolated' if isolated else 'cross'
         percentage = unrealizedPnl / initialMargin
         collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
+        maxLeverage = market['maxLeverage']
 
         return {
             'info': info,
@@ -3236,6 +3252,7 @@ class okex(Exchange, OkexTealstreetMixin):
             'collateral': collateral,
             'marginType': marginType,
             'percentage': percentage,
+            'maxLeverage': maxLeverage,
         }
 
     async def fetch_ledger(self, code=None, since=None, limit=None, params={}):
