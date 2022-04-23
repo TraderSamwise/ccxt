@@ -3125,8 +3125,8 @@ class okex(Exchange, OkexTealstreetMixin):
         # if type is not None:
         #     if (type == 'SWAP') or (type == 'FUTURES'):
         #         request['instType'] = self.convert_to_instrument_type(type)
-
-        response = awaitself.privateGetAccountPositions(self.extend(request, query))
+        
+        response = await self.privateGetAccountPositions(self.extend(request, query))
         #
         #     {
         #         "code": "0",
