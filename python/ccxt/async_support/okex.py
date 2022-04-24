@@ -77,7 +77,7 @@ class OkexTealstreetMixin(object):
                 marketId = self.safe_string(data, 'instId')
                 levMarket = self.safe_market(marketId)
                 levSymbol = levMarket['symbol']
-                marketConfig['symbol'] = symbol
+                marketConfig['symbol'] = levSymbol
 
                 posSide = self.safe_string(leverageResponse, 'posSide')
                 leverage = self.safe_float(leverageResponse, 'lever')
