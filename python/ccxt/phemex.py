@@ -27,6 +27,57 @@ from ccxt.base.precise import Precise
 # TEALSTREET
 class PhemexTealstreetMixin(object):
     def parse_position(self: 'phemex', position, contract_type, account_balance):
+        # {
+        #     "accountID": 9443740001,
+        #     "assignedPosBalanceEv": 0,
+        #     "avgEntryPriceEp": 0,
+        #     "bankruptCommEv": 0,
+        #     "bankruptPriceEp": 0,
+        #     "buyLeavesQty": 0,
+        #     "buyLeavesValueEv": 0,
+        #     "buyValueToCostEr": 1150750,
+        #     "createdAtNs": 0,
+        #     "crossSharedBalanceEv": 24999950,
+        #     "cumClosedPnlEv": -44,
+        #     "cumFundingFeeEv": 0,
+        #     "cumTransactFeeEv": 6,
+        #     "curTermRealisedPnlEv": -4,
+        #     "currency": "BTC",
+        #     "dataVer": 14,
+        #     "deleveragePercentileEr": 0,
+        #     "displayLeverageEr": 10000000000,
+        #     "estimatedOrdLossEv": 0,
+        #     "execSeq": 12919895541,
+        #     "freeCostEv": 0,
+        #     "freeQty": 0,
+        #     "initMarginReqEr": 1000000,
+        #     "lastFundingTime": 1644796254099491365,
+        #     "lastTermEndTime": 1646936157560487554,
+        #     "leverageEr": 0,
+        #     "liquidationPriceEp": 0,
+        #     "maintMarginReqEr": 500000,
+        #     "makerFeeRateEr": 0,
+        #     "markPriceEp": 390807509,
+        #     "orderCostEv": 0,
+        #     "posCostEv": 0,
+        #     "positionMarginEv": 0,
+        #     "positionStatus": "Normal",
+        #     "riskLimitEv": 10000000000,
+        #     "sellLeavesQty": 0,
+        #     "sellLeavesValueEv": 0,
+        #     "sellValueToCostEr": 1149250,
+        #     "side": "None",
+        #     "size": 0,
+        #     "symbol": "BTCUSD",
+        #     "takerFeeRateEr": 0,
+        #     "term": 4,
+        #     "transactTimeNs": 1646936157560487554,
+        #     "unrealisedPnlEv": 0,
+        #     "updatedAtNs": 0,
+        #     "usedBalanceEv": 0,
+        #     "userID": 944374,
+        #     "valueEv": 0
+        # }
         info = position
         evScale = '1e8' if contract_type == 'inverse' else '1e4'
         marketId = self.safe_string(position, 'symbol')
@@ -34,7 +85,6 @@ class PhemexTealstreetMixin(object):
         symbol = market['symbol']
         datetime = None  # TODO
         timestamp = self.parse8601(datetime)
-        isolated = False  # don't have isolated
         hedged = False  # trading in opposite direction will close the position
         side = 'long' if self.safe_string(position, 'side') == 'Buy' else 'short'
         id = symbol # + ':' + side
@@ -44,7 +94,8 @@ class PhemexTealstreetMixin(object):
         markPrice = float(Precise.string_div(self.safe_string(position, 'markPriceEp'), '1e4'))
         notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
         collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
-        leverage = notional / (collateral or 1)
+        leverage = float(Precise.string_div(self.safe_string(position, 'leverageEr'), '1e8'))
+        isolated = leverage != 0.0
         initialMarginPercentage = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
         maintenanceMarginPercentage = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
         initialMargin = initialMarginPercentage * notional
@@ -56,8 +107,9 @@ class PhemexTealstreetMixin(object):
         status = 'open'
         entryPrice = float(Precise.string_div(self.safe_string(position, 'avgEntryPriceEp'), '1e4'))
         marginRatio = maintenanceMargin / (collateral or 1)  # not sure what this is, followed binance calc
-        marginType = 'cross'  # only cross
+        marginType = 'isolated' if isolated else 'cross'  # only cross
         percentage = unrealizedPnl / 1 if initialMargin == 0 else initialMargin
+        maxLeverage = self.safe_float(market, 'maxLeverage', 1.0)
 
         return {
             'info': info,
@@ -86,6 +138,7 @@ class PhemexTealstreetMixin(object):
             'collateral': collateral,
             'marginType': marginType,
             'percentage': percentage,  # not important
+            'maxLeverage': maxLeverage,
         }
 
 class phemex(Exchange, PhemexTealstreetMixin):
@@ -518,6 +571,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
         active = status == 'Listed'
         lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
         contractSize = self.safe_number_strip_alpha(market, 'contractSize', 1) # TEALSTREET
+        maxLeverage = self.safe_float(market, 'maxLeverage')
+
         return {
             'id': id,
             'symbol': symbol,
@@ -540,7 +595,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'precision': precision,
             'limits': limits,
             'contractSize': contractSize, # TEALSTREET
-            'lotSize': lotSize # TEALSTREET
+            'lotSize': lotSize, # TEALSTREET
+            'maxLeverage': maxLeverage,
         }
 
     def parse_spot_market(self, market):
@@ -626,6 +682,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'valueScale': 8,
             'ratioScale': 8,
             'limits': limits,
+            'maxLeverage': 0,
         }
 
     def fetch_markets(self, params={}):
@@ -2758,7 +2815,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
 
         return unifiedResponse
 
-    def switch_isolated(self: 'bitmex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+    def switch_isolated(self: 'phemex', symbol, isIsolated, buyLeverage, sellLeverage, params={}):
         # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
         # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
         if symbol is None:
