@@ -297,6 +297,7 @@ class BitmexTealstreetMixin(object):
         marginRatio = maintenanceMargin / collateral if collateral else None  # not sure what this is, followed binance calc
         marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
         percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
+        maxLeverage = self.safe_float(market, 'maxLeverage')
 
         return ({
             'info': info,
@@ -325,6 +326,7 @@ class BitmexTealstreetMixin(object):
             'collateral': collateral,
             'marginType': marginType,
             'percentage': percentage, # not important
+            'maxLeverage': maxLeverage, # TEALSTREET
         })
 
     def fetch_positions(self, symbols=None, params={}):
@@ -745,6 +747,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'min': lotSize,
                 'max': self.safe_number(market, 'maxOrderQty'),
             }
+            initMargin = self.safe_float(market, 'initMargin', 1)
+            maxLeverage = 1 / initMargin
             result.append({
                 'id': id,
                 'symbol': symbol,
@@ -770,6 +774,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'orderAmount': contractSize, # TEALSTREET
                 'orderMultiplier': orderMultiplier, # TEALSTREET
                 'contractSize': contractSize, # TEALSTREET
+                'maxLeverage': maxLeverage, # TEALSTREET
             })
         return result
 
