@@ -54,6 +54,19 @@ class FTXTealstreetMixin(object):
             return True
         return False
 
+    async def fetch_account_configuration(self: 'ftx', symbol=None, params={}):
+        response = await self.privateGetAccount()
+        result = self.safe_value(response, 'result')
+        leverage = self.safe_float(result, 'leverage', 1)
+
+        unifiedResponse = {
+            'leverage': leverage,
+            'tradeMode': 'oneway',
+            'marginType': 'cross',
+        }
+
+        return unifiedResponse
+
 class ftx(Exchange, FTXTealstreetMixin):
 
     def describe(self):
