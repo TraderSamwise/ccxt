@@ -456,6 +456,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
         active = status == 'Listed'
         lotSize = self.safe_number(market, 'lotSize', 1) # TEALSTREET
         contractSize = self.safe_number_strip_alpha(market, 'contractSize', 1) # TEALSTREET
+        maxLeverage = self.safe_float(market, 'maxLeverage')
         return {
             'id': id,
             'symbol': symbol,
@@ -478,7 +479,8 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'precision': precision,
             'limits': limits,
             'contractSize': contractSize, # TEALSTREET
-            'lotSize': lotSize # TEALSTREET
+            'lotSize': lotSize, # TEALSTREET
+            'maxLeverage': maxLeverage,
         }
 
     def parse_spot_market(self, market):
@@ -564,6 +566,7 @@ class phemex(Exchange, PhemexTealstreetMixin):
             'valueScale': 8,
             'ratioScale': 8,
             'limits': limits,
+            'maxLeverage': 0,
         }
 
     async def fetch_markets(self, params={}):
