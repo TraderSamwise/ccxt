@@ -54,7 +54,7 @@ class FTXTealstreetMixin(object):
             return True
         return False
 
-class ftx(Exchange, FTXTealstreetMixin):
+class ftx(FTXTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(ftx, self).describe(), {

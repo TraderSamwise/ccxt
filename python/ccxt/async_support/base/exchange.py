@@ -82,7 +82,10 @@ class ExchangeTealstreetMixin(object):
             self.balance['used'] = {}
         self.balance['used'][currency] = balance.get('used')
 
-class Exchange(BaseExchange, ExchangeTealstreetMixin):
+    async def fetch_account_configuration(self, symbol, params = {}):
+        return {}
+
+class Exchange(ExchangeTealstreetMixin, BaseExchange):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:

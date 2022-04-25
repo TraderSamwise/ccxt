@@ -26,7 +26,7 @@ from ccxt.phemex import PhemexTealstreetMixin
 from ccxt.base.precise import Precise
 
 
-class phemex(Exchange, PhemexTealstreetMixin):
+class phemex(PhemexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(phemex, self).describe(), {

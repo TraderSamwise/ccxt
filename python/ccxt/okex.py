@@ -95,7 +95,7 @@ class OkexTealstreetMixin(object):
             return self.batch_cancel_orders(type, symbol, order_ids, results)  # recursively call to cancel more orders, if any
         return results
 
-class okex(Exchange, OkexTealstreetMixin):
+class okex(OkexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(okex, self).describe(), {

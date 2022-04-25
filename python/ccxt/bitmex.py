@@ -477,7 +477,7 @@ class BitmexTealstreetMixin(object):
             unifiedResult.append(self.parse_position(position, balance))
         return unifiedResult
 
-class bitmex(Exchange, BitmexTealstreetMixin):
+class bitmex(BitmexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {

@@ -115,7 +115,7 @@ class OkexTealstreetMixin(object):
 
         return marginMode
 
-class okex(Exchange, OkexTealstreetMixin):
+class okex(OkexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(okex, self).describe(), {

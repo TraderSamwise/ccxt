@@ -67,7 +67,7 @@ class FTXTealstreetMixin(object):
 
         return unifiedResponse
 
-class ftx(Exchange, FTXTealstreetMixin):
+class ftx(FTXTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(ftx, self).describe(), {

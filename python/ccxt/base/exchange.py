@@ -384,6 +384,7 @@ class Exchange(object):
         self.first_orders = True
         self.second_orders = False
         self.first_positions = True
+        self.first_account_config = True
 
         # version = '.'.join(map(str, sys.version_info[:3]))
         # self.userAgent = {

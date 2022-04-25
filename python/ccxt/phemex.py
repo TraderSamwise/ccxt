@@ -141,7 +141,7 @@ class PhemexTealstreetMixin(object):
             'maxLeverage': maxLeverage,
         }
 
-class phemex(Exchange, PhemexTealstreetMixin):
+class phemex(PhemexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(phemex, self).describe(), {

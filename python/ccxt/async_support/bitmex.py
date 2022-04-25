@@ -18,7 +18,7 @@ from ccxt.async_support.base.exchange import Exchange
 from ccxt.bitmex import BitmexTealstreetMixin
 
 
-class bitmex(Exchange, BitmexTealstreetMixin):
+class bitmex(BitmexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {
