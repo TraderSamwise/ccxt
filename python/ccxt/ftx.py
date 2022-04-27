@@ -2040,7 +2040,11 @@ class ftx(FTXTealstreetMixin, Exchange):
         # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
         # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
 
-        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+        rawLeverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+
+        leverageOptions = [1, 2, 3, 5, 10, 20]
+
+        leverage = min(leverageOptions, key=lambda x:abs(x-rawLeverage))
 
         if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20:
             raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
