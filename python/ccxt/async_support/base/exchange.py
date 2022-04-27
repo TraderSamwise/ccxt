@@ -8,6 +8,7 @@ __version__ = '1.50.88'
 
 import asyncio
 import concurrent.futures
+import json
 import socket
 import certifi
 import aiohttp
@@ -21,7 +22,7 @@ from ccxt.async_support.base.throttle import throttle
 
 # -----------------------------------------------------------------------------
 
-from ccxt.base.errors import ExchangeError
+from ccxt.base.errors import ExchangeError, RateLimitExceeded
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import RequestTimeout
 from ccxt.base.errors import NotSupported
@@ -147,6 +148,7 @@ class Exchange(ExchangeTealstreetMixin, BaseExchange):
         except Exception as e:
             if self.is_rate_limit_error(e):
                 self.set_rate_limit_status(True)
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'User or Tealstreet servers appear to be rate limited.'}))
             raise e
 
     async def fetch(self, url, method='GET', headers=None, body=None):
