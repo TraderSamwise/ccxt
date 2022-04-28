@@ -3185,6 +3185,7 @@ class binance(Exchange):
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
+            'isolated': isolated,
             'initialMargin': initialMargin,
             'initialMarginPercentage': self.parse_number(initialMarginPercentageString),
             'maintenanceMargin': maintenanceMargin, # maintenanceMargin, # TEALSTREET
