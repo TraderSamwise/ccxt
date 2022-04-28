@@ -529,6 +529,7 @@ class Exchange(object):
         except Exception as e:
             if self.is_rate_limit_error(e):
                 self.set_rate_limit_status(True)
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'User or Tealstreet servers appear to be rate limited.'}))
             raise e
 
     def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
@@ -564,7 +565,8 @@ class Exchange(object):
         max_rate_limit_checks = self.options.get("max_rate_limit_checks", 2)
         while self.get_is_rate_limited():
             if rate_limit_count >= max_rate_limit_checks:
-                raise RateLimitExceeded(f'Still rate limited after {max_rate_limit_checks} attempts.')
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited after {max_rate_limit_checks} attempts.'}))
+                # raise RateLimitExceeded(f'{self.id} Still rate limited after {max_rate_limit_checks} attempts.')
             rate_limit_count += 1
             time.sleep(rate_limit_timeout)
 
@@ -576,19 +578,27 @@ class Exchange(object):
 
 
     rate_limit_keywords = [
-        "too many requests",
-        "rate limit",
-        "ratelimit",
-        "slow down",
-        "try later"
+        "toomanyrequests",
+        "ratelimited",
+        "ratelimited",
+        "slowdown",
+        "trylater"
     ]
 
     def is_rate_limit_error(self, e):
-        error_str = str(e).lower().replace("_", " ")
-        for k in self.rate_limit_keywords:
-            if k in error_str:
-                return True
-        return False
+        if isinstance(e, DDoSProtection):
+            return True
+        elif isinstance(e, RateLimitExceeded):
+            return True
+        elif isinstance(e, ExchangeNotAvailable):
+            error_str = str(e).lower().replace("_", " ").replace(" ", "")
+            for k in self.rate_limit_keywords:
+                if k in error_str:
+                    return True
+            return False
+        else:
+            return False
+
 
     def throw_exactly_matched_exception(self, exact, string, message):
         if string in exact:
