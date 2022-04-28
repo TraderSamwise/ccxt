@@ -937,7 +937,7 @@ class binance(Exchange):
 
         return unifiedResponse
 
-    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+    def  switch_hedge_mode(self, symbol, isHedgeMode, params={}):
         self.load_markets()
         market = self.market(symbol)
         defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
