@@ -862,7 +862,7 @@ class binance(Exchange):
 
         request = {
             'symbol': market['id'],
-            'timestamp': self.nonce()
+            # 'timestamp': self.nonce()
         }
 
         leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)

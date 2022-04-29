@@ -2824,6 +2824,8 @@ class phemex(PhemexTealstreetMixin, Exchange):
         leverage = 0 # sets to cross
         if isIsolated:
             leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+            if not leverage:
+                leverage = 1
 
         if (leverage < 0) or (leverage > 100):
             raise BadRequest(self.id + ' leverage should be between 0 (cross) and 100')
