@@ -283,7 +283,7 @@ class BitmexTealstreetMixin(object):
         # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
         # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
         notional = self.safe_float(position, 'homeNotional') # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
-        leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
+        leverage = self.safe_float(position, 'leverage') if isolated else 0 # notional / collateral
         initialMarginPercentage = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
         maintenanceMarginPercentage = self.safe_float(position, 'maintMarginReq') # TODO make maintenanceMargin * btcNotional?
         maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), precision))
