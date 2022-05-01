@@ -73,6 +73,8 @@ class OkexTealstreetMixin(object):
             leverageInfo = await self.privateGetAccountLeverageInfo(self.extend(request, params))
             leverageResponses = self.safe_value(leverageInfo, 'data')
 
+            markets = dict()
+
             for leverageResponse in leverageResponses:
                 marketId = self.safe_string(data, 'instId')
                 levMarket = self.safe_market(marketId)
@@ -81,7 +83,7 @@ class OkexTealstreetMixin(object):
 
                 posSide = self.safe_string(leverageResponse, 'posSide')
                 leverage = self.safe_float(leverageResponse, 'lever')
-                marketConfig['marginMode'] = self.safe_string(leverageResponse, 'mgnMode')
+                marketConfig['marginType'] = self.safe_string(leverageResponse, 'mgnMode')
 
                 if posSide == 'long':
                     marketConfig['buyLeverage'] = leverage
@@ -90,10 +92,12 @@ class OkexTealstreetMixin(object):
                 else:
                     marketConfig['leverage'] = leverage
 
+                markets[symbol] = marketConfig
+
         unifiedResponse = {
             'tradeMode': tradeMode,
             'marginMode': marginMode,
-            'markets': marketConfig,
+            'markets': markets,
         }
 
         return unifiedResponse
