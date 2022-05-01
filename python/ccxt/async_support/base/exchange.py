@@ -42,32 +42,32 @@ __all__ = [
 class ExchangeTealstreetMixin(object):
     def get_new_position_dict(self):
         return {
-                'id': None,
-                'symbol': None,
-                'timestamp': None,
-                'datetime': None,
-                'isolated': False,
-                'hedged': False,
-                'side': None,
-                'contracts': 0,
-                'price': 0,
-                'markPrice': 0,
-                'notional': 0.0,
-                'leverage': 0.0,
-                'initialMargin': 0.0,
-                'maintenanceMargin': 0.0,
-                'initialMarginPercentage': 0.0,
-                'maintenanceMarginPercentage': 0.0,
-                'unrealizedPnl': 0.0,
-                'pnl': 0.0,
-                'liquidationPrice': None,
-                'status': 'open',
-                'entryPrice': 0,
-                'marginRatio':0,
-                'collateral':0,
-                'marginType':'cross',
-                'percentage':0.0
-            }
+            'id': None,
+            'symbol': None,
+            'timestamp': None,
+            'datetime': None,
+            'isolated': False,
+            'hedged': False,
+            'side': None,
+            'contracts': 0,
+            'price': 0,
+            'markPrice': 0,
+            'notional': 0.0,
+            'leverage': 0.0,
+            'initialMargin': 0.0,
+            'maintenanceMargin': 0.0,
+            'initialMarginPercentage': 0.0,
+            'maintenanceMarginPercentage': 0.0,
+            'unrealizedPnl': 0.0,
+            'pnl': 0.0,
+            'liquidationPrice': None,
+            'status': 'open',
+            'entryPrice': 0,
+            'marginRatio':0,
+            'collateral':0,
+            'marginType':'cross',
+            'percentage':0.0
+        }
 
     def update_balance_free_used_total_from_currency_balance(self, currency, balance):
         if 'free' not in self.balance:
@@ -130,11 +130,21 @@ class Exchange(BaseExchange, ExchangeTealstreetMixin):
 
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None):
         """A better wrapper over request for deferred signing"""
+        # TEALSTREET
+        self.check_rate_limits()
+
         if self.enableRateLimit:
             await self.throttle(self.rateLimit)
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
-        return await self.fetch(request['url'], request['method'], request['headers'], request['body'])
+        try:
+            res = await self.fetch(request['url'], request['method'], request['headers'], request['body'])
+            self.set_rate_limit_status(False)
+            return res
+        except Exception as e:
+            if self.is_rate_limit_error(e):
+                self.set_rate_limit_status(True)
+            raise e
 
     async def fetch(self, url, method='GET', headers=None, body=None):
         """Perform a HTTP request and return decoded JSON data"""
