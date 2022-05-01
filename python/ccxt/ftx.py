@@ -2042,12 +2042,12 @@ class ftx(FTXTealstreetMixin, Exchange):
 
         rawLeverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
-        leverageOptions = [1, 2, 3, 5, 10, 20]
+        leverageOptions = [1, 2, 3, 5, 10, 20, 50, 100, 101]
 
         leverage = min(leverageOptions, key=lambda x:abs(x-rawLeverage))
 
-        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20:
-            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
+        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20 and leverage != 50 and leverage != 100 and leverage != 101:
+            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, 20, 50, 100,  or 101')
         request = {
             'leverage': leverage,
         }
