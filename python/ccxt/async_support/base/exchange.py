@@ -82,6 +82,9 @@ class ExchangeTealstreetMixin(object):
             self.balance['used'] = {}
         self.balance['used'][currency] = balance.get('used')
 
+    async def fetch_account_configuration(self, symbol=None, params={}):
+        return {}
+
 class Exchange(BaseExchange, ExchangeTealstreetMixin):
 
     def __init__(self, config={}):
