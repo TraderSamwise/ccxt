@@ -2929,99 +2929,18 @@ class okex(OkexTealstreetMixin, Exchange):
         self.load_markets()
         market = self.market(symbol)
         marginType = self.safe_string_lower(params, 'marginType')
+        tradeMode = self.safe_string_lower(params, 'tradeMode')
         params = self.omit(params, ['mgnMode'])
         if (marginType != 'cross') and (marginType != 'isolated'):
             raise BadRequest(self.id + ' setLeverage params["marginMode"] must be either cross or isolated')
-        request = {
-            'lever': leverage,
-            'mgnMode': marginType,
-            'instId': market['id'],
-        }
-        response = self.privatePostAccountSetLeverage(self.extend(request, params))
-        #
-        #     {
-        #       "code": "0",
-        #       "data": [
-        #         {
-        #           "instId": "BTC-USDT-SWAP",
-        #           "lever": "5",
-        #           "mgnMode": "isolated",
-        #           "posSide": "long"
-        #         }
-        #       ],
-        #       "msg": ""
-        #     }
-        #
-        data = self.safe_value(response, 'data')
-        if data:
-            data = data[0]
-        marketId = self.safe_string(data, 'instId')
-        market = self.safe_market(marketId)
-        unifiedResponse = {
-            'symbol': market['symbol'],
-            'leverage': self.safe_number(data, 'lever')
-        }
-        return unifiedResponse
 
-    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
-        hedgeMode = None
-        if isHedgeMode:
-            hedgeMode = 'long_short_mode'
-        else:
-            hedgeMode = 'net_mode'
-        request = {
-            'posMode': hedgeMode,
-        }
-        response = self.privatePostAccountSetPositionMode(self.extend(request, params))
-        #
-        #     {
-        #       "code": "0",
-        #       "data": [
-        #         {
-        #           "posMode": "net_mode"
-        #         }
-        #       ],
-        #       "msg": ""
-        #     }
-        #
-        data = self.safe_value(response, 'data')
-        if data:
-            data = data[0]
-        posMode = self.safe_string(data, 'posMode')
-        tradeMode = 'oneway' if posMode == 'net_mode' else 'hedged'
-
-        unifiedResponse = {
-            'symbol': None,
-            'tradeMode': tradeMode
-        }
-
-        return unifiedResponse
-
-    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
-        if symbol is None:
-            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
-        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
-        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
-        marginType = None
-        if isIsolated:
-            marginType = 'isolated'
-        else:
-            marginType = 'cross'
-        marginType = marginType.lower()
-        if (marginType != 'cross') and (marginType != 'isolated'):
-            raise BadRequest(self.id + ' setMarginMode marginType must be either cross or isolated')
-        self.load_markets()
-        market = self.market(symbol)
-        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
-        if (leverage is None) or (leverage < 1) or (leverage > 125):
-            raise BadRequest(self.id + ' leverage should be between 1 and 125')
-        request = {
-            'lever': leverage,
-            'mgnMode': marginType,
-            'instId': market['id'],
-        }
         responses = []
-        if marginType == 'cross':
+        if marginType == 'cross' or tradeMode == 'oneway':
+            request = {
+                'lever': leverage,
+                'mgnMode': marginType,
+                'instId': market['id'],
+            }
             responses.append(self.privatePostAccountSetLeverage(self.extend(request, params)))
         else:
             responses = []
@@ -3072,12 +2991,177 @@ class okex(OkexTealstreetMixin, Exchange):
                     unifiedResponse['buyLeverage'] = leverage
                 elif posSide == 'short':
                     unifiedResponse['sellLeverage'] = leverage
-            else:
-                unifiedResponse['leverage'] = leverage
+            unifiedResponse['leverage'] = leverage
+
+        #
+        #     {
+        #       "code": "0",
+        #       "data": [
+        #         {
+        #           "instId": "BTC-USDT-SWAP",
+        #           "lever": "5",
+        #           "mgnMode": "isolated",
+        #           "posSide": "long"
+        #         }
+        #       ],
+        #       "msg": ""
+        #     }
+        #
+        # data = self.safe_value(response, 'data')
+        # if data:
+        #     data = data[0]
+        # marketId = self.safe_string(data, 'instId')
+        # market = self.safe_market(marketId)
+        # unifiedResponse = {
+        #     'symbol': market['symbol'],
+        #     'leverage': self.safe_number(data, 'lever')
+        # }
+        return unifiedResponse
+
+    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+        hedgeMode = None
+        if isHedgeMode:
+            hedgeMode = 'long_short_mode'
+        else:
+            hedgeMode = 'net_mode'
+        request = {
+            'posMode': hedgeMode,
+        }
+        response = self.privatePostAccountSetPositionMode(self.extend(request, params))
+        #
+        #     {
+        #       "code": "0",
+        #       "data": [
+        #         {
+        #           "posMode": "net_mode"
+        #         }
+        #       ],
+        #       "msg": ""
+        #     }
+        #
+        data = self.safe_value(response, 'data')
+        if data:
+            data = data[0]
+        posMode = self.safe_string(data, 'posMode')
+        tradeMode = 'oneway' if posMode == 'net_mode' else 'hedged'
+
+        unifiedResponse = {
+            'symbol': None,
+            'tradeMode': tradeMode
+        }
+
+        return unifiedResponse
+
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' setLeverage() requires a symbol argument')
+        # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
+        # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
+        marginType = None
+        if isIsolated:
+            marginType = 'isolated'
+        else:
+            marginType = 'cross'
+
+        marketConfig = {}
+        if symbol:
+            market = self.market(symbol)
+            request = {
+                'instId': market['id'],
+                'mgnMode': marginType,
+            }
+            leverageInfo = self.privateGetAccountLeverageInfo(self.extend(request, params))
+            leverageResponses = self.safe_value(leverageInfo, 'data')
+
+            marketConfig = {}
+            for leverageResponse in leverageResponses:
+                marketId = self.safe_string(leverageResponse, 'instId')
+                levMarket = self.safe_market(marketId)
+                levSymbol = levMarket['symbol'] or symbol
+                marketConfig['symbol'] = levSymbol
+
+                posSide = self.safe_string(leverageResponse, 'posSide')
+                leverage = self.safe_float(leverageResponse, 'lever')
+                marketConfig['marginType'] = self.safe_string(leverageResponse, 'mgnMode')
+
+                if posSide == 'long':
+                    marketConfig['buyLeverage'] = leverage
+                elif posSide == 'short':
+                    marketConfig['sellLeverage'] = leverage
+                marketConfig['leverage'] = leverage
+
+        return marketConfig
+
+        # marginType = marginType.lower()
+        # if (marginType != 'cross') and (marginType != 'isolated'):
+        #     raise BadRequest(self.id + ' setMarginMode marginType must be either cross or isolated')
+        # self.load_markets()
+        # market = self.market(symbol)
+        # leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+        # if (leverage is None) or (leverage < 1) or (leverage > 125):
+        #     raise BadRequest(self.id + ' leverage should be between 1 and 125')
+        # request = {
+        #     'lever': leverage,
+        #     'mgnMode': marginType,
+        #     'instId': market['id'],
+        # }
+        # responses = []
+        # if marginType == 'cross':
+        #     responses.append(self.privatePostAccountSetLeverage(self.extend(request, params)))
+        # else:
+        #     responses = []
+        #     longRequest = {
+        #         'lever': buyLeverage or sellLeverage,
+        #         'mgnMode': marginType,
+        #         'instId': market['id'],
+        #         'posSide': 'long',
+        #     }
+        #     shortRequest = {
+        #         'lever': sellLeverage or buyLeverage,
+        #         'mgnMode': marginType,
+        #         'instId': market['id'],
+        #         'posSide': 'short',
+        #     }
+        #     responses.append(self.privatePostAccountSetLeverage(self.extend(longRequest, params)))
+        #     responses.append(self.privatePostAccountSetLeverage(self.extend(shortRequest, params)))
+        #
+        # #
+        # #     {
+        # #       "code": "0",
+        # #       "data": [
+        # #         {
+        # #           "instId": "BTC-USDT-SWAP",
+        # #           "lever": "5",
+        # #           "mgnMode": "isolated",
+        # #           "posSide": "long"
+        # #         }
+        # #       ],
+        # #       "msg": ""
+        # #     }
+        # #
+        # unifiedResponse = {}
+        # for response in responses:
+        #     data = self.safe_value(response, 'data')[0]
+        #     marketId = self.safe_string(data, 'instId')
+        #     market = self.safe_market(marketId)
+        #     marginType = self.safe_string(data, 'mgnMode')
+        #
+        #     unifiedResponse['symbol'] = market['symbol']
+        #     unifiedResponse['marginType'] = marginType
+        #
+        #     leverage = self.safe_number(data, 'lever')
+        #     posSide = self.safe_string(data, 'posSide')
+        #
+        #     if posSide:
+        #         if posSide == 'long':
+        #             unifiedResponse['buyLeverage'] = leverage
+        #         elif posSide == 'short':
+        #             unifiedResponse['sellLeverage'] = leverage
+        #     unifiedResponse['leverage'] = leverage
 
         # unifiedResponse = {
         #     'symbol': symbol,
         #     'marginType': marginType
         # }
 
-        return unifiedResponse
+        # return unifiedResponse

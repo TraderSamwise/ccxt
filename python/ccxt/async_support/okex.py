@@ -76,7 +76,7 @@ class OkexTealstreetMixin(object):
             markets = dict()
 
             for leverageResponse in leverageResponses:
-                marketId = self.safe_string(data, 'instId')
+                marketId = self.safe_string(leverageResponse, 'instId')
                 levMarket = self.safe_market(marketId)
                 levSymbol = levMarket['symbol'] or symbol
                 marketConfig['symbol'] = levSymbol
@@ -89,8 +89,7 @@ class OkexTealstreetMixin(object):
                     marketConfig['buyLeverage'] = leverage
                 elif posSide == 'short':
                     marketConfig['sellLeverage'] = leverage
-                else:
-                    marketConfig['leverage'] = leverage
+                marketConfig['leverage'] = leverage
 
                 markets[symbol] = marketConfig
 
