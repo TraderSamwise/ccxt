@@ -479,6 +479,8 @@ class bybit(Exchange):
             request['buy_leverage'] = buyLeverage
             request['sell_leverage'] = sellLeverage
 
+        params = self.omit(params, ['marginType', 'tradeMode'])
+
         response = getattr(self, method)(self.extend(request, params))
         # inverse
         # {
