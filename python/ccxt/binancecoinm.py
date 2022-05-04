@@ -149,14 +149,15 @@ class binancecoinm(binance):
                 entry = response[i]
                 marketId = self.safe_string(entry, 'symbol')
                 symbol = self.safe_symbol(marketId)
-                brackets = self.safe_value(entry, 'brackets')
+                brackets = sorted(self.safe_value(entry, 'brackets'), key=lambda d: self.safe_float(d, 'initialLeverage'), reverse=True)
                 result = []
                 for j in range(0, len(brackets)):
                     bracket = brackets[j]
                     # we use floats here internally on purpose
                     qtyFloor = self.safe_float(bracket, 'qtyFloor')
                     maintenanceMarginPercentage = self.safe_string(bracket, 'maintMarginRatio')
-                    result.append([qtyFloor, maintenanceMarginPercentage])
+                    initialLeverage = self.safe_float(bracket, 'initialLeverage')
+                    result.append([qtyFloor, maintenanceMarginPercentage, initialLeverage])
                 self.options['leverageBrackets'][symbol] = result
         return self.options['leverageBrackets']
 

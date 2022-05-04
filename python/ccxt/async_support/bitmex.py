@@ -18,7 +18,7 @@ from ccxt.async_support.base.exchange import Exchange
 from ccxt.bitmex import BitmexTealstreetMixin
 
 
-class bitmex(Exchange, BitmexTealstreetMixin):
+class bitmex(BitmexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {
@@ -220,6 +220,66 @@ class bitmex(Exchange, BitmexTealstreetMixin):
             }
         })
 
+    async def fetch_account_configuration(self: 'okex', symbol, params={}):
+        await self.load_markets()
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a marginType ("cross" or "isolated")')
+
+        marginType = self.safe_string(params, 'marginType', 'cross')
+        if marginType is None:
+            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a marginType ("cross" or "isolated")')
+
+        accountResponse = await self.privateGetAccountConfig()
+        data = self.safe_value(accountResponse, 'data')[0]
+        posMode = self.safe_string(data, 'posMode')
+        tradeMode = 'oneway' if posMode == 'net_mode' else 'hedged'
+        acctLv = self.safe_string(data, 'acctLv')
+
+        marginMode = 'simple'
+        if acctLv == '1':
+            marginMode =  'simple'
+        elif acctLv == '2':
+            marginMode = 'single-currency margin'
+        elif acctLv == '3':
+            marginMode = 'multi-currency margin'
+        elif acctLv == '4':
+            marginMode = 'portfolio margin'
+
+        marketConfig = {}
+        if symbol:
+            market = self.market(symbol)
+            request = {
+                'instId': market['id'],
+                'mgnMode': marginType,
+            }
+            leverageInfo = await self.privateGetAccountLeverageInfo(self.extend(request, params))
+            leverageResponses = self.safe_value(leverageInfo, 'data')
+
+            for leverageResponse in leverageResponses:
+                marketId = self.safe_string(data, 'instId')
+                levMarket = self.safe_market(marketId)
+                levSymbol = levMarket['symbol']
+                marketConfig['symbol'] = levSymbol
+
+                posSide = self.safe_string(leverageResponse, 'posSide')
+                leverage = self.safe_float(leverageResponse, 'lever')
+                marketConfig['marginMode'] = self.safe_string(leverageResponse, 'mgnMode')
+
+                if posSide == 'long':
+                    marketConfig['buyLeverage'] = leverage
+                elif posSide == 'short':
+                    marketConfig['sellLeverage'] = leverage
+                else:
+                    marketConfig['leverage'] = leverage
+
+        unifiedResponse = {
+            'tradeMode': tradeMode,
+            'marginMode': marginMode,
+            'markets': marketConfig,
+        }
+
+        return unifiedResponse
+
     async def fetch_markets(self, params={}):
         response = await self.publicGetInstrumentActiveAndIndices(params)
         result = []
@@ -288,6 +348,9 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'min': lotSize,
                 'max': self.safe_number(market, 'maxOrderQty'),
             }
+            initMargin = self.safe_float(market, 'initMargin', 1)
+            maxLeverage = 1 / initMargin
+
             result.append({
                 'id': id,
                 'symbol': symbol,
@@ -313,6 +376,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'orderAmount': contractSize, # TEALSTREET
                 'orderMultiplier': orderMultiplier, # TEALSTREET
                 'contractSize': contractSize, # TEALSTREET
+                'maxLeverage': maxLeverage, # TEALSTREET
             })
         return result
 

@@ -283,7 +283,7 @@ class BitmexTealstreetMixin(object):
         # homeNotional = self.safe_float(position, 'homeNotional') # of position in units of underlying
         # foreignNotional = self.safe_float(position, 'foreignNotional') # value of positions in units of quote currency
         notional = self.safe_float(position, 'homeNotional') # float(Precise.string_div(self.safe_string(position, 'homeNotional'), '1e8'))
-        leverage = self.safe_float(position, 'leverage') # notional / collateral  # need to convert home or foreign notional to xbt and divide by collateral
+        leverage = self.safe_float(position, 'leverage') if isolated else 0 # notional / collateral
         initialMarginPercentage = self.safe_float(position, 'initMarginReq') # self.safe_float(position, 'initMargin')
         maintenanceMarginPercentage = self.safe_float(position, 'maintMarginReq') # TODO make maintenanceMargin * btcNotional?
         maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), precision))
@@ -297,6 +297,7 @@ class BitmexTealstreetMixin(object):
         marginRatio = maintenanceMargin / collateral if collateral else None  # not sure what this is, followed binance calc
         marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
         percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
+        maxLeverage = self.safe_float(market, 'maxLeverage')
 
         return ({
             'info': info,
@@ -325,6 +326,7 @@ class BitmexTealstreetMixin(object):
             'collateral': collateral,
             'marginType': marginType,
             'percentage': percentage, # not important
+            'maxLeverage': maxLeverage, # TEALSTREET
         })
 
     def fetch_positions(self, symbols=None, params={}):
@@ -475,7 +477,7 @@ class BitmexTealstreetMixin(object):
             unifiedResult.append(self.parse_position(position, balance))
         return unifiedResult
 
-class bitmex(Exchange, BitmexTealstreetMixin):
+class bitmex(BitmexTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(bitmex, self).describe(), {
@@ -745,6 +747,8 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'min': lotSize,
                 'max': self.safe_number(market, 'maxOrderQty'),
             }
+            initMargin = self.safe_float(market, 'initMargin', 1)
+            maxLeverage = 1 / initMargin
             result.append({
                 'id': id,
                 'symbol': symbol,
@@ -770,6 +774,7 @@ class bitmex(Exchange, BitmexTealstreetMixin):
                 'orderAmount': contractSize, # TEALSTREET
                 'orderMultiplier': orderMultiplier, # TEALSTREET
                 'contractSize': contractSize, # TEALSTREET
+                'maxLeverage': maxLeverage, # TEALSTREET
             })
         return result
 

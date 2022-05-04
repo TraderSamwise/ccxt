@@ -862,7 +862,7 @@ class binance(Exchange):
 
         request = {
             'symbol': market['id'],
-            'timestamp': self.nonce()
+            # 'timestamp': self.nonce()
         }
 
         leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
@@ -937,7 +937,7 @@ class binance(Exchange):
 
         return unifiedResponse
 
-    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+    def  switch_hedge_mode(self, symbol, isHedgeMode, params={}):
         self.load_markets()
         market = self.market(symbol)
         defaultType = self.safe_string_2(self.options, 'fetchOrder', 'defaultType', 'spot')
@@ -3508,7 +3508,7 @@ class binance(Exchange):
         }
 
     def load_leverage_brackets(self, reload=False, params={}):
-        self.load_markets()
+        # self.load_markets()
         # by default cache the leverage bracket
         # it contains useful stuff like the maintenance margin and initial margin for positions
         if (self.options['leverageBrackets'] is None) or (reload):
@@ -3526,14 +3526,15 @@ class binance(Exchange):
                 entry = response[i]
                 marketId = self.safe_string(entry, 'symbol')
                 symbol = self.safe_symbol(marketId)
-                brackets = self.safe_value(entry, 'brackets')
+                brackets = sorted(self.safe_value(entry, 'brackets'), key=lambda d: self.safe_float(d, 'initialLeverage'), reverse=True)
                 result = []
                 for j in range(0, len(brackets)):
                     bracket = brackets[j]
                     # we use floats here internally on purpose
                     floorValue = self.safe_float_2(bracket, 'notionalFloor', 'qtyFloor')
                     maintenanceMarginPercentage = self.safe_string(bracket, 'maintMarginRatio')
-                    result.append([floorValue, maintenanceMarginPercentage])
+                    initialLeverage = self.safe_float(bracket, 'initialLeverage')
+                    result.append([floorValue, maintenanceMarginPercentage, initialLeverage])
                 self.options['leverageBrackets'][symbol] = result
         return self.options['leverageBrackets']
 

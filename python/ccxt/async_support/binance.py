@@ -1827,7 +1827,7 @@ class binance(Exchange):
         #       "executedQty": "0.00050000",
         #       "cummulativeQuoteQty": "29.47081500",
         #       "status": "FILLED",
-        #       "timeInForce": "GTC",
+        #       "timeInForce": "GTC
         #       "type": "MARKET",
         #       "side": "BUY",
         #       "fills": [
@@ -3106,6 +3106,9 @@ class binance(Exchange):
         contractsStringAbs = Precise.string_abs(contractsString)
         contracts = self.parse_number(contractsString)
         leverageBracket = self.options['leverageBrackets'][symbol]
+        maxLeverage = 10
+        if leverageBracket:
+            maxLeverage = leverageBracket[0][2]
         maintenanceMarginPercentageString = None
         for i in range(0, len(leverageBracket)):
             bracket = leverageBracket[i]
@@ -3182,6 +3185,7 @@ class binance(Exchange):
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
+            'isolated': isolated,
             'initialMargin': initialMargin,
             'initialMarginPercentage': self.parse_number(initialMarginPercentageString),
             'maintenanceMargin': maintenanceMargin, # maintenanceMargin, # TEALSTREET
@@ -3199,7 +3203,8 @@ class binance(Exchange):
             'marginType': marginType,
             'side': side,
             'percentage': percentage,
-            'tradeMode': tradeMode
+            'tradeMode': tradeMode,
+            'maxLeverage': maxLeverage,
         }
 
     def parse_position_risk(self, position, market=None):
@@ -3336,14 +3341,15 @@ class binance(Exchange):
                 entry = response[i]
                 marketId = self.safe_string(entry, 'symbol')
                 symbol = self.safe_symbol(marketId)
-                brackets = self.safe_value(entry, 'brackets')
+                brackets = sorted(self.safe_value(entry, 'brackets'), key=lambda d: self.safe_float(d, 'initialLeverage'), reverse=True)
                 result = []
                 for j in range(0, len(brackets)):
                     bracket = brackets[j]
                     # we use floats here internally on purpose
                     floorValue = self.safe_float_2(bracket, 'notionalFloor', 'qtyFloor')
                     maintenanceMarginPercentage = self.safe_string(bracket, 'maintMarginRatio')
-                    result.append([floorValue, maintenanceMarginPercentage])
+                    initialLeverage = self.safe_float(bracket, 'initialLeverage')
+                    result.append([floorValue, maintenanceMarginPercentage, initialLeverage])
                 self.options['leverageBrackets'][symbol] = result
         return self.options['leverageBrackets']
 

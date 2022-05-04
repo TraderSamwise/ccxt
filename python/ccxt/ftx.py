@@ -54,7 +54,7 @@ class FTXTealstreetMixin(object):
             return True
         return False
 
-class ftx(Exchange, FTXTealstreetMixin):
+class ftx(FTXTealstreetMixin, Exchange):
 
     def describe(self):
         return self.deep_extend(super(ftx, self).describe(), {
@@ -2040,10 +2040,14 @@ class ftx(Exchange, FTXTealstreetMixin):
         # WARNING: THIS WILL INCREASE LIQUIDATION PRICE FOR OPEN ISOLATED LONG POSITIONS
         # AND DECREASE LIQUIDATION PRICE FOR OPEN ISOLATED SHORT POSITIONS
 
-        leverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
+        rawLeverage = self.hedge_leverage_to_one_way_leverage(buyLeverage, sellLeverage)
 
-        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20:
-            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, or 20')
+        leverageOptions = [1, 2, 3, 5, 10, 20, 50, 100, 101]
+
+        leverage = min(leverageOptions, key=lambda x:abs(x-rawLeverage))
+
+        if leverage != 1 and leverage != 2 and leverage != 3 and leverage != 5 and leverage != 10 and leverage != 20 and leverage != 50 and leverage != 100 and leverage != 101:
+            raise BadRequest(self.id + ' leverage should be 1, 2, 3, 5, 10, 20, 50, 100,  or 101')
         request = {
             'leverage': leverage,
         }
