@@ -1512,11 +1512,15 @@ class okex(OkexTealstreetMixin, Exchange):
             request['orderPx'] =  self.price_to_precision(symbol, price)
 
         tradeMode = self.safe_string(params, 'tradeMode', 'hedged')
+        marginType   = self.safe_string(params, 'marginType', 'cross')
         params = []
         if tradeMode:
             params = self.omit(params, ['tradeMode'])
             if tradeMode == 'oneway':
                 request = self.omit(request, ['posSide'])
+        if marginType:
+            params = self.omit(params, ['marginType'])
+            request['tdMode'] = marginType
 
         try:
             response = getattr(self, method)(self.extend(request, params))
