@@ -2171,6 +2171,7 @@ class okex(OkexTealstreetMixin, Exchange):
             clientOrderId = None  # fix empty clientOrderId string
         reduce = self.safe_boolean(order, 'reduceOnly')
         close = self.safe_boolean(order, 'closeOnTrigger')
+        marginType = self.safe_string(order, 'tdMode')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -2195,6 +2196,7 @@ class okex(OkexTealstreetMixin, Exchange):
             'trades': None,
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
+            'marginType': marginType, # TEALSTREET
         })
 
     async def fetch_order(self, id, symbol=None, params={}):
@@ -3266,7 +3268,8 @@ class okex(OkexTealstreetMixin, Exchange):
         if side == 'short' and contracts > 0:
             contracts = contracts * -1
         tradeMode = 'oneway' if side == 'net' else 'hedged'
-        id = symbol + ":" + side
+        marginType = 'isolated' if isolated else 'cross'
+        id = symbol + ":" + side + ':' + marginType
         price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?
         markPrice = self.safe_float(position, 'last')
         notional = self.safe_float(position, 'notionalUsd')
@@ -3282,7 +3285,6 @@ class okex(OkexTealstreetMixin, Exchange):
         status = 'open' # TODO: can this be anything else?
         entryPrice = 0 # TODO
         marginRatio = self.safe_float(position, 'mgnRatio')
-        marginType = 'isolated' if isolated else 'cross'
         percentage = unrealizedPnl / initialMargin
         collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
         maxLeverage = market['maxLeverage']
