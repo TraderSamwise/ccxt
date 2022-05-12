@@ -191,6 +191,24 @@ module.exports = class Exchange {
                 'price': { 'min': undefined, 'max': undefined },
                 'cost': { 'min': undefined, 'max': undefined },
             },
+            'timeframeMap': {
+                '1m': 60,
+                '3m': 3 * 60,
+                '5m': 5 * 60,
+                '15m': 15 * 60,
+                '30m': 30 * 60,
+                '1h': 60 * 60,
+                '2h': 2 * 60 * 60,
+                '4h': 4 * 60 * 60,
+                '6h': 6 * 60 * 60,
+                '12h': 12 * 60 * 60,
+                '1d': 24 * 60 * 60,
+                '1w': 7 * 24 * 60 * 60,
+                '1M': 30 * 24 * 60 * 60,
+                '3M': 3 * 30 * 24 * 60 * 60,
+                '6M': 6 * 30 * 24 * 60 * 60,
+                '1y': 365 * 24 * 60 * 60,
+            },
         } // return
     } // describe ()
 

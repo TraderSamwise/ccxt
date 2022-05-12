@@ -47,12 +47,6 @@ module.exports = class bitmex extends Exchange {
                 '1h': '1h',
                 '1d': '1d',
             },
-            'timeframeMap': {
-                '1m': '60',
-                '5m': '300',
-                '1h': '3600',
-                '1d': '86400',
-            },
             'urls': {
                 'test': {
                     'public': 'https://testnet.bitmex.com',
@@ -222,11 +216,11 @@ module.exports = class bitmex extends Exchange {
                 'amount': undefined,
                 'price': undefined,
             };
-            const tickSize = this.safeNumber(market, 'tickSize');
-            const rawUnderlyingToPositionMultiplier = this.safeNumber(market, 'underlyingToPositionMultiplier');
-            const orderMultiplier = rawUnderlyingToPositionMultiplier || 1 // TEALSTREET
+            const tickSize = this.safeNumber (market, 'tickSize');
+            const rawUnderlyingToPositionMultiplier = this.safeNumber (market, 'underlyingToPositionMultiplier');
+            const orderMultiplier = rawUnderlyingToPositionMultiplier || 1; // TEALSTREET
             // const lotSize = this.safeNumber(market, 'lotSize') / orderMultiplier; // TEALSTREET
-            const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
+            const lotSize = this.safeNumber (market, 'lotSize'); // TEALSTREET
             const inverse = market['isInverse'];
             const quanto = market['isQuanto'];
             const linear = !inverse && !quanto;
