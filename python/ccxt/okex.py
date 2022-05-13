@@ -1512,11 +1512,18 @@ class okex(OkexTealstreetMixin, Exchange):
             request['orderPx'] =  self.price_to_precision(symbol, price)
 
         tradeMode = self.safe_string(params, 'tradeMode', 'hedged')
+        marginType   = self.safe_string(params, 'marginType', 'cross')
         params = []
         if tradeMode:
             params = self.omit(params, ['tradeMode'])
             if tradeMode == 'oneway':
                 request = self.omit(request, ['posSide'])
+        if marginType:
+            params = self.omit(params, ['marginType'])
+            request['tdMode'] = marginType
+
+        if not reduceOnly:
+            request = self.omit(request, ['reduceOnly'])
 
         try:
             response = getattr(self, method)(self.extend(request, params))
@@ -1785,6 +1792,7 @@ class okex(OkexTealstreetMixin, Exchange):
             clientOrderId = None  # fix empty clientOrderId string
         reduce = self.safe_boolean(order, 'reduceOnly')
         close = self.safe_boolean(order, 'closeOnTrigger')
+        marginType = self.safe_string(order, 'tdMode')
         return self.safe_order({
             'info': order,
             'id': id,
@@ -1809,6 +1817,7 @@ class okex(OkexTealstreetMixin, Exchange):
             'trades': None,
             'reduce': reduce,  # TEALSTREET
             'close': close,  # TEALSTREET
+            'marginType': marginType, # TEALSTREET
         })
 
     def fetch_order(self, id, symbol=None, params={}):
