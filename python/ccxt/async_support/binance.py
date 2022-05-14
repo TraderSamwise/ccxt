@@ -3028,10 +3028,11 @@ class binance(Exchange):
             market = self.safe_market(marketId)
             code = market['quote'] if (self.options['defaultType'] == 'future') else market['base']
             other_fields = {}
-            if 'crossMargin' in balances[code]:
-                other_fields['crossMargin'] = balances[code]['crossMargin']
-            if 'crossWalletBalance' in balances[code]:
-                other_fields['crossWalletBalance'] = balances[code]['crossWalletBalance']
+            if balances[code]:
+                if 'crossMargin' in balances[code]:
+                    other_fields['crossMargin'] = balances[code]['crossMargin']
+                if 'crossWalletBalance' in balances[code]:
+                    other_fields['crossWalletBalance'] = balances[code]['crossWalletBalance']
             parsed = self.parse_position(self.extend(position, other_fields), market)
             result.append(parsed)
         return result

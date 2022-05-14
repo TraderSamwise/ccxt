@@ -109,9 +109,11 @@ def test_binance():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # print(exchange.switch_isolated(symbol, False, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 24, 25))
+    markets = exchange.fetch_markets()
+
+    # print(exchange.switch_isolated(symbol, True, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, True))
+    # print(exchange.set_leverage(symbol, 12, 25))
 
     # exchange.edit_order('37677901237',
     #      'BTC/USD',
@@ -173,9 +175,9 @@ def test_bitmex():
 
     symbol = 'BTC/USD'
 
-    # print(exchange.switch_isolated(symbol, False, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 40, 40))
+    # print(exchange.switch_isolated(symbol, True, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 25, 40))
 
     # print('sending order')
     # result = exchange.create_order(
@@ -245,8 +247,10 @@ def test_bitmex():
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 def test_bybit():
-    exchange = test.mn_bybit_inverse_exchange
+    # exchange = test.mn_bybit_inverse_exchange
     # exchange = test.mn_bybit_linear_exchange
+    exchange = test.mn_sub_bybit_linear_exchang
+    # exchange = test.mn_sub_bybit_inverse_exchange
     # exchange = test.tn_bybit_inverse_exchange
     # exchange = test.tn_bybit_linear_exchange
 
@@ -258,9 +262,9 @@ def test_bybit():
     # orders = exchange.fetch_orders(symbol, limit=100)
     # trades = exchange.fetch_my_trades(symbol)
     #
-    # print(exchange.switch_isolated(symbol, False, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 25, 25))
+    print(exchange.switch_isolated(symbol, False, 10, 10))
+    # print(exchange.switch_hedge_mode(symbol, True))
+    # print(exchange.set_leverage(symbol, 15, 15))
 
     # exchange.create_order(symbol,
     #                       'stop',
@@ -294,6 +298,24 @@ def test_bybit():
     # pprint(exchange.cancel_all_orders('BTC/USD'))
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
 
+# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
+def test_ftx():
+    exchange = test.mn_ftx_exchange
+
+    symbol = 'BTC-PERP'
+    # symbol = 'BTC/USDT'
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    print(exchange.set_leverage(symbol, 101, 15))
+
+    # pprint(exchange.fetch_open_orders('BTC-PERP', None, None, { 'type': 'stop'}))
+    # pprint(exchange.fetch_positions())
+    # pprint(exchange.api_referral_success())
+# FTX FTX FTX FTX FTX FTX FTX FTX FTX FTX #
+
 # GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
 def test_gateio():
     exchange = test.mn_gateio_exchange
@@ -303,7 +325,7 @@ def test_gateio():
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.fetch_orders())
+    print(exchange.fetch_positions())
 
 
     # print(exchange.switch_isolated(symbol, False, 10, 20))
@@ -325,39 +347,20 @@ def test_kucoin():
     pprint(exchange.fetch_balance())
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 
-# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
-def test_phemex():
-    # exchange = test.mn_phemex_exchange
-    exchange = test.tn_phemex_exchange
-
-    symbol = 'LINK/USD'
-    # exchange.load_markets()
-    # symbol = exchange.markets[symbol]['id']
-    ticker = exchange.fetch_ticker(symbol)
-    last = ticker['last']
-
-    # print(exchange.switch_isolated(symbol, False, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, False))
-    print(exchange.set_leverage(symbol, 4, 15))
-
-    # pprint(exchange.fetch_balance())
-    # pprint(exchange.fetch_markets())
-# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
-
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 def test_okex():
     # exchange = test.mn_okex_exchange
     exchange = test.tn_okex_exchange
 
-    symbol = 'BTC-USD-SWAP'
+    symbol = 'BADGER-USDT-SWAP'
     # exchange.load_markets()
     # symbol = exchange.markets[symbol]['id']
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    # print(exchange.switch_isolated(symbol, True, 10, 20))
-    # print(exchange.switch_hedge_mode(symbol, True))
-    print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
+    print(exchange.switch_isolated(symbol, False, 10, 20))
+    # print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
 
     # result = exchange.create_order(
     #     'BTC-USD-SWAP',
@@ -372,23 +375,44 @@ def test_okex():
     #         'closeOnTrigger': None,
     #         'basePrice': None,
     #         'trigger': None,
+    #         'tradeMode': 'hedged',
+    #         'marginType': 'isolated',
     #     })
     # pprint(exchange.fetch_balance())
     # pprint(exchange.fetch_positions())
     # pprint(exchange.fetch_markets())
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
 
+# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
+def test_phemex():
+    # exchange = test.mn_phemex_exchange
+    exchange = test.tn_phemex_exchange
+
+    symbol = 'LINK/USD'
+    # exchange.load_markets()
+    # symbol = exchange.markets[symbol]['id']
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker['last']
+
+    # print(exchange.switch_isolated(symbol, True, 10, 20))
+    print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.set_leverage(symbol, 8, 15))
+
+    # pprint(exchange.fetch_balance())
+    # pprint(exchange.fetch_markets())
+# PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
+
 def main():
     # test_binance()
     # test_bitmex()
     # test_bybit()
-    # test_ftx()
-    test_gateio()
-    # test_kucoin()
-    # test_phemex()
+    test_ftx()
     # test_okex()
+    # test_phemex()
+    # test_gateio()
+    # test_kucoin()
     # buy_stuff()
-    test_kucoin()
+    # test_kucoin()
 
 if __name__ == "__main__":
     main()

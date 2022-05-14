@@ -483,7 +483,8 @@ with open(keys_file) as file:
     config = json.load(file)
 
 # instantiate all exchanges
-for id in ccxt.exchanges:
+for id in ccxt.tealstreet_exchanges:
+    print(id)
     if id == 'theocean':
         continue
     exchange = getattr(ccxt, id)
