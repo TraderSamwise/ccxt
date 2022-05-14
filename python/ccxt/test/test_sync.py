@@ -319,7 +319,7 @@ def test_symbol(exchange, symbol, code):
         dump(green(response))
     else:
         test_order_book(exchange, symbol)
-        test_trades(exchange, symbol)
+        # test_trades(exchange, symbol) # we don't use trades on backend
         if (not hasattr(exchange, 'apiKey') or (len(exchange.apiKey) < 1)):
             return
         if exchange.has['signIn']:
