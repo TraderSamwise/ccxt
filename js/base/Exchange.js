@@ -191,6 +191,24 @@ module.exports = class Exchange {
                 'price': { 'min': undefined, 'max': undefined },
                 'cost': { 'min': undefined, 'max': undefined },
             },
+            'timeframeMap': {
+                '1m': 60,
+                '3m': 3 * 60,
+                '5m': 5 * 60,
+                '15m': 15 * 60,
+                '30m': 30 * 60,
+                '1h': 60 * 60,
+                '2h': 2 * 60 * 60,
+                '4h': 4 * 60 * 60,
+                '6h': 6 * 60 * 60,
+                '12h': 12 * 60 * 60,
+                '1d': 24 * 60 * 60,
+                '1w': 7 * 24 * 60 * 60,
+                '1M': 30 * 24 * 60 * 60,
+                '3M': 3 * 30 * 24 * 60 * 60,
+                '6M': 6 * 30 * 24 * 60 * 60,
+                '1y': 365 * 24 * 60 * 60,
+            },
         } // return
     } // describe ()
 
@@ -396,14 +414,14 @@ module.exports = class Exchange {
             }
 
             const promise =
-                fetchImplementation (url, this.extend (params, this.fetchOptions))
-                    .catch ((e) => {
-                        if (isNode) {
-                            throw new ExchangeNotAvailable ([ this.id, method, url, e.type, e.message ].join (' '))
-                        }
-                        throw e // rethrow all unknown errors
-                    })
-                    .then ((response) => this.handleRestResponse (response, url, method, headers, body))
+              fetchImplementation (url, this.extend (params, this.fetchOptions))
+                  .catch ((e) => {
+                      if (isNode) {
+                          throw new ExchangeNotAvailable ([ this.id, method, url, e.type, e.message ].join (' '))
+                      }
+                      throw e // rethrow all unknown errors
+                  })
+                  .then ((response) => this.handleRestResponse (response, url, method, headers, body))
 
             return timeout (this.timeout, promise).catch ((e) => {
                 if (e instanceof TimedOut) {
@@ -625,21 +643,21 @@ module.exports = class Exchange {
             this.currencies = deepExtend (currencies, this.currencies)
         } else {
             let baseCurrencies =
-                values.filter ((market) => 'base' in market)
-                    .map ((market) => ({
-                        id: market.baseId || market.base,
-                        numericId: (market.baseNumericId !== undefined) ? market.baseNumericId : undefined,
-                        code: market.base,
-                        precision: market.precision ? (market.precision.base || market.precision.amount) : 8,
-                    }))
+              values.filter ((market) => 'base' in market)
+                  .map ((market) => ({
+                      id: market.baseId || market.base,
+                      numericId: (market.baseNumericId !== undefined) ? market.baseNumericId : undefined,
+                      code: market.base,
+                      precision: market.precision ? (market.precision.base || market.precision.amount) : 8,
+                  }))
             let quoteCurrencies =
-                values.filter ((market) => 'quote' in market)
-                    .map ((market) => ({
-                        id: market.quoteId || market.quote,
-                        numericId: (market.quoteNumericId !== undefined) ? market.quoteNumericId : undefined,
-                        code: market.quote,
-                        precision: market.precision ? (market.precision.quote || market.precision.price) : 8,
-                    }))
+              values.filter ((market) => 'quote' in market)
+                  .map ((market) => ({
+                      id: market.quoteId || market.quote,
+                      numericId: (market.quoteNumericId !== undefined) ? market.quoteNumericId : undefined,
+                      code: market.quote,
+                      precision: market.precision ? (market.precision.quote || market.precision.price) : 8,
+                  }))
             baseCurrencies = sortBy (baseCurrencies, 'code')
             quoteCurrencies = sortBy (quoteCurrencies, 'code')
             this.baseCurrencies = indexBy (baseCurrencies, 'code')
@@ -1107,7 +1125,7 @@ module.exports = class Exchange {
         // single-pass filter for both symbol and since
         if (valueIsDefined || sinceIsDefined) {
             array = array.filter ((entry) => ((valueIsDefined ? (entry[field] === value) : true) &&
-                 (sinceIsDefined ? (entry[key] >= since) : true)))
+              (sinceIsDefined ? (entry[key] >= since) : true)))
         }
 
         if (limit !== undefined && limit !== null) {
