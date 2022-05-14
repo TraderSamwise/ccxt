@@ -170,13 +170,13 @@ from ccxt.async_support.zaif import zaif                                  # noqa
 from ccxt.async_support.zb import zb                                      # noqa: F401
 
 tealstreet_exchanges = [
-    'binancecoinm',
-    'binanceusdm',
-    'bitmex',
-    'bybitlinear',
-    'bybitinverse',
-    'ftx',
-    'okex',
+    # 'binancecoinm',
+    # 'binanceusdm',
+    # 'bitmex',
+    # 'bybitlinear',
+    # 'bybitinverse',
+    # 'ftx',
+    # 'okex',
     'phemex',
 ]
 

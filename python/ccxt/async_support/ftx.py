@@ -29,7 +29,11 @@ from ccxt.base.precise import Precise
 
 class FTXTealstreetMixin(object):
     def bigger(self, a, b):  # Find the bigger of two numbers ...
-        if a > b:
+        if not a:
+            return b
+        elif not b:
+            return a
+        elif a > b:
             return a
         else:
             return b

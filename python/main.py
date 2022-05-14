@@ -385,8 +385,8 @@ def test_okex():
 
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 def test_phemex():
-    # exchange = test.mn_phemex_exchange
-    exchange = test.tn_phemex_exchange
+    exchange = test.mn_phemex_exchange
+    # exchange = test.tn_phemex_exchange
 
     symbol = 'LINK/USD'
     # exchange.load_markets()
@@ -395,7 +395,7 @@ def test_phemex():
     last = ticker['last']
 
     # print(exchange.switch_isolated(symbol, True, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.switch_hedge_mode(symbol, False))
     # print(exchange.set_leverage(symbol, 8, 15))
 
     # pprint(exchange.fetch_balance())
@@ -406,9 +406,9 @@ def main():
     # test_binance()
     # test_bitmex()
     # test_bybit()
-    test_ftx()
+    # test_ftx()
     # test_okex()
-    # test_phemex()
+    test_phemex()
     # test_gateio()
     # test_kucoin()
     # buy_stuff()
