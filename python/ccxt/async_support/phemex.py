@@ -888,15 +888,15 @@ class phemex(PhemexTealstreetMixin, Exchange):
         #
         baseVolume = None
         if (market is not None) and market['spot']:
-            baseVolume = self.from_ev(self.safe_number(ohlcv, 7), market)
+            baseVolume = self.parse_number(self.from_ev(self.safe_string(ohlcv, 7), market))
         else:
-            baseVolume = self.safe_integer(ohlcv, 7)
+            baseVolume = self.safe_number(ohlcv, 7)
         return [
             self.safe_timestamp(ohlcv, 0),
-            self.from_ep(self.safe_number(ohlcv, 3), market),
-            self.from_ep(self.safe_number(ohlcv, 4), market),
-            self.from_ep(self.safe_number(ohlcv, 5), market),
-            self.from_ep(self.safe_number(ohlcv, 6), market),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 3), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 4), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 5), market)),
+            self.parse_number(self.from_ep(self.safe_string(ohlcv, 6), market)),
             baseVolume,
         ]
 
