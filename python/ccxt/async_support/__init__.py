@@ -92,6 +92,8 @@ from ccxt.async_support.btcturk import btcturk                            # noqa
 from ccxt.async_support.buda import buda                                  # noqa: F401
 from ccxt.async_support.bw import bw                                      # noqa: F401
 from ccxt.async_support.bybit import bybit                                # noqa: F401
+from ccxt.async_support.bybitlinear import bybitlinear                    # noqa: F401
+from ccxt.async_support.bybitinverse import bybitinverse                  # noqa: F401
 from ccxt.async_support.bytetrade import bytetrade                        # noqa: F401
 from ccxt.async_support.cdax import cdax                                  # noqa: F401
 from ccxt.async_support.cex import cex                                    # noqa: F401
@@ -169,13 +171,13 @@ from ccxt.async_support.zb import zb                                      # noqa
 
 tealstreet_exchanges = [
     'binancecoinm',
-    # 'binanceusdm',
-    # 'bitmex',
-    # 'bybitlinear',
-    # 'bybitinverse',
-    # 'ftx',
-    # 'okex',
-    # 'phemex',
+    'binanceusdm',
+    'bitmex',
+    'bybitlinear',
+    'bybitinverse',
+    'ftx',
+    'okex',
+    'phemex',
 ]
 
 exchanges = [
@@ -221,6 +223,7 @@ exchanges = [
     'bw',
     'bybit',
     'bybitinverse',
+    'bybitlinear',
     'bytetrade',
     'cdax',
     'cex',
