@@ -229,7 +229,7 @@ exchanges = [
     'bw',
     'bybit',
     'bybitlinear',
-    'bybitinverse'
+    'bybitinverse',
     'bytetrade',
     'cdax',
     'cex',
