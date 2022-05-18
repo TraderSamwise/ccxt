@@ -999,9 +999,9 @@ module.exports = class phemex extends Exchange {
         const openString = this.fromEp (this.safeString (ticker, 'openEp'), market);
         const open = this.parseNumber (openString);
         if ((openString !== undefined) && (lastString !== undefined)) {
-            change = this.parseNumber (Precise.stringSub (lastString, openString));
-            average = this.parseNumber (Precise.stringDiv (Precise.stringAdd (lastString, openString), '2'));
-            percentage = this.parseNumber (Precise.stringMul (Precise.stringSub (Precise.stringDiv (lastString, openString), '1'), '100'));
+            change = undefined; // this.parseNumber (Precise.stringSub (lastString, openString));
+            average = undefined; // this.parseNumber (Precise.stringDiv (Precise.stringAdd (lastString, openString), '2'));
+            percentage = undefined; // this.parseNumber (Precise.stringMul (Precise.stringSub (Precise.stringDiv (lastString, openString), '1'), '100'));
         }
         const result = {
             'symbol': symbol,
