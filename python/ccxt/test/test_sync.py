@@ -319,7 +319,7 @@ def test_symbol(exchange, symbol, code):
         dump(green(response))
     else:
         test_order_book(exchange, symbol)
-        test_trades(exchange, symbol)
+        # test_trades(exchange, symbol) # we don't use trades on backend
         if (not hasattr(exchange, 'apiKey') or (len(exchange.apiKey) < 1)):
             return
         if exchange.has['signIn']:
@@ -473,7 +473,8 @@ proxies = [
 ]
 
 # prefer local testing keys to global keys
-keys_folder = os.path.dirname(root)
+# keys_folder = os.path.dirname(root)
+keys_folder = root
 keys_global = os.path.join(keys_folder, 'keys.json')
 keys_local = os.path.join(keys_folder, 'keys.local.json')
 keys_file = keys_local if os.path.exists(keys_local) else keys_global
@@ -485,7 +486,7 @@ with open(keys_file) as file:
 
 
 # instantiate all exchanges
-for id in ccxt.exchanges:
+for id in ccxt.tealstreet_exchanges:
     print(id)
     if id == 'theocean':
         continue

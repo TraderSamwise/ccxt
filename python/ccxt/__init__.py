@@ -186,6 +186,17 @@ from ccxt.yobit import yobit                                # noqa: F401
 from ccxt.zaif import zaif                                  # noqa: F401
 from ccxt.zb import zb                                      # noqa: F401
 
+tealstreet_exchanges = [
+    'binancecoinm',
+    'binanceusdm',
+    'bitmex',
+    'bybitlinear',
+    'bybitinverse',
+    'ftx',
+    'okex',
+    'phemex',
+]
+
 exchanges = [
     'aax',
     'aofex',

@@ -502,7 +502,8 @@ proxies = [
 ]
 
 # prefer local testing keys to global keys
-keys_folder = os.path.dirname(root)
+# keys_folder = os.path.dirname(root)
+keys_folder = root
 keys_global = os.path.join(keys_folder, 'keys.json')
 keys_local = os.path.join(keys_folder, 'keys.local.json')
 keys_file = keys_local if os.path.exists(keys_local) else keys_global
@@ -512,7 +513,7 @@ with open(keys_file) as file:
     config = json.load(file)
 
 # instantiate all exchanges
-for id in ccxt.exchanges:
+for id in ccxt.tealstreet_exchanges:
     if id == 'theocean':
         continue
     exchange = getattr(ccxt, id)

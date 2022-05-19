@@ -828,43 +828,38 @@ class okex(OkexTealstreetMixin, Exchange):
     async def fetch_order_book(self, symbol, limit=None, params={}):
         await self.load_markets()
         market = self.market(symbol)
-        method = market['type'] + 'GetInstrumentsInstrumentId'
-        method += 'Depth' if (market['type'] == 'swap') else 'Book'
         request = {
-            'instrument_id': market['id'],
+            'instId': market['id'],
         }
+        limit = 20 if (limit is None) else limit
         if limit is not None:
-            request['size'] = limit  # max 200
-        response = await getattr(self, method)(self.extend(request, params))
-        #
-        # spot
-        #
-        #     {     asks: [["0.02685268", "0.242571", "1"],
-        #                    ["0.02685493", "0.164085", "1"],
-        #                    ...
-        #                    ["0.02779", "1.039", "1"],
-        #                    ["0.027813", "0.0876", "1"]        ],
-        #            bids: [["0.02684052", "10.371849", "1"],
-        #                    ["0.02684051", "3.707", "4"],
-        #                    ...
-        #                    ["0.02634963", "0.132934", "1"],
-        #                    ["0.02634962", "0.264838", "2"]    ],
-        #       timestamp:   "2018-12-17T20:24:16.159Z"            }
-        #
-        # swap
+            request['sz'] = limit  # max 400
+        response = await self.publicGetMarketBooks(self.extend(request, params))
         #
         #     {
-        #         "asks":[
-        #             ["916.21","94","0","1"]
-        #         ],
-        #         "bids":[
-        #             ["916.1","15","0","1"]
-        #         ],
-        #         "time":"2021-04-16T02:04:48.282Z"
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
+        #             {
+        #                 "asks": [
+        #                     ["0.07228","4.211619","0","2"],  # price, amount, liquidated orders, total open orders
+        #                     ["0.0723","299.880364","0","2"],
+        #                     ["0.07231","3.72832","0","1"],
+        #                 ],
+        #                 "bids": [
+        #                     ["0.07221","18.5","0","1"],
+        #                     ["0.0722","18.5","0","1"],
+        #                     ["0.07219","0.505407","0","1"],
+        #                 ],
+        #                 "ts": "1621438475342"
+        #             }
+        #         ]
         #     }
         #
-        timestamp = self.parse8601(self.safe_string_2(response, 'timestamp', 'time'))
-        return self.parse_order_book(response, symbol, timestamp)
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0, {})
+        timestamp = self.safe_integer(first, 'ts')
+        return self.parse_order_book(first, symbol, timestamp)
 
     def parse_ticker(self, ticker, market=None):
         #
@@ -928,43 +923,85 @@ class okex(OkexTealstreetMixin, Exchange):
     async def fetch_ticker(self, symbol, params={}):
         await self.load_markets()
         market = self.market(symbol)
-        method = market['type'] + 'GetInstrumentsInstrumentIdTicker'
         request = {
-            'instrument_id': market['id'],
+            'instId': market['id'],
         }
-        response = await getattr(self, method)(self.extend(request, params))
+        response = await self.publicGetMarketTicker(self.extend(request, params))
         #
-        #     {        best_ask: "0.02665472",
-        #               best_bid: "0.02665221",
-        #          instrument_id: "ETH-BTC",
-        #             product_id: "ETH-BTC",
-        #                   last: "0.02665472",
-        #                    ask: "0.02665472",
-        #                    bid: "0.02665221",
-        #               open_24h: "0.02645482",
-        #               high_24h: "0.02714633",
-        #                low_24h: "0.02614109",
-        #        base_volume_24h: "572298.901923",
-        #              timestamp: "2018-12-17T21:20:07.856Z",
-        #       quote_volume_24h: "15094.86831261"            }
+        #     {
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
+        #             {
+        #                 "instType": "SPOT",
+        #                 "instId": "ETH-BTC",
+        #                 "last": "0.07319",
+        #                 "lastSz": "0.044378",
+        #                 "askPx": "0.07322",
+        #                 "askSz": "4.2",
+        #                 "bidPx": "0.0732",
+        #                 "bidSz": "6.050058",
+        #                 "open24h": "0.07801",
+        #                 "high24h": "0.07975",
+        #                 "low24h": "0.06019",
+        #                 "volCcy24h": "11788.887619",
+        #                 "vol24h": "167493.829229",
+        #                 "ts": "1621440583784",
+        #                 "sodUtc0": "0.07872",
+        #                 "sodUtc8": "0.07345"
+        #             }
+        #         ]
+        #     }
         #
-        return self.parse_ticker(response)
+        data = self.safe_value(response, 'data', [])
+        first = self.safe_value(data, 0, {})
+        return self.parse_ticker(first, market)
 
     async def fetch_tickers_by_type(self, type, symbols=None, params={}):
         await self.load_markets()
-        method = type + 'GetInstrumentsTicker'
-        response = await getattr(self, method)(params)
-        result = {}
-        for i in range(0, len(response)):
-            ticker = self.parse_ticker(response[i])
-            symbol = ticker['symbol']
-            result[symbol] = ticker
-        return self.filter_by_array(result, 'symbol', symbols)
+        request = {
+            'instType': self.convert_to_instrument_type(type),
+        }
+        if type == 'option':
+            defaultUnderlying = self.safe_value(self.options, 'defaultUnderlying', 'BTC-USD')
+            currencyId = self.safe_string_2(params, 'uly', 'marketId', defaultUnderlying)
+            if currencyId is None:
+                raise ArgumentsRequired(self.id + ' fetchTickersByType() requires an underlying uly or marketId parameter for options markets')
+            else:
+                request['uly'] = currencyId
+        response = await self.publicGetMarketTickers(self.extend(request, params))
+        #
+        #     {
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
+        #             {
+        #                 "instType": "SPOT",
+        #                 "instId": "BCD-BTC",
+        #                 "last": "0.0000769",
+        #                 "lastSz": "5.4788",
+        #                 "askPx": "0.0000777",
+        #                 "askSz": "3.2197",
+        #                 "bidPx": "0.0000757",
+        #                 "bidSz": "4.7509",
+        #                 "open24h": "0.0000885",
+        #                 "high24h": "0.0000917",
+        #                 "low24h": "0.0000596",
+        #                 "volCcy24h": "9.2877",
+        #                 "vol24h": "124824.1985",
+        #                 "ts": "1621441741434",
+        #                 "sodUtc0": "0.0000905",
+        #                 "sodUtc8": "0.0000729"
+        #             },
+        #         ]
+        #     }
+        #
+        tickers = self.safe_value(response, 'data', [])
+        return self.parse_tickers(tickers, symbols)
 
     async def fetch_tickers(self, symbols=None, params={}):
-        defaultType = self.safe_string_2(self.options, 'fetchTickers', 'defaultType')
-        type = self.safe_string(params, 'type', defaultType)
-        return await self.fetch_tickers_by_type(type, symbols, self.omit(params, 'type'))
+        type, query = self.handle_market_type_and_params('fetchTickers', None, params)
+        return await self.fetch_tickers_by_type(type, symbols, query)
 
     def parse_trade(self, trade, market=None):
         #
@@ -1072,44 +1109,25 @@ class okex(OkexTealstreetMixin, Exchange):
     async def fetch_trades(self, symbol, since=None, limit=None, params={}):
         await self.load_markets()
         market = self.market(symbol)
-        method = market['type'] + 'GetInstrumentsInstrumentIdTrades'
-        if (limit is None) or (limit > 100):
-            limit = 100  # maximum = default = 100
         request = {
-            'instrument_id': market['id'],
-            'limit': limit,
-            # from: 'id',
-            # to: 'id',
+            'instId': market['id'],
         }
-        response = await getattr(self, method)(self.extend(request, params))
+        if limit is not None:
+            request['limit'] = limit  # default 100
+        response = await self.publicGetMarketTrades(self.extend(request, params))
         #
-        # spot markets
+        #     {
+        #         "code": "0",
+        #         "msg": "",
+        #         "data": [
+        #             {"instId":"ETH-BTC","side":"sell","sz":"0.119501","px":"0.07065","tradeId":"15826757","ts":"1621446178316"},
+        #             {"instId":"ETH-BTC","side":"sell","sz":"0.03","px":"0.07068","tradeId":"15826756","ts":"1621446178066"},
+        #             {"instId":"ETH-BTC","side":"buy","sz":"0.507","px":"0.07069","tradeId":"15826755","ts":"1621446175085"},
+        #         ]
+        #     }
         #
-        #     [
-        #         {
-        #             time: "2018-12-17T23:31:08.268Z",
-        #             timestamp: "2018-12-17T23:31:08.268Z",
-        #             trade_id: "409687906",
-        #             price: "0.02677805",
-        #             size: "0.923467",
-        #             side: "sell"
-        #         }
-        #     ]
-        #
-        # futures markets, swap markets
-        #
-        #     [
-        #         {
-        #             trade_id: "1989230840021013",
-        #             side: "buy",
-        #             price: "92.42",
-        #             qty: "184",  # missing in swap markets
-        #             size: "5",  # missing in futures markets
-        #             timestamp: "2018-12-17T23:26:04.613Z"
-        #         }
-        #     ]
-        #
-        return self.parse_trades(response, market, since, limit)
+        data = self.safe_value(response, 'data', [])
+        return self.parse_trades(data, market, since, limit)
 
     def parse_ohlcv(self, ohlcv, market=None):
         #

@@ -307,7 +307,7 @@ module.exports = class phemex extends Exchange {
                 'x-phemex-request-expiry': 60, // in seconds
                 'createOrderByQuoteRequiresPrice': true,
             },
-            'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
+            'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
         });
     }
 
@@ -999,9 +999,11 @@ module.exports = class phemex extends Exchange {
         const openString = this.fromEp (this.safeString (ticker, 'openEp'), market);
         const open = this.parseNumber (openString);
         if ((openString !== undefined) && (lastString !== undefined)) {
-            change = this.parseNumber (Precise.stringSub (lastString, openString));
-            average = this.parseNumber (Precise.stringDiv (Precise.stringAdd (lastString, openString), '2'));
-            percentage = this.parseNumber (Precise.stringMul (Precise.stringSub (Precise.stringDiv (lastString, openString), '1'), '100'));
+            change = undefined; // this.parseNumber (Precise.stringSub (lastString, openString));
+            average = undefined; // this.parseNumber (Precise.stringDiv (Precise.stringAdd (lastString, openString), '2'));
+            if (last && open) {
+                percentage = this.parseNumber (Precise.stringMul (Precise.stringSub (Precise.stringDiv (lastString, openString), '1'), '100'));
+            }
         }
         const result = {
             'symbol': symbol,
