@@ -529,7 +529,7 @@ class Exchange(object):
         except Exception as e:
             if self.is_rate_limit_error(e):
                 self.set_rate_limit_status(True)
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'User or Tealstreet servers appear to be rate limited.'}))
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
             raise e
 
     def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
