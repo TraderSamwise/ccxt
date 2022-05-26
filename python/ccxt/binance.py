@@ -2195,7 +2195,7 @@ class binance(Exchange):
         if tradeMode:
             params = self.omit(params, ['tradeMode'])
         else:
-            tradeMode = 'hedged'
+            tradeMode = 'oneway'
 
         def set_hedged_positionSide():
             nonlocal request
@@ -2215,14 +2215,13 @@ class binance(Exchange):
             set_hedged_positionSide()
 
         params = self.omit(params, ['closeOnTrigger', 'basePrice', 'timeInForce', 'trigger', 'reduceOnly'])
-        # try, add reduce only back if hedge mode error
 
         response = None
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as ex:
             if tradeMode == 'hedged': # assume user may be on oneway mode instead
-                if reduceOnly:
+                if not closeOnTrigger and reduceOnly:
                     request['reduceOnly'] = reduceOnly
                 request = self.omit(request, ['positionSide'])
             elif tradeMode == 'oneway': # assume user should have hedged instead
