@@ -483,6 +483,8 @@ keys_file = keys_local if os.path.exists(keys_local) else keys_global
 with open(keys_file) as file:
     config = json.load(file)
 
+
+
 # instantiate all exchanges
 for id in ccxt.tealstreet_exchanges:
     print(id)
