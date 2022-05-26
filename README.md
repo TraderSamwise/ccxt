@@ -49,96 +49,159 @@ These are the CCXT Javascript methods necessary to unify for the frontend of Tea
 | KuCoin  | ✔️ | ✔️ |
 | Gate.io |   |   |
 
-### Keys to Unify
+## Tealstreet Unified Responses
 
-These are the CCXT keys necessary to be unified for Tealstreet to work.
+These are the necessary CCXT responses for Tealstreet to work.
 
 ### fetch_balance
-	 individual coin keys...
-		 free
-		 total
-		 used
-	 free
-	 total
-	 used
+	individual coin keys...
+		free
+		total
+		used
+	free
+	total
+	used
 
 ### fetch_positions
-	 collateral
-	 contracts
-	 datetime
-	 entryPrice
-	 hedged
-	 id
-	 info
-	 initialMargin
-	 initialMarginPercentage
-	 isolated
-	 leverage
-	 liquidationPrice
-	 maintenanceMargin
-	 maintenanceMarginPercentage
-	 marginRatio
-	 marginType
-	 markPrice
-	 notional
-	 percentage
-	 pnl
-	 price
-	 side
-	 status
-	 symbol
-	 timestamp
-	 unrealizedPnl
+	collateral
+	contracts
+	datetime
+	entryPrice
+	hedged
+	id
+	info
+	initialMargin
+	initialMarginPercentage
+	isolated
+	leverage
+	liquidationPrice
+	maintenanceMargin
+	maintenanceMarginPercentage
+	marginRatio
+	marginType
+	markPrice
+	notional
+	percentage
+	pnl
+	price
+	side
+	status
+	symbol
+	timestamp
+	unrealizedPnl
 
 ### fetch_open_orders
     amount
-	 average
-	 clientOrderId
-	 close
-	 cost
-	 datetime
-	 fee
-	 fees
-	 filled
-	 id
-	 info
-	 lastTradeTimestamp
-	 postOnly
-	 price
-	 reduce
-	 remaining
-	 side
-	 status
-	 stopPrice
-	 symbol
-	 timeInForce
-	 timestamp
-	 trades
-	 type
+	average
+	clientOrderId
+	close
+	cost
+	datetime
+	fee
+	fees
+	filled
+	id
+	info
+	lastTradeTimestamp
+	postOnly
+	price
+	reduce
+	remaining
+	side
+	status
+	stopPrice
+	symbol
+	timeInForce
+	timestamp
+	trades
+	type
 
 ### fetch_my_trades
-	 info
-	 timestamp
-	 datetime
-	 symbol
-	 id
-	 order
-	 type
-	 takerOrMaker
-	 side
-	 price
-	 amount
-	 cost
-	 fee
+	info
+	timestamp
+	datetime
+	symbol
+	id
+	order
+	type
+	takerOrMaker
+	side
+	price
+	amount
+	cost
+	fee
 
 ### switch_hedge_mode
-	 symbol
-	 tradeMode
+	symbol
+	tradeMode
 
 ### switch_isolated
-	 symbol
-	 marginType
+	symbol
+	marginType
 
+## Tests
+
+### Setup
+
+Populate the following root `.env` file with non-IP bound API credentials.
+
+	PYTHONUNBUFFERED=
+
+	# BINANCE
+	mn_binance_key=
+	mn_binance_secret=
+
+	# BITMEX
+	mn_bitmex_key=
+	mn_bitmex_secret=
+	tn_bitmex_key=
+	tn_bitmex_secret=
+
+	# BYBIT
+	mn_bybit_key=
+	mn_bybit_secret=
+	mn_sub_bybit_key=
+	mn_sub_bybit_secret=
+	tn_bybit_key=
+	tn_bybit_secret=
+
+	# FTX
+	mn_ftx_key=
+	mn_ftx_secret=
+	mn_ftx_subaccount_name=
+	mnc_ftx_key=
+	mnc_ftx_secret=
+	mnc_ftx_subaccount_name=
+
+	# GATE.IO
+	mn_gateio_key=
+	mn_gateio_secret=
+
+	# KUCOIN
+	mn_kucoin_key=
+	mn_kucoin_secret=
+	tn_kucoin_key=
+	tn_kucoin_secret=
+
+	# PHEMEX
+	mn_phemex_key=
+	mn_phemex_secret=
+	tn_phemex_key=
+	tn_phemex_secret=
+
+	# OKEX
+	tn_okex_key=
+	tn_okex_secret=
+	tn_okex_password=
+	mn_okex_key=
+	mn_okex_secret=
+	mn_okex_password=
+
+### POST tests: `tealstreet_tests.py`
+
+These tests ensure the order create, edit, delete, and other functionality of the Tealstreet terminal is operational.
+
+End Tealstreet x CCXT README
 
 Current feature list:
 
