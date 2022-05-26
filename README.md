@@ -3,13 +3,201 @@
 [![Build Status](https://travis-ci.com/ccxt/ccxt.svg?branch=master)](https://travis-ci.com/ccxt/ccxt) [![npm](https://img.shields.io/npm/v/ccxt.svg)](https://npmjs.com/package/ccxt) [![PyPI](https://img.shields.io/pypi/v/ccxt.svg)](https://pypi.python.org/pypi/ccxt) [![NPM Downloads](https://img.shields.io/npm/dy/ccxt.svg)](https://www.npmjs.com/package/ccxt) [![Discord](https://img.shields.io/discord/690203284119617602?logo=discord&logoColor=white)](https://discord.gg/dhzSKYU) [![Supported Exchanges](https://img.shields.io/badge/exchanges-115-blue.svg)](https://github.com/ccxt/ccxt/wiki/Exchange-Markets) [![Open Collective](https://opencollective.com/ccxt/backers/badge.svg)](https://opencollective.com/ccxt)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ccxt_official.svg?style=social&label=CCXT)](https://twitter.com/ccxt_official)
 
+# Patched by Tealstreet
+
 A JavaScript / Python / PHP library for cryptocurrency trading and e-commerce with support for many bitcoin/ether/altcoin exchange markets and merchant APIs.
 
-### [Install](#install) · [Usage](#usage) · [Manual](https://github.com/ccxt/ccxt/wiki) · [FAQ](https://github.com/ccxt/ccxt/wiki/FAQ) · [Examples](https://github.com/ccxt/ccxt/tree/master/examples) · [Contributing](https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md) · [Social](#social) · [CCXT Pro](https://ccxt.pro)
+### [Tealstreet](#tealstreet) · [Install](#install) · [Usage](#usage) · [Manual](https://github.com/ccxt/ccxt/wiki) · [FAQ](https://github.com/ccxt/ccxt/wiki/FAQ) · [Examples](https://github.com/ccxt/ccxt/tree/master/examples) · [Contributing](https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md) · [Social](#social) · [CCXT Pro](https://ccxt.pro)
 
 The **CCXT** library is used to connect and trade with cryptocurrency exchanges and payment processing services worldwide. It provides quick access to market data for storage, analysis, visualization, indicator development, algorithmic trading, strategy backtesting, bot programming, and related software engineering.
 
 It is intended to be used by **coders, developers, technically-skilled traders, data-scientists and financial analysts** for building trading algorithms.
+
+# Tealstreet
+
+### Python Methods
+
+These are the CCXT Python methods necessary to unify for the Python backend of Tealstreet to function. There are many helper functions not listed to support these primary methods. Further, this includes custom methods such as: `switch_isolated`, `set_leverage`, and `switch_hedge_mode`. ✔ indicates it's unified and tested.
+
+| Exchange | fetch_balance | fetch_positions | fetch_orders | fetch_my_trades | create_order | cancel_order | cancel_all_orders | edit_order | fetch_markets | switch_isolated | set_leverage | switch_hedge_mode |
+|----------|---------------|-----------------|--------------|-----------------|--------------|--------------|-------------------|------------|---------------|-----------------|--------------|-------------------|
+| Binance  | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| BitMEX   | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| bybit    | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| FTX      | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| Phemex   | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| OKEx     | ✔️             | ✔️               | ✔️            | ✔️               | ✔️            | ✔️            | ✔️                 | ✔️          | ✔️             | ✔️               | ✔️            | ✔️                 |
+| KuCoin   |               |                 |              |                 |              |              |                   |            |               |                 |              |                   |
+| Gate.io  |               |                 |              |                 |              |              |                   |            |               |                 |              |                   |
+
+### Python Unified Results
+
+These are the result keys necessary for Tealstreet to 
+
+### Javascript Methods
+
+These are the CCXT Javascript methods necessary to unify for the frontend of Tealstreet to function. There are many helper functions not listed to support these primary methods'. ✔ indicates it's unified and tested. 
+
+| Exchange | fetchOHLCV️ | fetchMarkets |
+|---------|---|---|
+| Binance | ✔️ | ✔️ |
+| BitMEX  | ✔️ | ✔️ |
+| bybit   | ✔️ | ✔️ |
+| FTX     | ✔️ | ✔️ |
+| Phemex  | ✔️ | ✔️ |
+| OKEx    | ✔️ | ✔️ |
+| KuCoin  | ✔️ | ✔️ |
+| Gate.io |   |   |
+
+### Keys to Unify
+
+These are the CCXT keys necessary to be unified for Tealstreet to work.
+
+- [ ]  fetch_balance
+    - [ ]  individual coin keys...
+        - [ ]  free
+        - [ ]  total
+        - [ ]  used
+    - [ ]  free
+    - [ ]  total
+    - [ ]  used
+- [ ]  fetch_positions
+    - [ ]  collateral
+    - [ ]  contracts
+    - [ ]  datetime
+    - [ ]  entryPrice
+    - [ ]  hedged
+    - [ ]  id
+    - [ ]  info
+    - [ ]  initialMargin
+    - [ ]  initialMarginPercentage
+    - [ ]  isolated
+    - [ ]  leverage
+    - [ ]  liquidationPrice
+    - [ ]  maintenanceMargin
+    - [ ]  maintenanceMarginPercentage
+    - [ ]  marginRatio
+    - [ ]  marginType
+    - [ ]  markPrice
+    - [ ]  notional
+    - [ ]  percentage
+    - [ ]  pnl
+    - [ ]  price
+    - [ ]  side
+    - [ ]  status
+    - [ ]  symbol
+    - [ ]  timestamp
+    - [ ]  unrealizedPnl
+- [ ]  fetch_open_orders
+    - [ ]  amount
+    - [ ]  average
+    - [ ]  clientOrderId
+    - [ ]  close
+    - [ ]  cost
+    - [ ]  datetime
+    - [ ]  fee
+    - [ ]  fees
+    - [ ]  filled
+    - [ ]  id
+    - [ ]  info
+    - [ ]  lastTradeTimestamp
+    - [ ]  postOnly
+    - [ ]  price
+    - [ ]  reduce
+    - [ ]  remaining
+    - [ ]  side
+    - [ ]  status
+    - [ ]  stopPrice
+    - [ ]  symbol
+    - [ ]  timeInForce
+    - [ ]  timestamp
+    - [ ]  fetch_balance
+        - [ ]  individual coin keys...
+            - [ ]  free
+            - [ ]  total
+            - [ ]  used
+        - [ ]  free
+        - [ ]  total
+        - [ ]  used
+    - [ ]  fetch_positions
+        - [ ]  collateral
+        - [ ]  contracts
+        - [ ]  datetime
+        - [ ]  entryPrice
+        - [ ]  hedged
+        - [ ]  id
+        - [ ]  info
+        - [ ]  initialMargin
+        - [ ]  initialMarginPercentage
+        - [ ]  isolated
+        - [ ]  leverage
+        - [ ]  liquidationPrice
+        - [ ]  maintenanceMargin
+        - [ ]  maintenanceMarginPercentage
+        - [ ]  marginRatio
+        - [ ]  marginType
+        - [ ]  markPrice
+        - [ ]  notional
+        - [ ]  percentage
+        - [ ]  pnl
+        - [ ]  price
+        - [ ]  side
+        - [ ]  status
+        - [ ]  symbol
+        - [ ]  timestamp
+        - [ ]  unrealizedPnl
+    - [ ]  fetch_open_orders
+        - [ ]  amount
+        - [ ]  average
+        - [ ]  clientOrderId
+        - [ ]  close
+        - [ ]  cost
+        - [ ]  datetime
+        - [ ]  fee
+        - [ ]  fees
+        - [ ]  filled
+        - [ ]  id
+        - [ ]  info
+        - [ ]  lastTradeTimestamp
+        - [ ]  postOnly
+        - [ ]  price
+        - [ ]  reduce
+        - [ ]  remaining
+        - [ ]  side
+        - [ ]  status
+        - [ ]  stopPrice
+        - [ ]  symbol
+        - [ ]  timeInForce
+        - [ ]  timestamp
+        - [ ]  trades
+        - [ ]  type
+    - [ ]  trades
+    - [ ]  type
+- [ ]  fetch_my_trades
+    - [ ]  info
+    - [ ]  timestamp
+    - [ ]  datetime
+    - [ ]  symbol
+    - [ ]  id
+    - [ ]  order
+    - [ ]  type
+    - [ ]  takerOrMaker
+    - [ ]  side
+    - [ ]  price
+    - [ ]  amount
+    - [ ]  cost
+    - [ ]  fee
+- [ ]  switch_hedge_mode
+    - [ ]  symbol
+    - [ ]  tradeMode
+- [ ]  switch_isolated
+    - [ ]  symbol
+    - [ ]  marginType
+- [ ]  set_leverage
+    - [ ]  symbol
+    - [ ]  leverage
+    - [ ]  buyLeverage
+    - [ ]  sellLeverage
 
 Current feature list:
 
