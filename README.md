@@ -30,13 +30,9 @@ These are the CCXT Python methods necessary to unify for the Python backend of T
 | KuCoin   |               |                 |              |                 |              |              |                   |            |               |                 |              |                   |
 | Gate.io  |               |                 |              |                 |              |              |                   |            |               |                 |              |                   |
 
-### Python Unified Results
-
-These are the result keys necessary for Tealstreet to 
-
 ### Javascript Methods
 
-These are the CCXT Javascript methods necessary to unify for the frontend of Tealstreet to function. There are many helper functions not listed to support these primary methods'. ✔ indicates it's unified and tested. 
+These are the CCXT Javascript methods necessary to unify for the frontend of Tealstreet to function. There are many helper functions not listed to support these primary methods. ✔ indicates it's unified and tested. 
 
 | Exchange | fetchOHLCV️ | fetchMarkets |
 |---------|---|---|
