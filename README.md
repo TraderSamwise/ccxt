@@ -53,151 +53,92 @@ These are the CCXT Javascript methods necessary to unify for the frontend of Tea
 
 These are the CCXT keys necessary to be unified for Tealstreet to work.
 
-- [ ]  fetch_balance
-    - [ ]  individual coin keys...
-        - [ ]  free
-        - [ ]  total
-        - [ ]  used
-    - [ ]  free
-    - [ ]  total
-    - [ ]  used
-- [ ]  fetch_positions
-    - [ ]  collateral
-    - [ ]  contracts
-    - [ ]  datetime
-    - [ ]  entryPrice
-    - [ ]  hedged
-    - [ ]  id
-    - [ ]  info
-    - [ ]  initialMargin
-    - [ ]  initialMarginPercentage
-    - [ ]  isolated
-    - [ ]  leverage
-    - [ ]  liquidationPrice
-    - [ ]  maintenanceMargin
-    - [ ]  maintenanceMarginPercentage
-    - [ ]  marginRatio
-    - [ ]  marginType
-    - [ ]  markPrice
-    - [ ]  notional
-    - [ ]  percentage
-    - [ ]  pnl
-    - [ ]  price
-    - [ ]  side
-    - [ ]  status
-    - [ ]  symbol
-    - [ ]  timestamp
-    - [ ]  unrealizedPnl
-- [ ]  fetch_open_orders
-    - [ ]  amount
-    - [ ]  average
-    - [ ]  clientOrderId
-    - [ ]  close
-    - [ ]  cost
-    - [ ]  datetime
-    - [ ]  fee
-    - [ ]  fees
-    - [ ]  filled
-    - [ ]  id
-    - [ ]  info
-    - [ ]  lastTradeTimestamp
-    - [ ]  postOnly
-    - [ ]  price
-    - [ ]  reduce
-    - [ ]  remaining
-    - [ ]  side
-    - [ ]  status
-    - [ ]  stopPrice
-    - [ ]  symbol
-    - [ ]  timeInForce
-    - [ ]  timestamp
-    - [ ]  fetch_balance
-        - [ ]  individual coin keys...
-            - [ ]  free
-            - [ ]  total
-            - [ ]  used
-        - [ ]  free
-        - [ ]  total
-        - [ ]  used
-    - [ ]  fetch_positions
-        - [ ]  collateral
-        - [ ]  contracts
-        - [ ]  datetime
-        - [ ]  entryPrice
-        - [ ]  hedged
-        - [ ]  id
-        - [ ]  info
-        - [ ]  initialMargin
-        - [ ]  initialMarginPercentage
-        - [ ]  isolated
-        - [ ]  leverage
-        - [ ]  liquidationPrice
-        - [ ]  maintenanceMargin
-        - [ ]  maintenanceMarginPercentage
-        - [ ]  marginRatio
-        - [ ]  marginType
-        - [ ]  markPrice
-        - [ ]  notional
-        - [ ]  percentage
-        - [ ]  pnl
-        - [ ]  price
-        - [ ]  side
-        - [ ]  status
-        - [ ]  symbol
-        - [ ]  timestamp
-        - [ ]  unrealizedPnl
-    - [ ]  fetch_open_orders
-        - [ ]  amount
-        - [ ]  average
-        - [ ]  clientOrderId
-        - [ ]  close
-        - [ ]  cost
-        - [ ]  datetime
-        - [ ]  fee
-        - [ ]  fees
-        - [ ]  filled
-        - [ ]  id
-        - [ ]  info
-        - [ ]  lastTradeTimestamp
-        - [ ]  postOnly
-        - [ ]  price
-        - [ ]  reduce
-        - [ ]  remaining
-        - [ ]  side
-        - [ ]  status
-        - [ ]  stopPrice
-        - [ ]  symbol
-        - [ ]  timeInForce
-        - [ ]  timestamp
-        - [ ]  trades
-        - [ ]  type
-    - [ ]  trades
-    - [ ]  type
-- [ ]  fetch_my_trades
-    - [ ]  info
-    - [ ]  timestamp
-    - [ ]  datetime
-    - [ ]  symbol
-    - [ ]  id
-    - [ ]  order
-    - [ ]  type
-    - [ ]  takerOrMaker
-    - [ ]  side
-    - [ ]  price
-    - [ ]  amount
-    - [ ]  cost
-    - [ ]  fee
-- [ ]  switch_hedge_mode
-    - [ ]  symbol
-    - [ ]  tradeMode
-- [ ]  switch_isolated
-    - [ ]  symbol
-    - [ ]  marginType
-- [ ]  set_leverage
-    - [ ]  symbol
-    - [ ]  leverage
-    - [ ]  buyLeverage
-    - [ ]  sellLeverage
+### fetch_balance
+	 individual coin keys...
+		 free
+		 total
+		 used
+	 free
+	 total
+	 used
+
+### fetch_positions
+	 collateral
+	 contracts
+	 datetime
+	 entryPrice
+	 hedged
+	 id
+	 info
+	 initialMargin
+	 initialMarginPercentage
+	 isolated
+	 leverage
+	 liquidationPrice
+	 maintenanceMargin
+	 maintenanceMarginPercentage
+	 marginRatio
+	 marginType
+	 markPrice
+	 notional
+	 percentage
+	 pnl
+	 price
+	 side
+	 status
+	 symbol
+	 timestamp
+	 unrealizedPnl
+
+### fetch_open_orders
+    amount
+	 average
+	 clientOrderId
+	 close
+	 cost
+	 datetime
+	 fee
+	 fees
+	 filled
+	 id
+	 info
+	 lastTradeTimestamp
+	 postOnly
+	 price
+	 reduce
+	 remaining
+	 side
+	 status
+	 stopPrice
+	 symbol
+	 timeInForce
+	 timestamp
+	 trades
+	 type
+
+### fetch_my_trades
+	 info
+	 timestamp
+	 datetime
+	 symbol
+	 id
+	 order
+	 type
+	 takerOrMaker
+	 side
+	 price
+	 amount
+	 cost
+	 fee
+
+### switch_hedge_mode
+	 symbol
+	 tradeMode
+
+### switch_isolated
+	 symbol
+	 marginType
+
 
 Current feature list:
 
