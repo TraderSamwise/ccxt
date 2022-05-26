@@ -193,11 +193,18 @@ Populate the following root `.env` file with non-IP bound API credentials.
 	mn_okex_secret=
 	mn_okex_password=
 
-### POST tests: `tealstreet_tests.py`
+### Test Files
 
-These tests ensure the order create, edit, delete, and other functionality of the Tealstreet terminal is operational.
+Python POST tests: `\python\tealstreet_tests.py`. These tests ensure the order create, edit, delete, and other functionality of the Tealstreet terminal is operational.
+Python CCXT tests: `\python\test`
 
-End Tealstreet x CCXT README
+### Sandbox
+
+Python sandbox: `\python\main.py`
+
+JavaScript sandbox: `\run-tests-2.py`
+
+# CCXT
 
 Current feature list:
 
