@@ -3181,7 +3181,7 @@ class binance(Exchange):
         positionSide = self.safe_string_2(position, 'positionSide', 'ps')
         if positionSide:
             tradeMode = 'oneway' if positionSide == 'BOTH' else 'hedged'
-        id = symbol + (':' + side if side else '')
+        id = symbol + ((':' + side) if side else '')
         return {
             'info': position,
             'id': id,
