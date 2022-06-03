@@ -912,6 +912,17 @@ class bybit(Exchange):
                 'currency': feeCurrencyCode,
                 'rate': self.safe_number(trade, 'fee_rate'),
             }
+
+        # TEALSTREET
+        isClose = None
+        closed_size = self.safe_string(trade, 'closed_size')
+        if closed_size is not None:
+            closed_size = self.parse_number(closed_size)
+            if closed_size == 0:
+                isClose = False
+            elif closed_size == amount:
+                isClose = True
+
         return {
             'id': id,
             'info': trade,
@@ -926,6 +937,7 @@ class bybit(Exchange):
             'amount': amount,
             'cost': cost,
             'fee': fee,
+            'isClose': isClose
         }
 
     async def fetch_trades(self, symbol, since=None, limit=None, params={}):

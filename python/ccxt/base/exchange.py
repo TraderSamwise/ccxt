@@ -105,8 +105,12 @@ try:
 except ImportError:
     import urllib as _urlencode          # Python 2
 
+
+class TealstreetMixin():
+    pass
+
 # -----------------------------------------------------------------------------
-class Exchange(object):
+class Exchange(TealstreetMixin, object):
     """Base exchange class"""
     id = None
     name = None
@@ -1584,6 +1588,9 @@ class Exchange(object):
 
     def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
         raise NotSupported('fetch_my_trades() is not supported yet')
+
+    def fetch_positions(self, symbols=None, params={}):
+        raise NotSupported('fetch_positions() is not supported yet')
 
     def fetch_order_trades(self, id, symbol=None, params={}):
         raise NotSupported('fetch_order_trades() is not supported yet')
