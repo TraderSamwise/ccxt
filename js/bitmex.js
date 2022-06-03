@@ -222,11 +222,11 @@ module.exports = class bitmex extends Exchange {
                 'amount': undefined,
                 'price': undefined,
             };
-            const tickSize = this.safeNumber(market, 'tickSize');
-            const rawUnderlyingToPositionMultiplier = this.safeNumber(market, 'underlyingToPositionMultiplier');
-            const orderMultiplier = rawUnderlyingToPositionMultiplier || 1 // TEALSTREET
+            const tickSize = this.safeNumber (market, 'tickSize');
+            const rawUnderlyingToPositionMultiplier = this.safeNumber (market, 'underlyingToPositionMultiplier');
+            const orderMultiplier = rawUnderlyingToPositionMultiplier || 1; // TEALSTREET
             // const lotSize = this.safeNumber(market, 'lotSize') / orderMultiplier; // TEALSTREET
-            const lotSize = this.safeNumber(market, 'lotSize'); // TEALSTREET
+            const lotSize = this.safeNumber (market, 'lotSize'); // TEALSTREET
             const inverse = market['isInverse'];
             const quanto = market['isQuanto'];
             const linear = !inverse && !quanto;
