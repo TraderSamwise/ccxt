@@ -1689,6 +1689,18 @@ class binance(Exchange):
             takerOrMaker = 'maker' if trade['maker'] else 'taker'
         marketId = self.safe_string(trade, 'symbol')
         symbol = self.safe_symbol(marketId, market)
+
+        # TEALSTREET
+        isClose = None
+        position_side = self.safe_string(trade, 'positionSide')
+        if position_side is not None:
+            position_side = position_side.lower()
+            if (position_side == 'long' and self.safe_string(trade, 'side', '').lower() == 'sell') or (
+                    position_side == 'short' and self.safe_string(trade, 'side', '').lower() == 'buy'):
+                isClose = True
+            else:
+                isClose = False
+
         return {
             'info': trade,
             'timestamp': timestamp,
@@ -1703,6 +1715,7 @@ class binance(Exchange):
             'amount': amount,
             'cost': cost,
             'fee': fee,
+            'isClose': isClose
         }
 
     async def fetch_trades(self, symbol, since=None, limit=None, params={}):
@@ -3354,7 +3367,7 @@ class binance(Exchange):
         await self.load_markets()
         # by default cache the leverage bracket
         # it contains useful stuff like the maintenance margin and initial margin for positions
-        if (self.options['leverageBrackets'] is None) or (reload):
+        if (self.options.get('leverageBrackets') is None) or (reload):
             method = None
             defaultType = self.safe_string_2(self.options, 'fetchPositions', 'defaultType', 'future')
             type = self.safe_string(params, 'type', defaultType)

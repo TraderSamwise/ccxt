@@ -3206,7 +3206,7 @@ class okex(OkexTealstreetMixin, Exchange):
         # if type is not None:
         #     if (type == 'SWAP') or (type == 'FUTURES'):
         #         request['instType'] = self.convert_to_instrument_type(type)
-        
+
         response = await self.privateGetAccountPositions(self.extend(request, query))
         #
         #     {
@@ -3305,7 +3305,7 @@ class okex(OkexTealstreetMixin, Exchange):
         marginRatio = self.safe_float(position, 'mgnRatio')
         percentage = unrealizedPnl / initialMargin
         collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
-        maxLeverage = market['maxLeverage']
+        maxLeverage = market.get('maxLeverage')
 
         return {
             'info': info,

@@ -1625,6 +1625,8 @@ class bitmex(BitmexTealstreetMixin, Exchange):
         #     ]
         #
         # todo unify parsePosition/parsePositions
+        # for pos in response:
+        #     pos['contracts'] = self.parse_number(pos['currentQty'], 0)
         return response
 
     def is_fiat(self, currency):
