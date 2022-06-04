@@ -452,6 +452,7 @@ class binance(Exchange):
                 },
                 'fapiPrivate': {
                     'get': [
+                        'positionSide/dual',
                         'allForceOrders',
                         'allOrders',
                         'openOrder',
@@ -696,6 +697,28 @@ class binance(Exchange):
                 'FOK': 'FOK',
             }
         })
+
+    async def fetch_account_configuration(self, symbol=None, params={}):
+        await self.load_markets()
+
+        method = None
+        defaultType = self.safe_string_2(self.options, 'fetchPositions', 'defaultType', 'future')
+        type = self.safe_string(params, 'type', defaultType)
+        query = self.omit(params, 'type')
+        if type == 'future':
+            method = 'fapiPrivateGetPositionSideDual'
+        elif type == 'delivery':
+            method = 'fapiPrivateGetPositionSideDual'
+        accountConfig = await getattr(self, method)(query)
+
+        dualSidePosition = self.safe_value(accountConfig, 'dualSidePosition')
+        tradeMode = 'hedged' if dualSidePosition else 'oneway'
+
+        unifiedResponse = {
+            'tradeMode': tradeMode,
+        }
+
+        return unifiedResponse
 
     def currency_to_precision(self, currency, fee):
         return self.number_to_string(fee)
@@ -3181,7 +3204,9 @@ class binance(Exchange):
         positionSide = self.safe_string_2(position, 'positionSide', 'ps')
         if positionSide:
             tradeMode = 'oneway' if positionSide == 'BOTH' else 'hedged'
-        id = symbol + ((':' + side) if side else '')
+        id = symbol
+        if tradeMode != 'oneway' and side:
+            id +=  ':' + side
         return {
             'info': position,
             'id': id,
