@@ -3142,7 +3142,7 @@ class binance(Exchange):
             contractsString = str(contractsRounded)
         contractsStringAbs = Precise.string_abs(contractsString)
         contracts = self.parse_number(contractsString)
-        leverageBracket = self.options['leverageBrackets'][symbol]
+        leverageBracket = self.options.get('leverageBrackets', {}).get(symbol)
         maxLeverage = 10
         if leverageBracket:
             maxLeverage = leverageBracket[0][2]
@@ -3218,7 +3218,8 @@ class binance(Exchange):
         if positionSide:
             tradeMode = 'oneway' if positionSide == 'BOTH' else 'hedged'
         id = symbol
-        if tradeMode != 'oneway' and side:
+        if tradeMode != 'oneway' and positionSide:
+            side = positionSide.lower()
             id +=  ':' + side
         return {
             'info': position,
