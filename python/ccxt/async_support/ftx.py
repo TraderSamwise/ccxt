@@ -1747,7 +1747,7 @@ class ftx(FTXTealstreetMixin, Exchange):
             price = self.safe_float(position, 'recentAverageOpenPrice') or 0
             markPrice = self.safe_float(market.get('info'), 'price')
             notional = contracts * price
-            leverage = notional / collateral if collateral else None
+            leverage = None
             initialMarginPercentage = self.safe_float(position, 'initialMarginRequirement')
             maintenanceMarginPercentage = self.safe_float(position, 'maintenanceMarginRequirement')
             initialMargin = initialMarginPercentage * notional
@@ -1763,7 +1763,7 @@ class ftx(FTXTealstreetMixin, Exchange):
             marginRatio = maintenanceMargin / collateral if collateral else None # not sure what this is, followed binance calc
             marginType = 'cross'
             percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
-            # collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
+            effectiveLeverage = notional / collateral if collateral else None
 
             unifiedResult.append({
                 'info': info,
@@ -1795,6 +1795,7 @@ class ftx(FTXTealstreetMixin, Exchange):
                 'collateral': collateral,
                 'marginType': marginType,
                 'percentage': percentage,  # not important
+                'effectiveLeverage': effectiveLeverage,  # not important
             })
 
         return unifiedResult
