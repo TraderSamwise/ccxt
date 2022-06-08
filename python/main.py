@@ -176,7 +176,7 @@ def test_bitmex():
     symbol = 'BTC/USD'
 
     # print(exchange.switch_isolated(symbol, True, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, False))
+    # print(exchange.switch_hedge_mode(symbol, False))
     # print(exchange.set_leverage(symbol, 25, 40))
 
     # print('sending order')
@@ -404,11 +404,11 @@ def test_phemex():
 
 def main():
     # test_binance()
-    # test_bitmex()
+    test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_okex()
-    test_phemex()
+    # test_phemex()
     # test_gateio()
     # test_kucoin()
     # buy_stuff()
