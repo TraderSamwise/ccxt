@@ -1799,7 +1799,6 @@ class ftx(FTXTealstreetMixin, Exchange):
             })
 
         return unifiedResult
-        # return self.safe_value(result, 'positions', [])
 
     async def fetch_deposit_address(self, code, params={}):
         await self.load_markets()
