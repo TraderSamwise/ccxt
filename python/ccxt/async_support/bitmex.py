@@ -601,7 +601,8 @@ class bitmex(BitmexTealstreetMixin, Exchange):
         #         }
         #     ]
         #
-        return self.parse_trades(response, market, since, limit)
+        filtered_response = list(filter(lambda order: order.get('execType') != 'Funding', response))
+        return self.parse_trades(filtered_response, market, since, limit)
 
     def parse_ledger_entry_type(self, type):
         types = {
