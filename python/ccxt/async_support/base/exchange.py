@@ -133,6 +133,9 @@ class Exchange(ExchangeTealstreetMixin, BaseExchange):
             self.session = None
 
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None):
+
+        trigger_ratelimit = params.pop('triggerRatelimit', True)
+
         """A better wrapper over request for deferred signing"""
         # TEALSTREET
         self.check_rate_limits()
@@ -143,12 +146,14 @@ class Exchange(ExchangeTealstreetMixin, BaseExchange):
         request = self.sign(path, api, method, params, headers, body)
         try:
             res = await self.fetch(request['url'], request['method'], request['headers'], request['body'])
-            self.set_rate_limit_status(False)
+            if trigger_ratelimit:
+                self.set_rate_limit_status(False)
             return res
         except Exception as e:
-            if self.is_rate_limit_error(e):
-                self.set_rate_limit_status(True)
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
+            if trigger_ratelimit:
+                if self.is_rate_limit_error(e):
+                    self.set_rate_limit_status(True)
+                    raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
             raise e
 
     async def fetch(self, url, method='GET', headers=None, body=None):
