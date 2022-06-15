@@ -458,6 +458,8 @@ class Exchange(object):
     def define_rest_api(cls, api, method_name, paths=[]):
         delimiters = re.compile('[^a-zA-Z0-9]')
         entry = getattr(cls, method_name)  # returns a function (instead of a bound method)
+        if api  == 1:
+            print(api)
         for key, value in api.items():
             if isinstance(value, list):
                 uppercase_method = key.upper()

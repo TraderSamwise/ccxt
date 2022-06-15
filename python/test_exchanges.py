@@ -109,14 +109,16 @@ mn_gateio_exchange = ccxt.gateio(mn_gateio_params)
 mn_kucoin_params = {
     'apiKey': os.environ.get('mn_kucoin_key'),
     'secret': os.environ.get('mn_kucoin_secret'),
-    'enableRateLimit': True,
+    'password': os.environ.get('tn_kucoin_password'),
+    'enableRateLimit': True
 }
 mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
 mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
 tn_kucoin_params = {
     'apiKey': os.environ.get('tn_kucoin_key'),
     'secret': os.environ.get('tn_kucoin_secret'),
-    'enableRateLimit': True,
+    'password': os.environ.get('tn_kucoin_password'),
+    'enableRateLimit': True
 }
 tn_kucoin_exchange_pro = ccxtpro.kucoin(tn_kucoin_params)
 tn_kucoin_exchange_pro.set_sandbox_mode(True)
