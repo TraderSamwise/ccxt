@@ -114,6 +114,7 @@ mn_kucoin_params = {
 }
 mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
 mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
+
 tn_kucoin_params = {
     'apiKey': os.environ.get('tn_kucoin_key'),
     'secret': os.environ.get('tn_kucoin_secret'),

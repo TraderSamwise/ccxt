@@ -1,21 +1,28 @@
+import asyncio
+from pprint import pprint
+
 import test_exchanges as test
+from ccxt.async_support.kucoinfutures import kucoinfutures
 
 
-def test_kucoin():
+async def test_kucoin():
     # exchange = test.mn_binance_usdm_exchange
-    exchange = test.mn_kucoin_exchange
-
+    exchange: kucoinfutures = test.mn_kucoin_exchange_pro
+    await exchange.load_markets()
+    pprint(exchange.markets)
+    '''
     # symbol = 'BTC/USDT'
     symbol = 'BTC/USD'
-    ticker = exchange.fetch_ticker(symbol)
+    ticker = await exchange.fetch_ticker(symbol)
     last = ticker['last']
+    '''
 
-    markets = exchange.fetch_markets()
-
-    print(markets)
 
 
 def main():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(test_kucoin())
     test_kucoin()
 
 
