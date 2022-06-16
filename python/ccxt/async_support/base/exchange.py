@@ -17,6 +17,7 @@ import sys
 import yarl
 
 # -----------------------------------------------------------------------------
+from ccxt.async_support.base.asyncio_utils import AsyncioSafeTasks
 
 from ccxt.async_support.base.throttle import throttle
 
@@ -86,7 +87,7 @@ class ExchangeTealstreetMixin(object):
     async def fetch_account_configuration(self, symbol=None, params={}):
         return {}
 
-class Exchange(ExchangeTealstreetMixin, BaseExchange):
+class Exchange(ExchangeTealstreetMixin, BaseExchange, AsyncioSafeTasks):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:
