@@ -107,7 +107,7 @@ except ImportError:
 
 
 class TealstreetMixin():
-    pass
+    support_class = None
 
 # -----------------------------------------------------------------------------
 class Exchange(TealstreetMixin, object):
