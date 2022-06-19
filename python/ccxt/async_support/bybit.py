@@ -1890,7 +1890,7 @@ class bybit(Exchange):
         }
         return await self.fetch_my_trades(symbol, since, limit, self.extend(request, params))
 
-    async def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
+    async def fetch_my_trades(self, symbol=None, since=None, limit=200, params={}):
         await self.load_markets()
         request = {
             # 'order_id': 'f185806b-b801-40ff-adec-52289370ed62',  # if not provided will return user's trading records
@@ -1912,6 +1912,7 @@ class bybit(Exchange):
             request['symbol'] = market['id']
         if since is not None:
             request['start_time'] = since
+            request['page'] = 2
         if limit is not None:
             request['limit'] = limit  # default 20, max 50
         defaultType = self.safe_string(self.options, 'defaultType', 'linear')
