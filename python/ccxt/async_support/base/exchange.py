@@ -87,7 +87,7 @@ class ExchangeTealstreetMixin(object):
     async def fetch_account_configuration(self, symbol=None, params={}):
         return {}
 
-class Exchange(ExchangeTealstreetMixin, BaseExchange, AsyncioSafeTasks):
+class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:
