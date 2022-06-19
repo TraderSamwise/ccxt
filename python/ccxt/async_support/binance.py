@@ -1692,11 +1692,11 @@ class binance(Exchange):
 
         # TEALSTREET
         isClose = None
-        position_side = self.safe_string(trade, 'positionSide')
-        if position_side is not None:
-            position_side = position_side.lower()
-            if (position_side == 'long' and self.safe_string(trade, 'side', '').lower() == 'sell') or (
-                    position_side == 'short' and self.safe_string(trade, 'side', '').lower() == 'buy'):
+        position_side = self.safe_string(trade, 'positionSide', 'BOTH').lower()
+        if position_side != 'both':
+            _side = self.safe_string(trade, 'side', '').lower()
+            if (position_side == 'long' and _side == 'sell') or (
+                    position_side == 'short' and _side == 'buy'):
                 isClose = True
             else:
                 isClose = False
@@ -2260,6 +2260,7 @@ class binance(Exchange):
             return response
 
     async def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
+        limit = limit or 1000
         if symbol is None:
             raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
         await self.load_markets()

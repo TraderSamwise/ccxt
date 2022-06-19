@@ -111,7 +111,7 @@ class ExchangeTealstreetMixin(object):
             fetch_callback and fetch_callback(trades)
             since_time = new_since_time
             trades.extend(fetched_trades)
-        trades.reverse()
+        trades.sort(key=lambda trade: trade['timestamp'], reverse=True)
         return trades
 
 class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
