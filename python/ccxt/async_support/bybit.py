@@ -1837,7 +1837,18 @@ class bybit(Exchange):
         #
         result = self.safe_value(response, 'result', {})
         data = self.safe_value(result, 'data', [])
-        return self.parse_orders(data, market, since, limit)
+        # TEALSTREET
+        parsed_orders = self.parse_orders(data, market, since, limit)
+        if len(data) >= 50:
+            if 'current_page' in result:
+                params['page'] = int(result['current_page']) + 1
+            elif 'cursor' in result:
+                params['cursor'] = int(result['cursor'])
+            else:
+                return parsed_orders
+            rest = await self.fetch_orders(symbol=symbol, since=since, limit=limit, params=params)
+            parsed_orders.extend(rest)
+        return parsed_orders
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         defaultStatuses = [
