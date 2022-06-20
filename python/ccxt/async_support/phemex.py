@@ -2387,7 +2387,6 @@ class phemex(PhemexTealstreetMixin, Exchange):
                         unifiedResult.append(self.parse_position(position, contractType, accountBalance))
                     combined.extend(unifiedResult)
                 return combined
-
         else:
             currency = self.currency(code)
             params = self.omit(params, 'code')
