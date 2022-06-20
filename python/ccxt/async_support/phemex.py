@@ -2363,11 +2363,10 @@ class phemex(PhemexTealstreetMixin, Exchange):
         if code is None:
             currencyId = self.safe_string(params, 'currency')
             if currencyId is None:
-                params['currency'] = 'USD'
-                fetch_usd = self.create_task(self.privateGetAccountsPositions(self.extend(request, params)))
-                params['currency'] = 'BTC'
-                fetch_btc = self.create_task(self.privateGetAccountsPositions(self.extend(request, params)))
-                results = await asyncio.gather(fetch_usd, fetch_btc)
+                fetch_usd = self.create_task(self.privateGetAccountsPositions(self.extend(request, {**params, 'currency': 'USD'})))
+                fetch_btc = self.create_task(self.privateGetAccountsPositions(self.extend(request, {**params, 'currency': 'BTC'})))
+                fetch_eth = self.create_task(self.privateGetAccountsPositions(self.extend(request, {**params, 'currency': 'ETH'})))
+                results = await asyncio.gather(fetch_usd, fetch_btc, fetch_eth)
                 combined = []
                 for response in results:
                     if isinstance(response, ccxt.errors.BaseError) or type(response) == TypeError:
