@@ -1005,74 +1005,44 @@ class okex(OkexTealstreetMixin, Exchange):
 
     def parse_trade(self, trade, market=None):
         #
-        # fetchTrades(public)
+        # public fetchTrades
         #
-        #     spot trades
+        #     {
+        #         "instId": "ETH-BTC",
+        #         "side": "sell",
+        #         "sz": "0.119501",
+        #         "px": "0.07065",
+        #         "tradeId": "15826757",
+        #         "ts": "1621446178316"
+        #     }
         #
-        #         {
-        #             time: "2018-12-17T23:31:08.268Z",
-        #             timestamp: "2018-12-17T23:31:08.268Z",
-        #             trade_id: "409687906",
-        #             price: "0.02677805",
-        #             size: "0.923467",
-        #             side: "sell"
-        #         }
+        # private fetchMyTrades
         #
-        #     futures trades, swap trades
-        #
-        #         {
-        #             trade_id: "1989230840021013",
-        #             side: "buy",
-        #             price: "92.42",
-        #             qty: "184",  # missing in swap markets
-        #             size: "5",  # missing in futures markets
-        #             timestamp: "2018-12-17T23:26:04.613Z"
-        #         }
-        #
-        # fetchOrderTrades(private)
-        #
-        #     spot trades, margin trades
-        #
-        #         {
-        #             "created_at":"2019-03-15T02:52:56.000Z",
-        #             "exec_type":"T",  # whether the order is taker or maker
-        #             "fee":"0.00000082",
-        #             "instrument_id":"BTC-USDT",
-        #             "ledger_id":"3963052721",
-        #             "liquidity":"T",  # whether the order is taker or maker
-        #             "order_id":"2482659399697408",
-        #             "price":"3888.6",
-        #             "product_id":"BTC-USDT",
-        #             "side":"buy",
-        #             "size":"0.00055306",
-        #             "timestamp":"2019-03-15T02:52:56.000Z"
-        #         },
-        #
-        #     futures trades, swap trades
-        #
-        #         {
-        #             "trade_id":"197429674631450625",
-        #             "instrument_id":"EOS-USD-SWAP",
-        #             "order_id":"6a-7-54d663a28-0",
-        #             "price":"3.633",
-        #             "order_qty":"1.0000",
-        #             "fee":"-0.000551",
-        #             "created_at":"2019-03-21T04:41:58.0Z",  # missing in swap trades
-        #             "timestamp":"2019-03-25T05:56:31.287Z",  # missing in futures trades
-        #             "exec_type":"M",  # whether the order is taker or maker
-        #             "side":"short",  # "buy" in futures trades
-        #         }
+        #     {
+        #         "side": "buy",
+        #         "fillSz": "0.007533",
+        #         "fillPx": "2654.98",
+        #         "fee": "-0.000007533",
+        #         "ordId": "317321390244397056",
+        #         "instType": "SPOT",
+        #         "instId": "ETH-USDT",
+        #         "clOrdId": "",
+        #         "posSide": "net",
+        #         "billId": "317321390265368576",
+        #         "tag": "0",
+        #         "execType": "T",
+        #         "tradeId": "107601752",
+        #         "feeCcy": "ETH",
+        #         "ts": "1621927314985"
+        #     }
         #
         id = self.safe_string(trade, 'tradeId')
         marketId = self.safe_string(trade, 'instId')
         market = self.safe_market(marketId, market, '-')
         symbol = market['symbol']
         timestamp = self.safe_integer(trade, 'ts')
-        priceString = self.safe_string_2(trade, 'fillPx', 'px')
-        amountString = self.safe_string_2(trade, 'fillSz', 'sz')
-        price = self.parse_number(priceString)
-        amount = self.parse_number(amountString)
-        cost = self.parse_number(Precise.string_mul(priceString, amountString))
+        price = self.safe_string_2(trade, 'fillPx', 'px')
+        amount = self.safe_string_2(trade, 'fillSz', 'sz')
         side = self.safe_string(trade, 'side')
         orderId = self.safe_string(trade, 'ordId')
         feeCostString = self.safe_string(trade, 'fee')
@@ -1082,7 +1052,7 @@ class okex(OkexTealstreetMixin, Exchange):
             feeCurrencyId = self.safe_string(trade, 'feeCcy')
             feeCurrencyCode = self.safe_currency_code(feeCurrencyId)
             fee = {
-                'cost': self.parse_number(feeCostSigned),
+                'cost': feeCostSigned,
                 'currency': feeCurrencyCode,
             }
         takerOrMaker = self.safe_string(trade, 'execType')
@@ -1090,7 +1060,7 @@ class okex(OkexTealstreetMixin, Exchange):
             takerOrMaker = 'taker'
         elif takerOrMaker == 'M':
             takerOrMaker = 'maker'
-        return {
+        return self.safe_trade({
             'info': trade,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
@@ -1102,9 +1072,9 @@ class okex(OkexTealstreetMixin, Exchange):
             'side': side,
             'price': price,
             'amount': amount,
-            'cost': cost,
+            'cost': None,
             'fee': fee,
-        }
+        }, market)
 
     async def fetch_trades(self, symbol, since=None, limit=None, params={}):
         await self.load_markets()
@@ -2857,117 +2827,62 @@ class okex(OkexTealstreetMixin, Exchange):
             result['fees'] = fees
         return result
 
-    def parse_my_trades(self, trades, market=None, since=None, limit=None, params={}):
-        grouped = self.group_by(trades, 'trade_id')
-        tradeIds = list(grouped.keys())
-        result = []
-        for i in range(0, len(tradeIds)):
-            tradeId = tradeIds[i]
-            pair = grouped[tradeId]
-            # make sure it has exactly 2 trades, no more, no less
-            numTradesInPair = len(pair)
-            if numTradesInPair == 2:
-                trade = self.parse_my_trade(pair)
-                result.append(trade)
-        symbol = None
-        if market is not None:
-            symbol = market['symbol']
-        return self.filter_by_symbol_since_limit(result, symbol, since, limit)
 
     async def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
-        # okex actually returns ledger entries instead of fills here, so each fill in the order
-        # is represented by two trades with opposite buy/sell sides, not one :\
-        # self aspect renders the 'fills' endpoint unusable for fetchOrderTrades
-        # until either OKEX fixes the API or we workaround self on our side somehow
-        if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
+        """
+        fetch all trades made by the user
+        :param str|None symbol: unified market symbol
+        :param int|None since: the earliest time in ms to fetch trades for
+        :param int|None limit: the maximum number of trades structures to retrieve
+        :param dict params: extra parameters specific to the okx api endpoint
+        :returns [dict]: a list of `trade structures <https://docs.ccxt.com/en/latest/manual.html#trade-structure>`
+        """
         await self.load_markets()
-        market = self.market(symbol)
-        if (limit is not None) and (limit > 100):
-            limit = 100
         request = {
-            'instrument_id': market['id'],
-            # 'order_id': id,  # string
-            # 'after': '1',  # pagination of data to return records earlier than the requested ledger_id
-            # 'before': '1',  # P=pagination of data to return records newer than the requested ledger_id
-            # 'limit': limit,  # optional, number of results per request, default = maximum = 100
+            # 'instType': 'SPOT',  # SPOT, MARGIN, SWAP, FUTURES, OPTION
+            # 'uly': currency['id'],
+            # 'instId': market['id'],
+            # 'ordId': orderId,
+            # 'after': billId,
+            # 'before': billId,
+            # 'limit': limit,  # default 100, max 100
         }
-        defaultType = self.safe_string_2(self.options, 'fetchMyTrades', 'defaultType')
-        type = self.safe_string(params, 'type', defaultType)
-        query = self.omit(params, 'type')
-        method = type + 'GetFills'
-        response = await getattr(self, method)(self.extend(request, query))
+        market = None
+        if symbol is not None:
+            market = self.market(symbol)
+            request['instId'] = market['id']
+        type, query = self.handle_market_type_and_params('fetchMyTrades', market, params)
+        request['instType'] = self.convert_to_instrument_type(type)
+        if limit is not None:
+            request['limit'] = limit  # default 100, max 100
+        response = await self.privateGetTradeFillsHistory(self.extend(request, query))
         #
-        #     [
-        #         # sell
-        #         {
-        #             "created_at":"2020-03-29T11:55:25.000Z",
-        #             "currency":"USDT",
-        #             "exec_type":"T",
-        #             "fee":"-0.04647925",
-        #             "instrument_id":"ETH-USDT",
-        #             "ledger_id":"10562924353",
-        #             "liquidity":"T",
-        #             "order_id":"4636470489136128",
-        #             "price":"129.13",
-        #             "product_id":"ETH-USDT",
-        #             "side":"buy",
-        #             "size":"30.98616393",
-        #             "timestamp":"2020-03-29T11:55:25.000Z",
-        #             "trade_id":"18551601"
-        #         },
-        #         {
-        #             "created_at":"2020-03-29T11:55:25.000Z",
-        #             "currency":"ETH",
-        #             "exec_type":"T",
-        #             "fee":"0",
-        #             "instrument_id":"ETH-USDT",
-        #             "ledger_id":"10562924352",
-        #             "liquidity":"T",
-        #             "order_id":"4636470489136128",
-        #             "price":"129.13",
-        #             "product_id":"ETH-USDT",
-        #             "side":"sell",
-        #             "size":"0.23996099",
-        #             "timestamp":"2020-03-29T11:55:25.000Z",
-        #             "trade_id":"18551601"
-        #         },
-        #         # buy
-        #         {
-        #             "created_at":"2020-03-29T11:55:16.000Z",
-        #             "currency":"ETH",
-        #             "exec_type":"T",
-        #             "fee":"-0.00036049",
-        #             "instrument_id":"ETH-USDT",
-        #             "ledger_id":"10562922669",
-        #             "liquidity":"T",
-        #             "order_id": "4636469894136832",
-        #             "price":"129.16",
-        #             "product_id":"ETH-USDT",
-        #             "side":"buy",
-        #             "size":"0.240322",
-        #             "timestamp":"2020-03-29T11:55:16.000Z",
-        #             "trade_id":"18551600"
-        #         },
-        #         {
-        #             "created_at":"2020-03-29T11:55:16.000Z",
-        #             "currency":"USDT",
-        #             "exec_type":"T",
-        #             "fee":"0",
-        #             "instrument_id":"ETH-USDT",
-        #             "ledger_id":"10562922668",
-        #             "liquidity":"T",
-        #             "order_id":"4636469894136832",
-        #             "price":"129.16",
-        #             "product_id":"ETH-USDT",
-        #             "side":"sell",
-        #             "size":"31.03998952",
-        #             "timestamp":"2020-03-29T11:55:16.000Z",
-        #             "trade_id":"18551600"
-        #         }
-        #     ]
+        #     {
+        #         "code": "0",
+        #         "data": [
+        #             {
+        #                 "side": "buy",
+        #                 "fillSz": "0.007533",
+        #                 "fillPx": "2654.98",
+        #                 "fee": "-0.000007533",
+        #                 "ordId": "317321390244397056",
+        #                 "instType": "SPOT",
+        #                 "instId": "ETH-USDT",
+        #                 "clOrdId": "",
+        #                 "posSide": "net",
+        #                 "billId": "317321390265368576",
+        #                 "tag": "0",
+        #                 "execType": "T",
+        #                 "tradeId": "107601752",
+        #                 "feeCcy": "ETH",
+        #                 "ts": "1621927314985"
+        #             }
+        #         ],
+        #         "msg": ""
+        #     }
         #
-        return self.parse_my_trades(response, market, since, limit, params)
+        data = self.safe_value(response, 'data', [])
+        return self.parse_trades(data, market, since, limit, query)
 
     async def fetch_order_trades(self, id, symbol=None, since=None, limit=None, params={}):
         request = {
@@ -3191,7 +3106,7 @@ class okex(OkexTealstreetMixin, Exchange):
 
     def convert_to_instrument_type(self, type):
         exchangeTypes = self.safe_value(self.options, 'exchangeType', {})
-        return self.safe_string(exchangeTypes, type, type)
+        return self.safe_string(exchangeTypes, type, type).upper()
 
     async def fetch_positions(self, symbols=None, params={}):
         await self.load_markets()

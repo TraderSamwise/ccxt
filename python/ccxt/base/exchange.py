@@ -8,7 +8,7 @@ __version__ = '1.50.88'
 
 # -----------------------------------------------------------------------------
 
-from ccxt.base.errors import ExchangeError
+from ccxt.base.errors import ExchangeError, BadRequest
 from ccxt.base.errors import NetworkError
 from ccxt.base.errors import NotSupported
 from ccxt.base.errors import AuthenticationError
@@ -2354,20 +2354,80 @@ class Exchange(TealstreetMixin, object):
         string.reverse()
         return ''.join(string)
 
-    def reduce_fees_by_currency(self, fees):
+    def reduce_fees_by_currency(self, fees, string=False):
+        #
+        # self function takes a list of fee structures having the following format
+        #
+        #     string = True
+        #
+        #     [
+        #         {'currency': 'BTC', 'cost': '0.1'},
+        #         {'currency': 'BTC', 'cost': '0.2'  },
+        #         {'currency': 'BTC', 'cost': '0.2', 'rate': '0.00123'},
+        #         {'currency': 'BTC', 'cost': '0.4', 'rate': '0.00123'},
+        #         {'currency': 'BTC', 'cost': '0.5', 'rate': '0.00456'},
+        #         {'currency': 'USDT', 'cost': '12.3456'},
+        #     ]
+        #
+        #     string = False
+        #
+        #     [
+        #         {'currency': 'BTC', 'cost': 0.1},
+        #         {'currency': 'BTC', 'cost': 0.2},
+        #         {'currency': 'BTC', 'cost': 0.2, 'rate': 0.00123},
+        #         {'currency': 'BTC', 'cost': 0.4, 'rate': 0.00123},
+        #         {'currency': 'BTC', 'cost': 0.5, 'rate': 0.00456},
+        #         {'currency': 'USDT', 'cost': 12.3456},
+        #     ]
+        #
+        # and returns a reduced fee list, where fees are summed per currency and rate(if any)
+        #
+        #     string = True
+        #
+        #     [
+        #         {'currency': 'BTC', 'cost': '0.3'  },
+        #         {'currency': 'BTC', 'cost': '0.6', 'rate': '0.00123'},
+        #         {'currency': 'BTC', 'cost': '0.5', 'rate': '0.00456'},
+        #         {'currency': 'USDT', 'cost': '12.3456'},
+        #     ]
+        #
+        #     string  = False
+        #
+        #     [
+        #         {'currency': 'BTC', 'cost': 0.3  },
+        #         {'currency': 'BTC', 'cost': 0.6, 'rate': 0.00123},
+        #         {'currency': 'BTC', 'cost': 0.5, 'rate': 0.00456},
+        #         {'currency': 'USDT', 'cost': 12.3456},
+        #     ]
+        #
         reduced = {}
         for i in range(0, len(fees)):
             fee = fees[i]
-            feeCurrencyCode = self.safe_value(fee, 'currency')
+            feeCurrencyCode = self.safe_string(fee, 'currency')
             if feeCurrencyCode is not None:
-                if feeCurrencyCode in reduced:
-                    reduced[feeCurrencyCode]['cost'] = self.sum(reduced[feeCurrencyCode]['cost'], fee['cost'])
+                rate = self.safe_string(fee, 'rate')
+                cost = self.safe_value(fee, 'cost')
+                if not (feeCurrencyCode in reduced):
+                    reduced[feeCurrencyCode] = {}
+                rateKey = '' if (rate is None) else rate
+                if rateKey in reduced[feeCurrencyCode]:
+                    if string:
+                        reduced[feeCurrencyCode][rateKey]['cost'] = Precise.string_add(reduced[feeCurrencyCode][rateKey]['cost'], cost)
+                    else:
+                        reduced[feeCurrencyCode][rateKey]['cost'] = self.sum(reduced[feeCurrencyCode][rateKey]['cost'], cost)
                 else:
-                    reduced[feeCurrencyCode] = {
-                        'cost': fee['cost'],
+                    reduced[feeCurrencyCode][rateKey] = {
                         'currency': feeCurrencyCode,
+                        'cost': cost if string else self.parse_number(cost),
                     }
-        return list(reduced.values())
+                    if rate is not None:
+                        reduced[feeCurrencyCode][rateKey]['rate'] = rate if string else self.parse_number(rate)
+        result = []
+        feeValues = list(reduced.values())
+        for i in range(0, len(feeValues)):
+            reducedFeeValues = list(feeValues[i].values())
+            result = self.array_concat(result, reducedFeeValues)
+        return result
 
     def safe_order(self, order):
         # Cost
@@ -2530,20 +2590,6 @@ class Exchange(TealstreetMixin, object):
             raise ExchangeError(self.id + 'fetchBorrowRate() could not find the borrow rate for currency code ' + code)
         return rate
 
-    def handle_market_type_and_params(self, method_name, market=None, params={}):
-        default_type = self.safe_string_2(self.options, 'defaultType', 'type', 'spot')
-        method_options = self.safe_value(self.options, method_name)
-        method_type = default_type
-        if method_options is not None:
-            if isinstance(method_options, str):
-                method_type = method_options
-            else:
-                method_type = self.safe_string_2(method_options, 'defaultType', 'type', method_type)
-        market_type = method_type if market is None else market['type']
-        type = self.safe_string_2(params, 'defaultType', 'type', market_type)
-        params = self.omit(params, ['defaultType', 'type'])
-        return [type, params]
-
     def load_time_difference(self, params={}):
         server_time = self.fetch_time(params)
         after = self.milliseconds()
@@ -2625,3 +2671,59 @@ class Exchange(TealstreetMixin, object):
         type = self.safe_string_2(params, 'defaultType', 'type', market_type)
         params = self.omit(params, ['defaultType', 'type'])
         return [type, params]
+
+    def safe_trade(self, trade, market=None):
+        amount = self.safe_string(trade, 'amount')
+        price = self.safe_string(trade, 'price')
+        cost = self.safe_string(trade, 'cost')
+        if cost is None:
+            # contract trading
+            contractSize = self.safe_string(market, 'contractSize')
+            multiplyPrice = price
+            if contractSize is not None:
+                inverse = self.safe_value(market, 'inverse', False)
+                if inverse:
+                    multiplyPrice = Precise.string_div('1', price)
+                multiplyPrice = Precise.string_mul(multiplyPrice, contractSize)
+            cost = Precise.string_mul(multiplyPrice, amount)
+        parseFee = self.safe_value(trade, 'fee') is None
+        parseFees = self.safe_value(trade, 'fees') is None
+        shouldParseFees = parseFee or parseFees
+        fees = []
+        if shouldParseFees:
+            tradeFees = self.safe_value(trade, 'fees')
+            if tradeFees is not None:
+                for j in range(0, len(tradeFees)):
+                    tradeFee = tradeFees[j]
+                    fees.append(self.extend({}, tradeFee))
+            else:
+                tradeFee = self.safe_value(trade, 'fee')
+                if tradeFee is not None:
+                    fees.append(self.extend({}, tradeFee))
+        fee = self.safe_value(trade, 'fee')
+        if shouldParseFees:
+            reducedFees = self.reduce_fees_by_currency(fees, True) if self.reduceFees else fees
+            reducedLength = len(reducedFees)
+            for i in range(0, reducedLength):
+                reducedFees[i]['cost'] = self.safe_number(reducedFees[i], 'cost')
+                if 'rate' in reducedFees[i]:
+                    reducedFees[i]['rate'] = self.safe_number(reducedFees[i], 'rate')
+            if not parseFee and (reducedLength == 0):
+                fee['cost'] = self.safe_number(fee, 'cost')
+                if 'rate' in fee:
+                    fee['rate'] = self.safe_number(fee, 'rate')
+                reducedFees.append(fee)
+            if parseFees:
+                trade['fees'] = reducedFees
+            if parseFee and (reducedLength == 1):
+                trade['fee'] = reducedFees[0]
+            tradeFee = self.safe_value(trade, 'fee')
+            if tradeFee is not None:
+                tradeFee['cost'] = self.safe_number(tradeFee, 'cost')
+                if 'rate' in tradeFee:
+                    tradeFee['rate'] = self.safe_number(tradeFee, 'rate')
+                trade['fee'] = tradeFee
+        trade['amount'] = self.parse_number(amount)
+        trade['price'] = self.parse_number(price)
+        trade['cost'] = self.parse_number(cost)
+        return trade
