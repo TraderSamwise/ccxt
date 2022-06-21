@@ -177,7 +177,7 @@ def test_bitmex():
 
     # print(exchange.switch_isolated(symbol, True, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
-    # print(exchange.set_leverage(symbol, 25, 40))
+    print(exchange.set_leverage(symbol, 25, 40))
 
     # print('sending order')
     # result = exchange.create_order(

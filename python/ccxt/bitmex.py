@@ -268,7 +268,7 @@ class BitmexTealstreetMixin(object):
         collateral = None
         marketId = self.safe_string(position, 'symbol')
         market = self.safe_market(marketId)
-        symbol = self.safe_symbol(marketId)
+        symbol = market['symbol']
         id = symbol
         datetime =self.safe_string(position, 'openingTimestamp')
         timestamp = self.parse8601(datetime)
