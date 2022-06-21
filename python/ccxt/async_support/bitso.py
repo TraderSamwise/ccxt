@@ -601,7 +601,7 @@ class bitso(Exchange):
                 self.throw_exactly_matched_exception(self.exceptions, code, feedback)
                 raise ExchangeError(feedback)
 
-    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
+    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         response = await self.fetch2(path, api, method, params, headers, body)
         if 'success' in response:
             if response['success']:

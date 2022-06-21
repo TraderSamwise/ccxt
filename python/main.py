@@ -3,6 +3,9 @@ from pprint import pprint
 
 import test_exchanges as test
 from ccxt.async_support.kucoinfutures import kucoinfutures
+# from python_utils.trace_prints import TracePrints
+# import sys
+# sys.stdout = TracePrints()
 
 
 async def test_kucoin():
@@ -20,10 +23,8 @@ async def test_kucoin():
 
 
 def main():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(test_kucoin())
-    test_kucoin()
 
 
 if __name__ == "__main__":

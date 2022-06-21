@@ -49,6 +49,6 @@ class Throttler(AsyncioSafeTasks):
         self.queue.append((future, cost))
         if not self.running:
             self.running = True
-            self.loop.create_task(self.looper())
-            # self.create_task(self.looper())
+            # self.loop.create_task(self.looper())
+            self.create_task(self.looper())
         return future
