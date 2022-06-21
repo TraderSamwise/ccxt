@@ -525,13 +525,20 @@ class Exchange(TealstreetMixin, object):
             else:
                 self.define_rest_api(value, method_name, paths + [key])
 
-    def throttle(self, cost=None):
+    # def throttle(self, cost=None):
+    #     now = float(self.milliseconds())
+    #     elapsed = now - self.lastRestRequestTimestamp
+    #     cost = 1 if cost is None else cost
+    #     sleep_time = self.rateLimit * cost
+    #     if elapsed < sleep_time:
+    #         delay = sleep_time - elapsed
+    #         time.sleep(delay / 1000.0)
+
+    def throttle(self):
         now = float(self.milliseconds())
         elapsed = now - self.lastRestRequestTimestamp
-        cost = 1 if cost is None else cost
-        sleep_time = self.rateLimit * cost
-        if elapsed < sleep_time:
-            delay = sleep_time - elapsed
+        if elapsed < self.rateLimit:
+            delay = self.rateLimit - elapsed
             time.sleep(delay / 1000.0)
 
     def calculate_rate_limiter_cost(self, api, method, path, params, config={}, context={}):
@@ -544,8 +551,9 @@ class Exchange(TealstreetMixin, object):
         self.check_rate_limits()
 
         if self.enableRateLimit:
-            cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
-            self.throttle(cost)
+            # cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
+            # self.throttle(cost)
+            self.throttle()
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
         try:
