@@ -1551,11 +1551,10 @@ class phemex(PhemexTealstreetMixin, Exchange):
             result = self.parse_swap_balance(response) if (_type == 'swap') else self.parse_spot_balance(response)
             return result
         else:
-            params['currency'] = 'USD'
-            fetch_usd = self.create_task(getattr(self, method)(self.extend(request, params)))
-            params['currency'] = 'BTC'
-            fetch_btc = self.create_task(getattr(self, method)(self.extend(request, params)))
-            results = await asyncio.gather(fetch_usd, fetch_btc)
+            fetch_usd = self.create_task(getattr(self, method)(self.extend(request, {**params, 'currency': 'USD'})))
+            fetch_btc= self.create_task(getattr(self, method)(self.extend(request, {**params, 'currency': 'BTC'})))
+            fetch_eth = self.create_task(getattr(self, method)(self.extend(request, {**params, 'currency': 'ETH'})))
+            results = await asyncio.gather(fetch_usd, fetch_btc, fetch_eth)
             combined = {}
             for response in results:
                 if isinstance(response, ccxt.errors.BaseError) or type(response) == TypeError:
@@ -2375,8 +2374,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
                     accountBalance = self.safe_value(data, 'account')
                     positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0']  # only open positions
                     unifiedResult = []
-
-                    contractType = 'inverse' if accountBalance.get('currency') == 'BTC' else 'linear'
+                    contractType = 'inverse' if accountBalance.get('currency') != 'USD' else 'linear'
 
                     # scales
                     # Ep = 1e4

@@ -71,7 +71,7 @@ class ExchangeTealstreetMixin(object):
             'percentage':0.0
         }
 
-    def update_balance_free_used_total_from_currency_balance(self, currency, balance):
+    def update_balance_free_used_total_from_currency_balance(self: 'Exchange', currency, balance):
         if 'free' not in self.balance:
             self.balance['free'] = {}
         self.balance['free'][currency] = balance.get('free')
