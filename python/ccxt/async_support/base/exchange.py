@@ -167,9 +167,9 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         # TEALSTREET
         self.check_rate_limits()
 
-        # if self.enableRateLimit:
-        #     cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
-        #     await self.throttle(cost)
+        if self.enableRateLimit:
+            cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
+            await self.throttle(cost)
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
         try:
