@@ -1120,7 +1120,7 @@ class coinbasepro(Exchange):
                 raise ExchangeError(feedback)  # unknown message
             raise ExchangeError(self.id + ' ' + body)
 
-    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
+    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         response = await self.fetch2(path, api, method, params, headers, body)
         if not isinstance(response, basestring):
             if 'message' in response:

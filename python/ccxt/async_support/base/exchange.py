@@ -18,7 +18,6 @@ import yarl
 
 # -----------------------------------------------------------------------------
 from ccxt.async_support.base.asyncio_utils import AsyncioSafeTasks
-
 from ccxt.async_support.base.throttle import throttle
 
 # -----------------------------------------------------------------------------
@@ -125,9 +124,13 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         self.own_session = 'session' not in config
         self.cafile = config.get('cafile', certifi.where())
         super(Exchange, self).__init__(config)
+        # self.throttle = None
         self.init_rest_rate_limiter()
         self.markets_loading = None
         self.reloading_markets = False
+
+    # def init_rest_rate_limiter(self):
+    #     self.throttle = Throttler(self.tokenBucket, self.asyncio_loop, parent_task_manager=self)
 
     def init_rest_rate_limiter(self):
         self.throttle = throttle(self.extend({
@@ -160,7 +163,7 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
                 await self.session.close()
             self.session = None
 
-    async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None):
+    async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
 
         trigger_ratelimit = params.pop('triggerRatelimit', True)
 
@@ -169,6 +172,8 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         self.check_rate_limits()
 
         if self.enableRateLimit:
+            # cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
+            # await self.throttle(cost)
             await self.throttle(self.rateLimit)
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
@@ -183,6 +188,9 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
                     self.set_rate_limit_status(True)
                     raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
             raise e
+
+    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
+        return await self.fetch2(path, api, method, params, headers, body, config, context)
 
     async def fetch(self, url, method='GET', headers=None, body=None):
         """Perform a HTTP request and return decoded JSON data"""

@@ -55,16 +55,6 @@ mn_bybit_linear_exchange = ccxt.bybitlinear(mn_bybit_params)
 mn_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(mn_bybit_params)
 mn_bybit_linear_exchange_pro = ccxtpro.bybitlinear(mn_bybit_params)
 
-mn_sub_bybit_params = {
-    'apiKey': os.environ.get('mn_sub_bybit_key'),
-    'secret': os.environ.get('mn_sub_bybit_secret'),
-    'enableRateLimit': False,
-}
-mn_sub_bybit_inverse_exchange = ccxt.bybitinverse(mn_sub_bybit_params)
-mn_sub_bybit_linear_exchange = ccxt.bybitlinear(mn_sub_bybit_params)
-mn_sub_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(mn_sub_bybit_params)
-mn_sub_bybit_linear_exchange_pro = ccxtpro.bybitlinear(mn_sub_bybit_params)
-
 tn_bybit_params = {
     'apiKey': os.environ.get('tn_bybit_key'),
     'secret': os.environ.get('tn_bybit_secret'),
@@ -119,41 +109,20 @@ mn_gateio_exchange = ccxt.gateio(mn_gateio_params)
 mn_kucoin_params = {
     'apiKey': os.environ.get('mn_kucoin_key'),
     'secret': os.environ.get('mn_kucoin_secret'),
-    'enableRateLimit': True,
+    'password': os.environ.get('tn_kucoin_password'),
+    'enableRateLimit': True
 }
 mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
 mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
+
 tn_kucoin_params = {
     'apiKey': os.environ.get('tn_kucoin_key'),
     'secret': os.environ.get('tn_kucoin_secret'),
-    'enableRateLimit': True,
+    'password': os.environ.get('tn_kucoin_password'),
+    'enableRateLimit': True
 }
 tn_kucoin_exchange_pro = ccxtpro.kucoin(tn_kucoin_params)
 tn_kucoin_exchange_pro.set_sandbox_mode(True)
-tn_kucoin_exchange = ccxt.kucoin(tn_kucoin_params)
-tn_kucoin_exchange.set_sandbox_mode(True)
-
-# OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
-tn_okex_params = {
-    'apiKey': os.environ.get('tn_okex_key'),
-    'secret': os.environ.get('tn_okex_secret'),
-    'password': os.environ.get('tn_okex_password'),
-    'enableRateLimit': True,
-    'headers': {
-        'x-simulated-trading': '1',
-    },
-}
-tn_okex_exchange_pro = ccxtpro.okex(tn_okex_params)
-tn_okex_exchange_pro.set_sandbox_mode(True)
-tn_okex_exchange = ccxt.okex(tn_okex_params)
-tn_okex_exchange.set_sandbox_mode(True)
-
-tn_kucoin_params = {
-    'apiKey': os.environ.get('tn_kucoin_key'),
-    'secret': os.environ.get('tn_kucoin_secret'),
-    'enableRateLimit': True,
-}
-
 tn_kucoin_exchange = ccxt.kucoin(tn_kucoin_params)
 tn_kucoin_exchange.set_sandbox_mode(True)
 
@@ -182,3 +151,18 @@ tn_phemex_exchange_pro = ccxtpro.phemex(tn_phemex_params)
 tn_phemex_exchange_pro.set_sandbox_mode(True)
 tn_phemex_exchange = ccxt.phemex(tn_phemex_params)
 tn_phemex_exchange.set_sandbox_mode(True)
+
+# OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
+tn_okex_params = {
+    'apiKey': os.environ.get('tn_okex_key'),
+    'secret': os.environ.get('tn_okex_secret'),
+    'password': os.environ.get('tn_okex_password'),
+    'enableRateLimit': True,
+    'headers': {
+        'x-simulated-trading': '1',
+    },
+}
+tn_okex_exchange_pro = ccxtpro.okex(tn_okex_params)
+tn_okex_exchange_pro.set_sandbox_mode(True)
+tn_okex_exchange = ccxt.okex(tn_okex_params)
+tn_okex_exchange.set_sandbox_mode(True)
