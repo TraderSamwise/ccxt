@@ -111,10 +111,11 @@ mn_kucoin_params = {
     'secret': os.environ.get('mn_kucoin_secret'),
     'password': os.environ.get('tn_kucoin_password'),
     'enableRateLimit': True
+
 }
 mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
 mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
-
+# print(mn_kucoin_params['apiKey'], mn_kucoin_params['secret'], mn_kucoin_params['password'])
 tn_kucoin_params = {
     'apiKey': os.environ.get('tn_kucoin_key'),
     'secret': os.environ.get('tn_kucoin_secret'),

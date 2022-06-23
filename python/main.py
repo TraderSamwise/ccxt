@@ -12,11 +12,14 @@ async def test_kucoin():
     # exchange = test.mn_binance_usdm_exchange
     exchange: kucoinfutures = test.mn_kucoin_exchange_pro
     await exchange.load_markets()
-    pprint(exchange.markets)
+    # exchange.verbose = True
+    balance = await exchange.fetch_balance()
+    pprint(balance)
+    await exchange.close() # kucoin requires to release all resources with an explicit call to the .close() coroutine
     '''
     # symbol = 'BTC/USDT'
     symbol = 'BTC/USD'
-    ticker = await exchange.fetch_ticker(symbol)
+    ticker = await exchange.fetch_ticker(symbol) 
     last = ticker['last']
     '''
 
