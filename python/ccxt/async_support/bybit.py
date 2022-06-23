@@ -1837,7 +1837,12 @@ class bybit(Exchange):
         #
         result = self.safe_value(response, 'result', {})
         data = self.safe_value(result, 'data', [])
-        return self.parse_orders(data, market, since, limit)
+        orders = self.parse_orders(data, market, since, limit)
+        print('------------- fetch_orders')
+        print(datetime.datetime.now())
+        pprint(orders)
+        print('------------- fetch_orders')
+        return orders
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         defaultStatuses = [
