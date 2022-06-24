@@ -17,6 +17,7 @@ from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 import datetime
+from pprint import pprint
 
 # TEALSTREET: did the private api implementations
 class bybit(Exchange):
@@ -1838,10 +1839,10 @@ class bybit(Exchange):
         result = self.safe_value(response, 'result', {})
         data = self.safe_value(result, 'data', [])
         orders = self.parse_orders(data, market, since, limit)
-        print('------------- fetch_orders')
-        print(datetime.datetime.now())
-        pprint(orders)
-        print('------------- fetch_orders')
+        # print('------------- fetch_orders')
+        # print(datetime.datetime.now())
+        # pprint(orders)
+        # print('------------- fetch_orders')
         return orders
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
