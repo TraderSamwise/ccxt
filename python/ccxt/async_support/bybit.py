@@ -1259,7 +1259,7 @@ class bybit(Exchange):
         rawTimestamp = self.safe_string_2(order, 'created_time', 'create_time') \
                        or self.safe_string_2(order, 'created_at', 'timestamp') \
                        or self.safe_string_2(order, 'time_now', 'updated_time') \
-                       or self.safe_string(order, 'update_time', 'updated_at') \
+                       or self.safe_string_2(order, 'update_time', 'updated_at') \
                        or str(datetime.datetime.now())
         timestamp = self.parse8601(rawTimestamp)
         # timestamp = self.parse8601(self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp', 'created_time') or self.iso8601(self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
