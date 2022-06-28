@@ -17,6 +17,7 @@ from ccxt.base.errors import InvalidNonce
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 import datetime
+from pprint import pprint
 
 # TEALSTREET: did the private api implementations
 class bybit(Exchange):
@@ -1204,7 +1205,28 @@ class bybit(Exchange):
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
         feeCurrency = None
-        timestamp = self.parse8601(self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp', 'created_time') or self.iso8601(self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
+        # bybit linear perps
+        # orders rest: "created_time": "2022-06-22T01:46:11Z", "updated_time": "2022-06-22T01:46:11Z",
+        # stops  rest: "created_time": "2019-10-21T07:28:19.396246Z", "updated_time": "2019-10-21T07:28:19.396246Z",
+        # orders ws:   "create_time": "2022-06-23T04:08:47.956636888Z", "update_time": "2022-06-23T04:08:47.960908408Z",
+        # stops  ws:   "create_time": "2022-06-23T04:06:55.402188346Z",  "update_time": "2022-06-23T04:08:47.960950878Z",
+        # bybit inverse perps
+        # orders rest:  "created_at": "2022-06-20T06:56:22.070Z", "updated_at": "2022-06-20T06:56:22.075Z",
+        # stops  rest: "created_at": "2022-06-21T02:19:46.052Z", "updated_at": "2022-06-21T02:37:13.05Z",
+        # orders ws: "timestamp": "2022-06-21T07:35:56.505Z",
+        # stops  ws: "timestamp": "2020-01-14T14:11:22.062Z"
+        # bybit inverse futures
+        # orders rest: "created_at": "2022-06-23T06:27:42.324Z", "updated_at": "2022-06-23T06:27:42.329Z",
+        # stops  rest: "created_at": "2022-06-23T07:15:46.803Z", "updated_at": "2022-06-23T07:15:46.803Z",
+        # orders ws: "timestamp": "2020-01-14T14:09:31.778Z",
+        # stops  ws: "timestamp": "2020-01-14T14:11:22.062Z"
+        rawTimestamp = self.safe_string_2(order, 'created_time', 'create_time') \
+                       or self.safe_string_2(order, 'created_at', 'timestamp') \
+                       or self.safe_string_2(order, 'time_now', 'updated_time') \
+                       or self.safe_string_2(order, 'update_time', 'updated_at') \
+                       or str(datetime.datetime.now())
+        timestamp = self.parse8601(rawTimestamp)
+        # timestamp = self.parse8601(self.safe_string_2(order, 'updated_at', 'created_at') or self.safe_string_2(order, 'timestamp', 'created_time') or self.iso8601(self.safe_string(order, 'time_now')) or str(datetime.datetime.now()))
         id = self.safe_string_2(order, 'stop_order_id', 'order_id')
         status = self.parse_order_status(self.safe_string_2(order, 'stop_order_status', 'order_status'), self.safe_string(order, 'cancel_type'))
         type = self.safe_string_lower_2(order, 'order_type', 'stop_order_type')
@@ -1776,7 +1798,7 @@ class bybit(Exchange):
         #                         "o_req_num": -34799032763,
         #                         "xreq_type": "x_create"
         #                     },
-        #                     "last_exec_time": "1577448481.696421",
+        #                     "ast_exec_time": "1577448481.696421",
         #                     "last_exec_price": 7070.5,
         #                     "leaves_qty": 0,
         #                     "leaves_value": 0,
@@ -1837,7 +1859,12 @@ class bybit(Exchange):
         #
         result = self.safe_value(response, 'result', {})
         data = self.safe_value(result, 'data', [])
-        return self.parse_orders(data, market, since, limit)
+        orders = self.parse_orders(data, market, since, limit)
+        # print('------------- fetch_orders')
+        # print(datetime.datetime.now())
+        # pprint(orders)
+        # print('------------- fetch_orders')
+        return orders
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         defaultStatuses = [
