@@ -1717,6 +1717,7 @@ class bybit(Exchange):
         return self.parse_orders(result, market)
 
     async def fetch_orders(self, symbol=None, since=None, limit=None, params={}):
+        limit = limit or 50
         await self.load_markets()
         request = {
             # 'order_id': 'string'
@@ -1798,7 +1799,7 @@ class bybit(Exchange):
         #                         "o_req_num": -34799032763,
         #                         "xreq_type": "x_create"
         #                     },
-        #                     "ast_exec_time": "1577448481.696421",
+        #                     "last_exec_time": "1577448481.696421",
         #                     "last_exec_price": 7070.5,
         #                     "leaves_qty": 0,
         #                     "leaves_value": 0,
@@ -1859,12 +1860,18 @@ class bybit(Exchange):
         #
         result = self.safe_value(response, 'result', {})
         data = self.safe_value(result, 'data', [])
-        orders = self.parse_orders(data, market, since, limit)
-        # print('------------- fetch_orders')
-        # print(datetime.datetime.now())
-        # pprint(orders)
-        # print('------------- fetch_orders')
-        return orders
+        # TEALSTREET
+        parsed_orders = self.parse_orders(data, market, since, limit)
+        if len(data) >= 50:
+            if 'current_page' in result:
+                params['page'] = int(result['current_page']) + 1
+            elif 'cursor' in result:
+                params['cursor'] = int(result['cursor'])
+            else:
+                return parsed_orders
+            rest = await self.fetch_orders(symbol=symbol, since=since, limit=limit, params=params)
+            parsed_orders.extend(rest)
+        return parsed_orders
 
     async def fetch_closed_orders(self, symbol=None, since=None, limit=None, params={}):
         defaultStatuses = [
