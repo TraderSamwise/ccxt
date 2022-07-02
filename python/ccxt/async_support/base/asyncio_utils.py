@@ -4,8 +4,18 @@ import traceback
 from contextlib import suppress
 from random import randint
 
+import asyncio
+import concurrent.futures._base
+import traceback
+from contextlib import suppress
+from random import randint
+
 
 #  TEALSTREET
+import ccxt
+from ccxt import NetworkError
+
+
 class AsyncioSafeTasks():
 
     def __init__(self, *args, parent_task_manager=None, **kwargs):
@@ -66,10 +76,9 @@ class AsyncioSafeTasks():
             with suppress(asyncio.CancelledError, concurrent.futures._base.CancelledError):
                 await found_task
 
-
-    async def timeout_tasks(self, tasks, avg_time_per_task):
+    async def timeout_tasks(self, tasks, time_per_task):
         async def cancel_pending_tasks():
-            await asyncio.sleep(len(tasks) * avg_time_per_task)
+            await asyncio.sleep(len(tasks) * time_per_task)
             for id, task in tasks.items():
                 if not task.done():
                     await self.cancel_task(id)
@@ -94,3 +103,21 @@ def asyncio_safe(cleanup=None):
                 return
         return decorated
     return async_safe_warpper
+
+
+async def timeout_tasks(tasks, time_per_task):
+    async def cancel_pending_tasks():
+        await asyncio.sleep(len(tasks) * time_per_task)
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+                with suppress(asyncio.CancelledError, concurrent.futures._base.CancelledError):
+                    await task
+
+    cancel_task = asyncio.create_task(cancel_pending_tasks())
+    res = await asyncio.gather(*tasks)
+    if not cancel_task.done():
+        cancel_task.cancel()
+        with suppress(asyncio.CancelledError, concurrent.futures._base.CancelledError):
+            await cancel_task
+    return res
