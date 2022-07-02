@@ -806,9 +806,12 @@ class Exchange(TealstreetMixin, object):
                 return dictionary[key] is not None
             else:
                 return False
-        if key in dictionary:
-            return dictionary[key] is not None
-        return False
+        try:
+            if key in dictionary:
+                return dictionary[key] is not None
+            return False
+        except Exception as e:
+            raise e
 
     @staticmethod
     def safe_float(dictionary, key, default_value=None):

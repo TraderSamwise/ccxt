@@ -1536,7 +1536,7 @@ class okex(OkexTealstreetMixin, Exchange):
 
                 response = getattr(self, method)(self.extend(request, params))
             else:
-                response = e
+                raise e
         #
         #     {
         #         "code": "0",
