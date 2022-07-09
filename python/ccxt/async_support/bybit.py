@@ -38,10 +38,13 @@ class bybit(Exchange):
                 try:
                     response, market = await self._fetch_my_trades_helper(symbol, since_time + 1, params={'triggerRatelimit': False, 'page': page})
                     break
-                except RateLimitExceeded:
-                    rate_limit_callback and rate_limit_callback()
-                    rate_limit_count += 1
-                    await asyncio.sleep(rate_limit_count * 30)
+                except Exception as e:
+                    if self.is_rate_limit_error(e):
+                        rate_limit_callback and rate_limit_callback()
+                        rate_limit_count += 1
+                        await asyncio.sleep(rate_limit_count * 30)
+                    else:
+                        raise e
             result = self.safe_value(response, 'result', {})
             _trades = self.safe_value_2(result, 'trade_list', 'data', [])
             fetched_trades = self.parse_trades(_trades, market, since, 200)

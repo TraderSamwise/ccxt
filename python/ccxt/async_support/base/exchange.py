@@ -97,10 +97,13 @@ class ExchangeTealstreetMixin(object):
                 try:
                     fetched_trades = await self.fetch_my_trades(symbol, since_time + 1, params={'triggerRatelimit': False})
                     break
-                except RateLimitExceeded:
-                    rate_limit_callback and rate_limit_callback()
-                    rate_limit_count += 1
-                    await asyncio.sleep(rate_limit_count * 30)
+                except Exception as e:
+                    if self.is_rate_limit_error(e):
+                        rate_limit_callback and rate_limit_callback()
+                        rate_limit_count += 1
+                        await asyncio.sleep(rate_limit_count * 30)
+                    else:
+                        raise e
             if len(fetched_trades) == 0:
                 break
             new_since_time = int(fetched_trades[-1]['timestamp'])

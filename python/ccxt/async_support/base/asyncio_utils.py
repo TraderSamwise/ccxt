@@ -4,18 +4,8 @@ import traceback
 from contextlib import suppress
 from random import randint
 
-import asyncio
-import concurrent.futures._base
-import traceback
-from contextlib import suppress
-from random import randint
-
 
 #  TEALSTREET
-import ccxt
-from ccxt import NetworkError
-
-
 class AsyncioSafeTasks():
 
     def __init__(self, *args, parent_task_manager=None, **kwargs):
@@ -28,11 +18,21 @@ class AsyncioSafeTasks():
     def create_id(self):
         return randint(0, 100000)
 
-    def create_task(self, awaitable, id=None, persistent=True):
+    def create_task(self, awaitable, id=None, persistent=True, callback=None):
         if self.parent_task_manager:
             return self.parent_task_manager.create_task(awaitable, id=id, persistent=persistent)
         id = id or self.create_id()
-        def callback(task):
+        def callback_helper(task):
+            if callback:
+                res = None
+                try:
+                    res = task.result()
+                except Exception as e:
+                    traceback.print_exc()
+                try:
+                    callback(res)
+                except Exception as e:
+                    traceback.print_exc()
             try:
                 if id in self._tasks:
                     self._tasks.pop(id)
@@ -45,7 +45,7 @@ class AsyncioSafeTasks():
             self._persistent_tasks[id] = task
         else:
             self._tasks[id] = task
-        task.add_done_callback(callback)
+        task.add_done_callback(callback_helper)
         return task
 
     async def _do_task(self, awaitable):
