@@ -593,15 +593,8 @@ class Exchange(TealstreetMixin, object):
 
     # TEALSTREET
     def check_rate_limits(self):
-        rate_limit_count = 0
-        rate_limit_timeout = self.options.get("rate_limit_timeout", 3)
-        max_rate_limit_checks = self.options.get("max_rate_limit_checks", 2)
-        while self.get_is_rate_limited():
-            if rate_limit_count >= max_rate_limit_checks:
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited after {max_rate_limit_checks} attempts.'}))
-                # raise RateLimitExceeded(f'{self.id} Still rate limited after {max_rate_limit_checks} attempts.')
-            rate_limit_count += 1
-            time.sleep(rate_limit_timeout)
+        if self.get_is_rate_limited():
+            raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited.'}))
 
     # TEALSTREET
     def set_rate_limit_status(self, status):

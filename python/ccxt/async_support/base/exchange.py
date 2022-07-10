@@ -166,13 +166,25 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
                 await self.session.close()
             self.session = None
 
+    # TEALSTREET
+    async def check_rate_limits(self):
+        rate_limit_count = 0
+        rate_limit_timeout = self.options.get("rate_limit_timeout", 3)
+        max_rate_limit_checks = self.options.get("max_rate_limit_checks", 2)
+        while self.get_is_rate_limited():
+            if rate_limit_count >= max_rate_limit_checks:
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited after {max_rate_limit_checks} attempts.'}))
+                # raise RateLimitExceeded(f'{self.id} Still rate limited after {max_rate_limit_checks} attempts.')
+            rate_limit_count += 1
+            await asyncio.sleep(rate_limit_timeout)
+
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
 
         trigger_ratelimit = params.pop('triggerRatelimit', True)
 
         """A better wrapper over request for deferred signing"""
         # TEALSTREET
-        self.check_rate_limits()
+        await self.check_rate_limits()
 
         if self.enableRateLimit:
             # cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
