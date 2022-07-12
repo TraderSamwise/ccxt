@@ -216,7 +216,6 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         """Perform a HTTP request and return decoded JSON data"""
         request_headers = self.prepare_request_headers(headers)
         url = self.proxy + url
-        print(url)
 
         if self.verbose:
             self.print("\nRequest:", method, url, headers, body)
