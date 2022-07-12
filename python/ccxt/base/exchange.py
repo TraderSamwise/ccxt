@@ -548,6 +548,7 @@ class Exchange(TealstreetMixin, object):
     def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         """A better wrapper over request for deferred signing"""
         # TEALSTREET
+        trigger_ratelimit = params.pop('triggerRatelimit', True)
         self.check_rate_limits()
 
         if self.enableRateLimit:
@@ -558,10 +559,19 @@ class Exchange(TealstreetMixin, object):
         request = self.sign(path, api, method, params, headers, body)
         try:
             res = self.fetch(request['url'], request['method'], request['headers'], request['body'])
-            self.set_rate_limit_status(False)
+            if trigger_ratelimit:
+                self.set_rate_limit_status(False)
             return res
         except Exception as e:
-            if self.is_rate_limit_error(e):
+            is_rate_limit_error = self.is_rate_limit_error(e)
+            if self.proxy and not is_rate_limit_error and isinstance(e, NetworkError):
+                old_proxy = self.proxy
+                self.proxy = ''
+                res = self.fetch2(path, api, method, params, headers, body, config, context)
+                self.disable_proxy(e)
+                self.proxy = old_proxy
+                return res
+            elif trigger_ratelimit and is_rate_limit_error:
                 self.set_rate_limit_status(True)
                 raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
             raise e
@@ -601,6 +611,12 @@ class Exchange(TealstreetMixin, object):
         _set_rate_limit_status = self.options.get("set_rate_limit_status")
         if _set_rate_limit_status:
             _set_rate_limit_status(self.apiKey, status)
+
+    # TEALSTREET
+    def disable_proxy(self, e):
+        _disable_proxy = self.options.get("disable_proxy")
+        if _disable_proxy:
+            _disable_proxy(self.apiKey, e)
 
 
     rate_limit_keywords = [

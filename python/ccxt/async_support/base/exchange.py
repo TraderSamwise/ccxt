@@ -22,7 +22,7 @@ from ccxt.async_support.base.throttle import throttle
 
 # -----------------------------------------------------------------------------
 
-from ccxt.base.errors import ExchangeError, RateLimitExceeded
+from ccxt.base.errors import ExchangeError, RateLimitExceeded, NetworkError
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import RequestTimeout
 from ccxt.base.errors import NotSupported
@@ -179,11 +179,9 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
             await asyncio.sleep(rate_limit_timeout)
 
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
-
-        trigger_ratelimit = params.pop('triggerRatelimit', True)
-
         """A better wrapper over request for deferred signing"""
         # TEALSTREET
+        trigger_ratelimit = params.pop('triggerRatelimit', True)
         await self.check_rate_limits()
 
         if self.enableRateLimit:
@@ -198,10 +196,17 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
                 self.set_rate_limit_status(False)
             return res
         except Exception as e:
-            if trigger_ratelimit:
-                if self.is_rate_limit_error(e):
-                    self.set_rate_limit_status(True)
-                    raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
+            is_rate_limit_error = self.is_rate_limit_error(e)
+            if self.proxy and not is_rate_limit_error and isinstance(e, NetworkError):
+                old_proxy = self.proxy
+                self.proxy = ''
+                res = await self.fetch2(path, api, method, params, headers, body, config, context)
+                self.disable_proxy(e)
+                self.proxy = old_proxy
+                return res
+            elif trigger_ratelimit and is_rate_limit_error:
+                self.set_rate_limit_status(True)
+                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
             raise e
 
     async def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
@@ -211,6 +216,7 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         """Perform a HTTP request and return decoded JSON data"""
         request_headers = self.prepare_request_headers(headers)
         url = self.proxy + url
+        print(url)
 
         if self.verbose:
             self.print("\nRequest:", method, url, headers, body)
