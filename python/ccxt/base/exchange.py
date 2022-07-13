@@ -568,6 +568,9 @@ class Exchange(TealstreetMixin, object):
                 old_proxy = self.proxy
                 self.proxy = ''
                 res = self.fetch2(path, api, method, params, headers, body, config, context)
+                print('PROXY ERROR')
+                print(path)
+                print(res)
                 self.disable_proxy(e)
                 self.proxy = old_proxy
                 return res
