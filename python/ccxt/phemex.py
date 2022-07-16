@@ -807,6 +807,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
         riskLimitsById = self.index_by(riskLimits, 'symbol')
         v1ProductsById = self.index_by(v1ProductsData, 'symbol')
         result = []
+        leverages = self.safe_value(v2ProductsData, 'leverages', [])
         for i in range(0, len(products)):
             market = products[i]
             type = self.safe_string_lower(market, 'type')
@@ -816,6 +817,15 @@ class phemex(PhemexTealstreetMixin, Exchange):
                 market = self.extend(market, riskLimitValues)
                 v1ProductsValues = self.safe_value(v1ProductsById, id, {})
                 market = self.extend(market, v1ProductsValues)
+                initialMaintenanceMargin = min(
+                    [riskLimit['initialMargin'] for riskLimit in riskLimitValues['riskLimits']])
+                maxLeverage = None
+                if initialMaintenanceMargin:
+                    leverageOptions = \
+                    [x['options'] for x in leverages if x['initialMargin'] == initialMaintenanceMargin][0]
+                    floatOptions = [float(x) for x in leverageOptions]
+                    maxLeverage = max(floatOptions)
+                market['maxLeverage'] = maxLeverage
                 market = self.parse_swap_market(market)
             else:
                 market = self.parse_spot_market(market)

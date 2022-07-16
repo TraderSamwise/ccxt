@@ -399,16 +399,16 @@ def test_phemex():
     # print(exchange.set_leverage(symbol, 8, 15))
 
     # pprint(exchange.fetch_balance())
-    # pprint(exchange.fetch_markets())
+    pprint(exchange.fetch_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():
     # test_binance()
-    test_bitmex()
+    # test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_okex()
-    # test_phemex()
+    test_phemex()
     # test_gateio()
     # test_kucoin()
     # buy_stuff()
