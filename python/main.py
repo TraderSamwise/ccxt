@@ -101,18 +101,18 @@ def buy_stuff():
         
 # BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE BINANCE #
 def test_binance():
-    # exchange = test.mn_binance_usdm_exchange
-    exchange = test.mn_binance_coinm_exchange
+    exchange = test.mn_binance_usdm_exchange
+    # exchange = test.mn_binance_coinm_exchange
 
     # symbol = 'BTC/USDT'
     symbol = 'BTC/USD'
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    markets = exchange.fetch_markets()
+    # markets = exchange.fetch_markets()
 
     # print(exchange.switch_isolated(symbol, True, 10, 20))
-    print(exchange.switch_hedge_mode(symbol, True))
+    # print(exchange.switch_hedge_mode(symbol, True))
     # print(exchange.set_leverage(symbol, 12, 25))
 
     # exchange.edit_order('37677901237',
@@ -403,12 +403,12 @@ def test_phemex():
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():
-    # test_binance()
+    test_binance()
     # test_bitmex()
     # test_bybit()
     # test_ftx()
     # test_okex()
-    test_phemex()
+    # test_phemex()
     # test_gateio()
     # test_kucoin()
     # buy_stuff()

@@ -3127,8 +3127,13 @@ class binance(Exchange):
         if not rational:
             initialMarginPercentageString = Precise.string_div(Precise.string_add(initialMarginPercentageString, '1e-8'), '1', 8)
         usdm = ('notional' in position)
+        isolated = self.safe_value(position, 'isolated')
         maintenanceMarginString = self.safe_string(position, 'maintMargin')
-        maintenanceMargin = self.parse_number(maintenanceMarginString)
+        isolatedWalletString = self.safe_string(position, 'isolatedWallet')
+        if isolated and isolatedWalletString:
+            maintenanceMargin = self.parse_number(isolatedWalletString)
+        else:
+            maintenanceMargin = initialMargin # self.parse_number(maintenanceMarginString)
         entryPriceString = self.safe_string(position, 'entryPrice')
         entryPriceFloat = float(entryPriceString)
         entryPrice = self.parse_number(entryPriceString)
@@ -3159,7 +3164,6 @@ class binance(Exchange):
         timestamp = self.safe_integer(position, 'updateTime')
         if timestamp == 0:
             timestamp = None
-        isolated = self.safe_value(position, 'isolated')
         marginType = None
         collateralString = None
         walletBalance = None
