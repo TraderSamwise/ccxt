@@ -548,7 +548,7 @@ class Exchange(TealstreetMixin, object):
     def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         """A better wrapper over request for deferred signing"""
         # TEALSTREET
-        trigger_ratelimit = params.pop('triggerRatelimit', True)
+        trigger_ratelimit = self.safe_value(params, 'triggerRatelimit', True)
         self.check_rate_limits()
 
         if self.enableRateLimit:
