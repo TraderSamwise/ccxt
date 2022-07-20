@@ -1474,7 +1474,11 @@ class okex(OkexTealstreetMixin, Exchange):
             # request = self.omit(request, 'px')
             stopPrice = self.safe_number(params, 'stopPrice')
             request['reduceOnly'] = closeOnTrigger
-            params = self.omit(['reduceOnly'])
+            params = self.omit(params, ['reduceOnly'])
+
+            triggerType = self.safe_string_lower(params, 'trigger', 'mark')
+            request['slTriggerPxType'] = triggerType
+            params = self.omit(params, ['trigger'])
 
             if price is None: # market
                 price = -1
