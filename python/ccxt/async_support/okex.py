@@ -2160,6 +2160,7 @@ class okex(OkexTealstreetMixin, Exchange):
         reduce = self.safe_boolean(order, 'reduceOnly')
         close = self.safe_boolean(order, 'closeOnTrigger')
         marginType = self.safe_string(order, 'tdMode')
+        trigger = self.safe_string(order, 'slTriggerPxType') and self.safe_string(order, 'slTriggerPxType').capitalize()
         return self.safe_order({
             'info': order,
             'id': id,
@@ -2185,6 +2186,7 @@ class okex(OkexTealstreetMixin, Exchange):
             'reduce': reduce, # TEALSTREET
             'close' : close, # TEALSTREET
             'marginType': marginType, # TEALSTREET
+            'trigger': trigger, # TEALSTREET
         })
 
     async def fetch_order(self, id, symbol=None, params={}):
