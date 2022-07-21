@@ -1905,7 +1905,7 @@ class bybit(Exchange):
             if 'current_page' in result:
                 params['page'] = int(result['current_page']) + 1
             elif 'cursor' in result:
-                params['cursor'] = int(result['cursor'])
+                params['cursor'] = result['cursor']
             else:
                 return parsed_orders
             rest = await self.fetch_orders(symbol=symbol, since=since, limit=limit, params=params)
