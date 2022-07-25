@@ -1322,9 +1322,14 @@ class binance(Exchange):
                 currencyId = self.safe_string(balance, 'asset')
                 code = self.safe_currency_code(currencyId)
                 account = self.account()
-                account['free'] = self.safe_string(balance, 'marginBalance')
-                account['used'] = self.safe_string(balance, 'maintMargin')
-                account['total'] = self.safe_string_2(balance, 'walletBalance', 'marginBalance')
+                # handles multiAssetMargin mode
+                if currencyId == 'USDT':
+                    account['free'] = self.safe_string(response, 'totalMarginBalance')
+                    account['used'] = self.safe_string(response, 'totalMaintMargin')
+                    account['total'] = self.safe_string_2(response, 'totalCrossWalletBalance', 'totalMarginBalance')
+                account['free'] = account['free'] or self.safe_string(balance, 'marginBalance')
+                account['used'] = account['used'] or self.safe_string(balance, 'maintMargin')
+                account['total'] = account['total'] or self.safe_string_2(balance, 'walletBalance', 'marginBalance')
                 result[code] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
