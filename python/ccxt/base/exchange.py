@@ -1714,7 +1714,7 @@ class Exchange(TealstreetMixin, object):
         }
 
     def parse_balance(self, balance, legacy=True):
-        currencies = self.omit(balance, ['info', 'timestamp', 'datetime', 'free', 'used', 'total', 'marginMode']).keys()
+        currencies = self.omit(balance, ['info', 'timestamp', 'datetime', 'free', 'used', 'total', 'marginMode', 'multiAssetsMode']).keys()
         balance['free'] = {}
         balance['used'] = {}
         balance['total'] = {}
