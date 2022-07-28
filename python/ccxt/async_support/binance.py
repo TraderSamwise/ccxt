@@ -394,7 +394,6 @@ class binance(Exchange):
                         'leverageBracket',
                         'forceOrders',
                         'adlQuantile',
-                        'multiAssetsMargin',
                     ],
                     'post': [
                         'positionSide/dual',
@@ -478,6 +477,7 @@ class binance(Exchange):
                         'apiReferral/tradeVol',
                         'apiReferral/rebateVol',
                         'apiReferral/traderSummary',
+                        'multiAssetsMargin',
                     ],
                     'post': [
                         'batchOrders',
