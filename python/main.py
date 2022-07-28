@@ -352,13 +352,15 @@ def test_okex():
     # exchange = test.mn_okex_exchange
     exchange = test.tn_okex_exchange
 
-    symbol = 'BADGER-USDT-SWAP'
+    symbol = 'BTC-USDT-SWAP'
     # exchange.load_markets()
     # symbol = exchange.markets[symbol]['id']
     ticker = exchange.fetch_ticker(symbol)
     last = ticker['last']
 
-    print(exchange.switch_isolated(symbol, False, 10, 20))
+    exchange.cancel_order('470003784142430208', 'BTC-USDT-SWAP')
+
+    # print(exchange.switch_isolated(symbol, False, 10, 20))
     # print(exchange.switch_hedge_mode(symbol, False))
     # print(exchange.set_leverage(symbol, 5, 15, {'marginMode': 'cross'}))
 
@@ -403,11 +405,11 @@ def test_phemex():
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():
-    test_binance()
+    # test_binance()
     # test_bitmex()
     # test_bybit()
     # test_ftx()
-    # test_okex()
+    test_okex()
     # test_phemex()
     # test_gateio()
     # test_kucoin()
