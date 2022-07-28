@@ -6,7 +6,6 @@
 from ccxt.async_support.binance import binance
 from ccxt.base.errors import BadRequest
 
-
 class binanceusdm(binance):
 
     def describe(self):

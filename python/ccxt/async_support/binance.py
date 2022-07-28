@@ -394,6 +394,7 @@ class binance(Exchange):
                         'leverageBracket',
                         'forceOrders',
                         'adlQuantile',
+                        'multiAssetsMargin',
                     ],
                     'post': [
                         'positionSide/dual',
@@ -1322,15 +1323,9 @@ class binance(Exchange):
                 currencyId = self.safe_string(balance, 'asset')
                 code = self.safe_currency_code(currencyId)
                 account = self.account()
-                # handles multiAssetMargin mode
-                if currencyId == 'USDT':
-                    account['free'] = self.safe_string(response, 'totalMarginBalance') or self.safe_string(balance, 'marginBalance')
-                    account['used'] = self.safe_string(response, 'totalMaintMargin') or self.safe_string(balance, 'maintMargin')
-                    account['total'] = self.safe_string_2(response, 'totalCrossWalletBalance', 'totalMarginBalance') or self.safe_string_2(balance, 'walletBalance', 'marginBalance')
-                else:
-                    account['free'] = self.safe_string(balance, 'marginBalance')
-                    account['used'] = self.safe_string(balance, 'maintMargin')
-                    account['total'] = self.safe_string_2(balance, 'walletBalance', 'marginBalance')
+                account['free'] = self.safe_string(balance, 'marginBalance')
+                account['used'] = self.safe_string(balance, 'maintMargin')
+                account['total'] = self.safe_string_2(balance, 'walletBalance', 'marginBalance')
                 result[code] = account
         result['timestamp'] = timestamp
         result['datetime'] = self.iso8601(timestamp)
