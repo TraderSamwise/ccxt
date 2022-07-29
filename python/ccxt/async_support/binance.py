@@ -1302,6 +1302,8 @@ class binance(Exchange):
         result = {
             'info': response,
         }
+        result['multiAssetsMode'] = False
+        result['marginMode'] = 'single-currency margin'
         timestamp = None
         if (type == 'spot') or (type == 'margin'):
             timestamp = self.safe_integer(response, 'updateTime')
