@@ -2137,7 +2137,7 @@ class okex(OkexTealstreetMixin, Exchange):
                 type = 'stop'
         marketId = self.safe_string(order, 'instId')
         symbol = self.safe_symbol(marketId, market, '-')
-        filled = self.safe_number(order, 'accFillSz')
+        filled = self.safe_number(order, 'accFillSz', 0.0)
         average = self.safe_number(order, 'avgPx')
         status = self.parse_order_status(self.safe_string(order, 'state'))
         feeCostString = self.safe_string(order, 'fee')
