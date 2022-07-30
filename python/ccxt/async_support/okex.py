@@ -2142,6 +2142,7 @@ class okex(OkexTealstreetMixin, Exchange):
         status = self.parse_order_status(self.safe_string(order, 'state'))
         feeCostString = self.safe_string(order, 'fee')
         amount = self.safe_number(order, 'sz')
+        remaining = amount - filled
         cost = None
         if side == 'buy' and type == 'market':
             cost = self.safe_number(order, 'sz')
@@ -2179,7 +2180,7 @@ class okex(OkexTealstreetMixin, Exchange):
             'cost': cost,
             'amount': amount,
             'filled': filled,
-            'remaining': None,
+            'remaining': remaining,
             'status': status,
             'fee': fee,
             'trades': None,
