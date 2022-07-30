@@ -1272,6 +1272,7 @@ class bitmex(BitmexTealstreetMixin, Exchange):
         # filled = float(Precise.string_div(self.safe_string(order, 'cumQty', 0.0), '1e6') if currency == 'USDT' and self.safe_number(order, 'cumQty') else self.safe_number(order, 'cumQty', 0.0))
         amount = self.safe_number(order, 'orderQty')
         filled = self.safe_number(order, 'cumQty', 0.0)
+        remaining = amount - filled
         average = self.safe_number(order, 'avgPx')
         id = self.safe_string(order, 'orderID')
         type = self.reverse_api_order_type(self.safe_string_lower(order, 'ordType'))
@@ -1301,7 +1302,7 @@ class bitmex(BitmexTealstreetMixin, Exchange):
             'cost': None,
             'average': average,
             'filled': filled,
-            'remaining': None,
+            'remaining': remaining,
             'status': status,
             'fee': None,
             'trades': None,
