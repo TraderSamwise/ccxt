@@ -1771,7 +1771,8 @@ class phemex(PhemexTealstreetMixin, Exchange):
         timeInForce = self.parse_time_in_force(self.safe_string(order, 'timeInForce'))
         stopPrice = self.safe_number(order, 'stopPx') or self.from_ep(self.safe_number(order, 'stopPxEp'), market)
         postOnly = (timeInForce == 'PO')
-        fee = self.from_er(self.safe_number(order, 'feeRateEr'))
+        feeRate = self.from_er(self.safe_number(order, 'feeRateEr'), market)
+        fee = feeRate * filled
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closeOnTrigger')
         trigger = self.reverse_api_trigger_type(self.safe_string(order, 'trigger') or self.safe_string(order, 'slTrigger') or self.safe_string(order, 'tpTrigger'))
