@@ -75,7 +75,7 @@ module.exports = class okex extends Exchange {
                 'fees': 'https://www.okex.com/pages/products/fees.html',
                 'referral': 'https://www.okex.com/join/1888677',
                 'test': {
-                    'rest': 'https://testnet.okex.com',
+                    'rest': 'https://{hostname}',
                 },
             },
             'api': {
@@ -526,6 +526,14 @@ module.exports = class okex extends Exchange {
         });
     }
 
+   setSandboxMode (enable) {
+        super.setSandboxMode (enable);
+        if (enable) {
+            this.headers['x-simulated-trading'] = '1';
+        } else if ('x-simulated-trading' in this.headers) {
+            this.headers = this.omit (this.headers, 'x-simulated-trading');
+        }yar
+    }
     async fetchStatus (params = {}) {
         const response = await this.publicGetSystemStatus (params);
         //
