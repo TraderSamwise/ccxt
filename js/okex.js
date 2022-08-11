@@ -532,7 +532,7 @@ module.exports = class okex extends Exchange {
             this.headers['x-simulated-trading'] = '1';
         } else if ('x-simulated-trading' in this.headers) {
             this.headers = this.omit (this.headers, 'x-simulated-trading');
-        }yar
+        }
     }
     async fetchStatus (params = {}) {
         const response = await this.publicGetSystemStatus (params);
