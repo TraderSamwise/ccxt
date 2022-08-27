@@ -172,6 +172,7 @@ class Exchange(TealstreetMixin, object):
         'stoplimit': 'StopLimit',
         'marketiftouched': 'MarketIfTouched',
         'limitiftouched': 'LimitIfTouched',
+        'trailingstop': 'trailingStop',
     }
     reverseOrderTypes = {
         'market': 'Market',
