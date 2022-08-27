@@ -1339,7 +1339,7 @@ class ftx(FTXTealstreetMixin, Exchange):
         orderPrice = self.safe_number(params, 'orderPrice')
         trailValue = self.safe_number(params, 'trailValue')
         params = self.omit(params, ['client_order_id', 'clientOrderId', 'triggerPrice', 'orderPrice', 'trailValue'])
-        triggerPriceIsDefined = (triggerPrice is not None)
+        triggerPriceIsDefined = (triggerPrice is not None) and (trailValue is None)
         orderPriceIsDefined = (orderPrice is not None)
         trailValueIsDefined = (trailValue is not None)
         if triggerPriceIsDefined or orderPriceIsDefined or trailValueIsDefined:
