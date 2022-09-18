@@ -2,7 +2,7 @@ import asyncio
 import collections
 from time import time
 
-from backend.utils.asyncio_utils import AsyncioSafeTasks
+from python_utils.asyncio_utils import AsyncioSafeTasks
 
 
 class Throttler(AsyncioSafeTasks):

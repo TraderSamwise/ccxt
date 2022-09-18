@@ -3188,7 +3188,7 @@ class okex(OkexTealstreetMixin, Exchange):
             result.append(position)
         return result
 
-    def parse_position(self, position):
+    def parse_position(self, position, side=None):
         info = position
         marketId = self.safe_string(position, 'instId')
         market = self.safe_market(marketId)
@@ -3198,11 +3198,12 @@ class okex(OkexTealstreetMixin, Exchange):
         isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
         hedged = False  # TODO: not sure if you can hedge positions on okex
         contracts = self.safe_float(position, 'pos')
-        side = self.safe_string(position, 'posSide', 'net')
-        if side == 'net':
-            side = 'long' if contracts > 0 else 'short'
-        if side == 'short' and contracts > 0:
-            contracts = contracts * -1
+        if not side:
+            side = self.safe_string(position, 'posSide', 'net')
+            if side == 'net':
+                side = 'long' if contracts >= 0 else 'short'
+            if side == 'short' and contracts > 0:
+                contracts = contracts * -1
         tradeMode = 'oneway' if side == 'net' else 'hedged'
         marginType = 'isolated' if isolated else 'cross'
         id = symbol + ":" + side + ':' + marginType
@@ -3218,7 +3219,7 @@ class okex(OkexTealstreetMixin, Exchange):
         realizedPnl = 0 # TODO
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = self.safe_float(position, 'liqPx')
-        status = 'open' # TODO: can this be anything else?
+        status = 'open' if contracts != 0 else 'closed'
         entryPrice = 0 # TODO
         marginRatio = self.safe_float(position, 'mgnRatio')
         percentage = unrealizedPnl / initialMargin

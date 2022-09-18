@@ -15,9 +15,9 @@ import aiohttp
 import ssl
 import sys
 import yarl
+from python_utils.asyncio_utils import AsyncioSafeTasks
 
 # -----------------------------------------------------------------------------
-from ccxt.async_support.base.asyncio_utils import AsyncioSafeTasks
 from ccxt.async_support.base.throttle import throttle
 
 # -----------------------------------------------------------------------------
@@ -40,6 +40,8 @@ __all__ = [
 ]
 
 # -----------------------------------------------------------------------------
+
+
 class ExchangeTealstreetMixin(object):
     def get_new_position_dict(self):
         return {

@@ -401,7 +401,7 @@ def test_phemex():
     # print(exchange.set_leverage(symbol, 8, 15))
 
     # pprint(exchange.fetch_balance())
-    pprint(exchange.fetch_markets())
+    pprint(exchange.fetch_filtered_ccxt_markets())
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
 
 def main():
