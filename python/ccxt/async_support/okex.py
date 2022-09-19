@@ -41,7 +41,7 @@ class OkexTealstreetMixin(object):
     async def fetch_account_configuration(self: 'okex', symbol, params={}):
         await self.load_markets()
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a marginType ("cross" or "isolated")')
+            raise ArgumentsRequired(self.id + ' fetch_account_configuration requires a symbol')
 
         marginType = self.safe_string(params, 'marginType', 'cross')
         if marginType is None:
@@ -3211,7 +3211,7 @@ class okex(OkexTealstreetMixin, Exchange):
         markPrice = self.safe_float(position, 'last')
         notional = self.safe_float(position, 'notionalUsd')
         leverage = self.safe_float(position, 'lever')
-        initialMargin = self.safe_float(position, 'imr', 1)
+        initialMargin = self.safe_float(position, 'imr', self.safe_float(position, 'margin', 1))
         maintenanceMargin = self.safe_float(position, 'mmr', 1)
         initialMarginPercentage = 1 # TODO
         maintenanceMarginPercentage = 1 # TODO
