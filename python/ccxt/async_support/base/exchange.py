@@ -10,6 +10,8 @@ import asyncio
 import concurrent.futures
 import json
 import socket
+import traceback
+
 import certifi
 import aiohttp
 import ssl
@@ -144,7 +146,9 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
 
     def __del__(self):
         if self.session is not None:
-            self.logger.warning(self.id + " requires to release all resources with an explicit call to the .close() coroutine. If you are using the exchange instance with async coroutines, add exchange.close() to your code into a place when you're done with the exchange and don't need the exchange instance anymore (at the end of your async coroutine).")
+            # traceback.print_stack()
+            self._close()
+            # self.logger.warning(self.id + " requires to release all resources with an explicit call to the .close() coroutine. If you are using the exchange instance with async coroutines, add exchange.close() to your code into a place when you're done with the exchange and don't need the exchange instance anymore (at the end of your async coroutine).")
 
     if sys.version_info >= (3, 5):
         async def __aenter__(self):
@@ -166,6 +170,15 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
         if self.session is not None:
             if self.own_session:
                 await self.session.close()
+            self.session = None
+
+    def _close(self):
+        if self.session is not None:
+            if self.own_session:
+                if not self.session.closed:
+                    if self.session._connector is not None and self.session._connector_owner:
+                        self.session._connector._close()
+                    self.session._connector = None
             self.session = None
 
     # TEALSTREET

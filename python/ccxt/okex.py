@@ -1570,6 +1570,8 @@ class okex(OkexTealstreetMixin, Exchange):
         })
 
     def cancel_order(self, id, symbol=None, params={}):
+        if '__' in id:
+            id = id.split('__')[0]
         if symbol is None:
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         self.load_markets()
