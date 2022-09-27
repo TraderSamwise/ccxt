@@ -1414,7 +1414,6 @@ class okex(OkexTealstreetMixin, Exchange):
             #
             'tdMode': marginType,  # cash, cross, isolated
             # 'ccy': currency['id'],  # only applicable to cross MARGIN orders in single-currency margin
-            'clOrdId': self.refCode + self.uuid16(),  # up to 32 characters, must be unique
             # 'tag': tag,  # up to 8 characters
             #
             #     In long/short mode, side and posSide need to be combined
@@ -1474,6 +1473,8 @@ class okex(OkexTealstreetMixin, Exchange):
             # request = self.omit(request, 'px')
             stopPrice = self.safe_number(params, 'stopPrice')
             request['reduceOnly'] = closeOnTrigger
+            if closeOnTrigger:
+                reduceOnly = True
             params = self.omit(params, ['reduceOnly'])
 
             triggerType = self.safe_string_lower(params, 'trigger', 'mark')
@@ -1528,6 +1529,13 @@ class okex(OkexTealstreetMixin, Exchange):
 
         if not reduceOnly:
             request = self.omit(request, ['reduceOnly'])
+
+
+        cloid_suffix = 'r0'
+        if reduceOnly:
+            cloid_suffix = 'r1'
+        request['clOrdId'] = self.refCode + self.uuid16()[:-2] + cloid_suffix
+        print(request['clOrdId'])
 
         try:
             response = getattr(self, method)(self.extend(request, params))
@@ -1586,18 +1594,18 @@ class okex(OkexTealstreetMixin, Exchange):
         if clientOrderId is not None:
             request['clOrdId'] = clientOrderId
         else:
-            if type == 'stop':
+            if type == 'stop' or type == 'stoplimit':
                 request['algoId'] = id
             else:
                 request['ordId'] = id
 
         method = 'privatePostTradeCancelOrder'
-        if type == 'stop':
+        if type == 'stop' or type == 'stoplimit':
             method = 'privatePostTradeCancelAlgos'
 
         query = self.omit(params, ['clOrdId', 'clientOrderId', 'type'])
 
-        if type == 'stop':
+        if type == 'stop' or type == 'stoplimit':
             response = getattr(self, method)([self.extend(request, query)])
         else:
             response = getattr(self, method)(self.extend(request, query))
@@ -1748,7 +1756,7 @@ class okex(OkexTealstreetMixin, Exchange):
         #     "triggerTime": ""
         # }
         # TEALSTREET TODO: make sure OCO is parsed correctly
-        id = self.safe_string(order, 'ordId')
+        id = self.safe_string(order, 'algoId', self.safe_string(order, 'ordId'))
         if id == '0' or not id:
             id = self.safe_string(order, 'algoId')
         timestamp = self.safe_integer(order, 'cTime')
