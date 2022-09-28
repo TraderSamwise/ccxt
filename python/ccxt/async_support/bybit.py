@@ -2003,12 +2003,6 @@ class bybit(Exchange):
         elif futures:
             method = 'futuresPrivateGetExecutionList'
         res = await getattr(self, method)(self.extend(request, params))
-        data = res.get('result', {}).get('data', [])
-        if data:
-            try:
-                res['result']['data'] = [t for t in data if t.get('exec_type') != 'Funding']
-            except Exception as e:
-                traceback.print_exc()
         return res, market
 
     async def fetch_my_trades(self, symbol=None, since=None, limit=200, params={}):
