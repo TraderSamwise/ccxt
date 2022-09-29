@@ -547,6 +547,8 @@ class phemex(PhemexTealstreetMixin, Exchange):
         priceScale = self.safe_integer(market, 'priceScale')
         ratioScale = self.safe_integer(market, 'ratioScale')
         valueScale = self.safe_integer(market, 'valueScale')
+        if priceScale and not valueScale:
+            valueScale = priceScale
         minPriceEp = self.safe_string(market, 'minPriceEp')
         maxPriceEp = self.safe_string(market, 'maxPriceEp')
         makerFeeRateEr = self.safe_string(market, 'makerFeeRateEr')

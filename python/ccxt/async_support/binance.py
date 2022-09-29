@@ -1325,7 +1325,7 @@ class binance(Exchange):
                 currencyId = self.safe_string(balance, 'asset')
                 code = self.safe_currency_code(currencyId)
                 account = self.account()
-                account['free'] = self.safe_string(balance, 'marginBalance')
+                account['free'] = self.safe_string(balance, 'maxWithdrawAmount')
                 account['used'] = self.safe_string(balance, 'maintMargin')
                 account['total'] = self.safe_string_2(balance, 'walletBalance', 'marginBalance')
                 result[code] = account

@@ -1414,7 +1414,7 @@ class binance(Exchange):
                 currencyId = self.safe_string(balance, 'asset')
                 code = self.safe_currency_code(currencyId)
                 account = self.account()
-                account['free'] = self.safe_string(balance, 'availableBalance')
+                account['free'] = self.safe_string(balance, 'maxWithdrawAmount')
                 account['used'] = self.safe_string(balance, 'initialMargin')
                 account['total'] = self.safe_string_2(balance, 'marginBalance', 'balance')
                 result[code] = account
@@ -2216,18 +2216,24 @@ class binance(Exchange):
 
         params = self.omit(params, ['closeOnTrigger', 'basePrice', 'timeInForce', 'trigger', 'reduceOnly'])
 
-        response = None
         try:
             response = getattr(self, method)(self.extend(request, params))
-        except BaseException as ex:
-            if tradeMode == 'hedged': # assume user may be on oneway mode instead
-                if not closeOnTrigger and reduceOnly:
-                    request['reduceOnly'] = reduceOnly
-                request = self.omit(request, ['positionSide'])
-            elif tradeMode == 'oneway': # assume user should have hedged instead
-                request = self.omit(request, ['reduceOnly'])
-                set_hedged_positionSide()
-            response = getattr(self, method)(self.extend(request, params))
+        except BaseException as e:
+            if hasattr(e, 'args') and len(e.args) > 0:
+                if 'maximum allowable position' in e.args[0] or 'margin' in e.args[0]:
+                    raise e
+            try:
+                if tradeMode == 'hedged': # assume user may be on oneway mode instead
+                    if not closeOnTrigger and reduceOnly:
+                        request['reduceOnly'] = reduceOnly
+                    request = self.omit(request, ['positionSide'])
+                elif tradeMode == 'oneway': # assume user should have hedged instead
+                    request = self.omit(request, ['reduceOnly'])
+                    set_hedged_positionSide()
+                response = getattr(self, method)(self.extend(request, params))
+            except Exception:
+                raise e
+
         return self.parse_order(response, market)
 
     def fetch_order(self, id, symbol=None, params={}):

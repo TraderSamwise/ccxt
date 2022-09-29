@@ -1541,12 +1541,15 @@ class okex(OkexTealstreetMixin, Exchange):
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
             if 'posSide' in str(e):
-                if tradeMode == 'oneway': # try doing the opposite aka sending as hedge mode
-                    request['posSide'] = posSide
-                else: # send as oneway
-                    request = self.omit(request, ['posSide'])
+                try:
+                    if tradeMode == 'oneway': # try doing the opposite aka sending as hedge mode
+                        request['posSide'] = posSide
+                    else: # send as oneway
+                        request = self.omit(request, ['posSide'])
 
-                response = getattr(self, method)(self.extend(request, params))
+                    response = getattr(self, method)(self.extend(request, params))
+                except Exception:
+                    raise e
             else:
                 raise e
         #
