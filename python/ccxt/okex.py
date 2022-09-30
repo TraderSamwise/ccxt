@@ -1380,8 +1380,14 @@ class okex(OkexTealstreetMixin, Exchange):
                 orderType = timeInForce
         # workingType = self.api_trigger_type(params['trigger']) # only for stops - contract and mark
         closeOnTrigger = self.safe_boolean(params, 'closeOnTrigger', False)
+        if orderType in ['conditional', 'trigger']:
+            # request = self.omit(request, 'px')
+            stopPrice = self.safe_number(params, 'stopPrice')
+            # request['reduceOnly'] = closeOnTrigger
+            if closeOnTrigger:
+                reduceOnly = True
+            params = self.omit(params, ['reduceOnly'])
         side = side.lower()
-        # posSide = 'long' if side == 'buy' else 'short'
         if (side == 'buy' and reduceOnly) or (side == 'sell' and not reduceOnly):
             posSide = 'short'
         else:
@@ -1470,12 +1476,6 @@ class okex(OkexTealstreetMixin, Exchange):
         request['sz'] = self.amount_to_precision(symbol, amount)
 
         if orderType in ['conditional', 'trigger']:
-            # request = self.omit(request, 'px')
-            stopPrice = self.safe_number(params, 'stopPrice')
-            request['reduceOnly'] = closeOnTrigger
-            if closeOnTrigger:
-                reduceOnly = True
-            params = self.omit(params, ['reduceOnly'])
 
             triggerType = self.safe_string_lower(params, 'trigger', 'mark')
             request['slTriggerPxType'] = triggerType
