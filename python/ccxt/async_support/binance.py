@@ -3204,22 +3204,29 @@ class binance(Exchange):
                 else:
                     onePlusMaintenanceMarginPercentageString = Precise.string_add('-1', maintenanceMarginPercentageString)
                     entryPriceSignString = Precise.string_mul('-1', entryPriceSignString)
-                leftSide = Precise.string_div(walletBalance, Precise.string_mul(contractsStringAbs, onePlusMaintenanceMarginPercentageString))
-                rightSide = Precise.string_div(entryPriceSignString, onePlusMaintenanceMarginPercentageString)
-                pricePrecision = market['precision']['price']
-                pricePrecisionPlusOne = pricePrecision + 1
-                pricePrecisionPlusOneString = str(pricePrecisionPlusOne)
-                # round half up
-                rounder = Precise('5e-' + pricePrecisionPlusOneString)
-                rounderString = str(rounder)
-                liquidationPriceStringRaw = Precise.string_add(leftSide, rightSide)
-                liquidationPriceRoundedString = Precise.string_add(rounderString, liquidationPriceStringRaw)
-                truncatedLiquidationPrice = Precise.string_div(liquidationPriceRoundedString, '1', pricePrecision)
-                if truncatedLiquidationPrice[0] == '-':
-                    # user cannot be liquidated
-                    # since he has more collateral than the size of the position
-                    truncatedLiquidationPrice = None
-                liquidationPrice = self.parse_number(truncatedLiquidationPrice)
+                error = False
+                try:
+                    leftSide = Precise.string_div(walletBalance, Precise.string_mul(contractsStringAbs, onePlusMaintenanceMarginPercentageString))
+                    rightSide = Precise.string_div(entryPriceSignString, onePlusMaintenanceMarginPercentageString)
+                except Exception as e:
+                    error = True
+                if not error:
+                    pricePrecision = market['precision']['price']
+                    pricePrecisionPlusOne = pricePrecision + 1
+                    pricePrecisionPlusOneString = str(pricePrecisionPlusOne)
+                    # round half up
+                    rounder = Precise('5e-' + pricePrecisionPlusOneString)
+                    rounderString = str(rounder)
+                    liquidationPriceStringRaw = Precise.string_add(leftSide, rightSide)
+                    liquidationPriceRoundedString = Precise.string_add(rounderString, liquidationPriceStringRaw)
+                    truncatedLiquidationPrice = Precise.string_div(liquidationPriceRoundedString, '1', pricePrecision)
+                    if truncatedLiquidationPrice[0] == '-':
+                        # user cannot be liquidated
+                        # since he has more collateral than the size of the position
+                        truncatedLiquidationPrice = None
+                    liquidationPrice = self.parse_number(truncatedLiquidationPrice)
+                else:
+                    liquidationPrice = 0
         price = entryPrice
         tradeMode = None
         positionSide = self.safe_string_2(position, 'positionSide', 'ps')
