@@ -2220,9 +2220,9 @@ class binance(Exchange):
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
-            if hasattr(e, 'args') and len(e.args) > 0:
-                if 'maximum allowable position' in e.args[0] or 'margin' in e.args[0]:
-                    raise e
+            primary_error = e
+            if e and ('maximum allowable position' in str(e) or 'margin' in str(e)):
+                raise e
             try:
                 if tradeMode == 'hedged': # assume user may be on oneway mode instead
                     if not closeOnTrigger and reduceOnly:
@@ -2233,7 +2233,7 @@ class binance(Exchange):
                     set_hedged_positionSide()
                 response = getattr(self, method)(self.extend(request, params))
             except Exception:
-                raise e
+                raise primary_error
 
         return self.parse_order(response, market)
 

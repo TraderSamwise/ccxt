@@ -1670,7 +1670,8 @@ class bybit(Exchange):
         try:
             response = getattr(self, method)(self.extend(request, params))
         except BaseException as e:
-            if hasattr(e, 'args') and len(e.args) > 0 and 'oc_diff' in e.args[0] or 'Not enough margin' in e.args[0]:
+            primary_error = e
+            if e and ('oc_diff' in str(e) or 'Not enough margin' in str(e)):
                 raise e
             try:
                 if request['position_idx']:
@@ -1685,8 +1686,8 @@ class bybit(Exchange):
                     # erroring when there's no position_idx means it's oneway
                     request['position_idx'] = 0
                     response = getattr(self, method)(self.extend(request, params))
-            except Exception:
-                raise e
+            except Exception as e:
+                raise primary_error
 
 
         #
