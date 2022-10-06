@@ -548,9 +548,6 @@ class Exchange(TealstreetMixin, object):
 
     def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         """A better wrapper over request for deferred signing"""
-        # TEALSTREET
-        trigger_ratelimit = self.safe_value(params, 'triggerRatelimit', True)
-        self.check_rate_limits()
 
         if self.enableRateLimit:
             # cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
@@ -558,24 +555,8 @@ class Exchange(TealstreetMixin, object):
             self.throttle()
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
-        try:
-            res = self.fetch(request['url'], request['method'], request['headers'], request['body'])
-            if trigger_ratelimit:
-                self.set_rate_limit_status(False)
-            return res
-        except Exception as e:
-            is_rate_limit_error = self.is_rate_limit_error(e)
-            if self.proxy and not is_rate_limit_error and isinstance(e, NetworkError):
-                old_proxy = self.proxy
-                self.proxy = ''
-                res = self.fetch2(path, api, method, params, headers, body, config, context)
-                self.disable_proxy(e)
-                self.proxy = old_proxy
-                return res
-            elif trigger_ratelimit and is_rate_limit_error:
-                self.set_rate_limit_status(True)
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
-            raise e
+        return self.fetch(request['url'], request['method'], request['headers'], request['body'])
+
 
     def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         return self.fetch2(path, api, method, params, headers, body, config, context)
@@ -593,55 +574,6 @@ class Exchange(TealstreetMixin, object):
     # TEALSTREET
     def resolve_error_message_future(self, message):
         pass
-
-    # TEALSTREET
-    def get_is_rate_limited(self):
-        get_is_rate_limitted = self.options.get("get_is_rate_limited")
-        if get_is_rate_limitted:
-            return get_is_rate_limitted()
-        else:
-            return False
-
-    # TEALSTREET
-    def check_rate_limits(self):
-        if self.get_is_rate_limited():
-            raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited.'}))
-
-    # TEALSTREET
-    def set_rate_limit_status(self, status):
-        _set_rate_limit_status = self.options.get("set_rate_limit_status")
-        if _set_rate_limit_status:
-            _set_rate_limit_status(self.apiKey, status)
-
-    # TEALSTREET
-    def disable_proxy(self, e):
-        _disable_proxy = self.options.get("disable_proxy")
-        if _disable_proxy:
-            _disable_proxy(self.apiKey, e)
-
-
-    rate_limit_keywords = [
-        "toomanyrequests",
-        "ratelimited",
-        "ratelimited",
-        "slowdown",
-        "trylater"
-    ]
-
-    def is_rate_limit_error(self, e):
-        if isinstance(e, DDoSProtection):
-            return True
-        elif isinstance(e, RateLimitExceeded):
-            return True
-        elif isinstance(e, ExchangeNotAvailable):
-            error_str = str(e).lower().replace("_", " ").replace(" ", "")
-            for k in self.rate_limit_keywords:
-                if k in error_str:
-                    return True
-            return False
-        else:
-            return False
-
 
     def throw_exactly_matched_exception(self, exact, string, message):
         if string in exact:

@@ -10,29 +10,25 @@ import asyncio
 import concurrent.futures
 import json
 import socket
-import traceback
-
-import certifi
-import aiohttp
 import ssl
 import sys
+
+import aiohttp
+import certifi
 import yarl
-from python_utils.asyncio_utils import AsyncioSafeTasks
 
 # -----------------------------------------------------------------------------
 from ccxt.async_support.base.throttle import throttle
-
-# -----------------------------------------------------------------------------
-
-from ccxt.base.errors import ExchangeError, RateLimitExceeded, NetworkError
-from ccxt.base.errors import ExchangeNotAvailable
-from ccxt.base.errors import RequestTimeout
-from ccxt.base.errors import NotSupported
 from ccxt.base.errors import BadSymbol
+from ccxt.base.errors import ExchangeError, RateLimitExceeded
+from ccxt.base.errors import ExchangeNotAvailable
+from ccxt.base.errors import NotSupported
+from ccxt.base.errors import RequestTimeout
+from ccxt.base.exchange import Exchange as BaseExchange
+from python_utils.asyncio_utils import AsyncioSafeTasks
 
 # -----------------------------------------------------------------------------
-
-from ccxt.base.exchange import Exchange as BaseExchange
+# -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 
@@ -181,23 +177,9 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
                     self.session._connector = None
             self.session = None
 
-    # TEALSTREET
-    async def check_rate_limits(self):
-        rate_limit_count = 0
-        rate_limit_timeout = self.options.get("rate_limit_timeout", 3)
-        max_rate_limit_checks = self.options.get("max_rate_limit_checks", 2)
-        while self.get_is_rate_limited():
-            if rate_limit_count >= max_rate_limit_checks:
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': f'Servers still rate limited after {max_rate_limit_checks} attempts.'}))
-                # raise RateLimitExceeded(f'{self.id} Still rate limited after {max_rate_limit_checks} attempts.')
-            rate_limit_count += 1
-            await asyncio.sleep(rate_limit_timeout)
 
     async def fetch2(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         """A better wrapper over request for deferred signing"""
-        # TEALSTREET
-        trigger_ratelimit = params.pop('triggerRatelimit', True)
-        await self.check_rate_limits()
 
         if self.enableRateLimit:
             # cost = self.calculate_rate_limiter_cost(api, method, path, params, config, context)
@@ -205,24 +187,7 @@ class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
             await self.throttle(self.rateLimit)
         self.lastRestRequestTimestamp = self.milliseconds()
         request = self.sign(path, api, method, params, headers, body)
-        try:
-            res = await self.fetch(request['url'], request['method'], request['headers'], request['body'])
-            if trigger_ratelimit:
-                self.set_rate_limit_status(False)
-            return res
-        except Exception as e:
-            is_rate_limit_error = self.is_rate_limit_error(e)
-            if self.proxy and not is_rate_limit_error and isinstance(e, NetworkError):
-                old_proxy = self.proxy
-                self.proxy = ''
-                res = await self.fetch2(path, api, method, params, headers, body, config, context)
-                self.disable_proxy(e)
-                self.proxy = old_proxy
-                return res
-            elif trigger_ratelimit and is_rate_limit_error:
-                self.set_rate_limit_status(True)
-                raise RateLimitExceeded(self.id + ' ' +  json.dumps({'error': 'Account or exchange appears to be rate limited.'}))
-            raise e
+        return await self.fetch(request['url'], request['method'], request['headers'], request['body'])
 
     async def request(self, path, api='public', method='GET', params={}, headers=None, body=None, config={}, context={}):
         return await self.fetch2(path, api, method, params, headers, body, config, context)
