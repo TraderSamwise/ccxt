@@ -8,7 +8,6 @@ __version__ = '1.50.88'
 
 import asyncio
 import concurrent.futures
-import json
 import socket
 import ssl
 import sys
@@ -20,7 +19,7 @@ import yarl
 # -----------------------------------------------------------------------------
 from ccxt.async_support.base.throttle import throttle
 from ccxt.base.errors import BadSymbol
-from ccxt.base.errors import ExchangeError, RateLimitExceeded
+from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import NotSupported
 from ccxt.base.errors import RequestTimeout
@@ -40,83 +39,7 @@ __all__ = [
 # -----------------------------------------------------------------------------
 
 
-class ExchangeTealstreetMixin(object):
-    def get_new_position_dict(self):
-        return {
-            'id': None,
-            'symbol': None,
-            'timestamp': None,
-            'datetime': None,
-            'isolated': False,
-            'hedged': False,
-            'side': None,
-            'contracts': 0,
-            'price': 0,
-            'markPrice': 0,
-            'notional': 0.0,
-            'leverage': 0.0,
-            'initialMargin': 0.0,
-            'maintenanceMargin': 0.0,
-            'initialMarginPercentage': 0.0,
-            'maintenanceMarginPercentage': 0.0,
-            'unrealizedPnl': 0.0,
-            'pnl': 0.0,
-            'liquidationPrice': None,
-            'status': 'open',
-            'entryPrice': 0,
-            'marginRatio':0,
-            'collateral':0,
-            'marginType':'cross',
-            'percentage':0.0
-        }
-
-    def update_balance_free_used_total_from_currency_balance(self: 'Exchange', currency, balance):
-        if 'free' not in self.balance:
-            self.balance['free'] = {}
-        self.balance['free'][currency] = balance.get('free')
-
-        if 'total' not in self.balance:
-            self.balance['total'] = {}
-        self.balance['total'][currency] = balance.get('total')
-
-        if 'used' not in self.balance:
-            self.balance['used'] = {}
-        self.balance['used'][currency] = balance.get('used')
-
-    async def fetch_account_configuration(self, symbol=None, params={}):
-        return {}
-
-    async def fetch_all_my_trades(self: 'Exchange', symbol, since, fetch_callback=None, rate_limit_callback=None):
-        since_time = since
-        count = 0
-        trades = []
-        while True:
-            count += 1
-            rate_limit_count = 0
-            while True:
-                try:
-                    fetched_trades = await self.fetch_my_trades(symbol, since_time + 1, params={'triggerRatelimit': False})
-                    break
-                except Exception as e:
-                    if self.is_rate_limit_error(e):
-                        rate_limit_callback and rate_limit_callback()
-                        rate_limit_count += 1
-                        await asyncio.sleep(rate_limit_count * 30)
-                    else:
-                        raise e
-            if len(fetched_trades) == 0:
-                break
-            new_since_time = int(fetched_trades[-1]['timestamp'])
-            if new_since_time == since_time or count >= 1000:
-                break
-            await asyncio.sleep(.1)
-            fetch_callback and fetch_callback(trades)
-            since_time = new_since_time
-            trades.extend(fetched_trades)
-        trades.sort(key=lambda trade: trade['timestamp'], reverse=True)
-        return trades
-
-class Exchange(AsyncioSafeTasks, ExchangeTealstreetMixin, BaseExchange):
+class Exchange(AsyncioSafeTasks, BaseExchange):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:

@@ -575,6 +575,28 @@ class Exchange(TealstreetMixin, object):
     def resolve_error_message_future(self, message):
         pass
 
+    rate_limit_keywords = [
+        "toomanyrequests",
+        "ratelimited",
+        "ratelimited",
+        "slowdown",
+        "trylater"
+    ]
+
+    def is_rate_limit_error(self, e):
+        if isinstance(e, DDoSProtection):
+            return True
+        elif isinstance(e, RateLimitExceeded):
+            return True
+        elif isinstance(e, ExchangeNotAvailable):
+            error_str = str(e).lower().replace("_", " ").replace(" ", "")
+            for k in self.rate_limit_keywords:
+                if k in error_str:
+                    return True
+            return False
+        else:
+            return False
+
     def throw_exactly_matched_exception(self, exact, string, message):
         if string in exact:
             self.resolve_error_message_future('{0} ({1})'.format(string, message))
