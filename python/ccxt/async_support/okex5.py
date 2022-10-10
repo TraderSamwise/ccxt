@@ -79,18 +79,18 @@ class okex5(Exchange):
                 '6M': '6M',
                 '1y': '1Y',
             },
-            'hostname': 'okex.com',
+            'hostname': 'okx.com',
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/1294454/32552768-0d6dd3c6-c4a6-11e7-90f8-c043b64756a7.jpg',
                 'api': {
                     'rest': 'https://www.{hostname}',
                 },
-                'www': 'https://www.okex.com',
-                'doc': 'https://www.okex.com/docs/en/',
-                'fees': 'https://www.okex.com/pages/products/fees.html',
-                'referral': 'https://www.okex.com/join/1888677',
+                'www': 'https://www.okx.com',
+                'doc': 'https://www.okx.com/docs/en/',
+                'fees': 'https://www.okx.com/pages/products/fees.html',
+                'referral': 'https://www.okx.com/join/1888677',
                 'test': {
-                    'rest': 'https://testnet.okex.com',
+                    'rest': 'https://testnet.okx.com',
                 },
             },
             'api': {
