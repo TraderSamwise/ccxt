@@ -2382,7 +2382,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
                     if isinstance(response, ccxt.errors.BaseError) or type(response) == TypeError:
                         raise response
                     data = self.safe_value(response, 'data', {})
-                    accountBalance = self.safe_value(data, 'account')
+                    accountBalance = self.safe_value(data, 'account', {})
                     positions = [x for x in self.safe_value(data, 'positions', []) if x['size'] != '0']  # only open positions
                     unifiedResult = []
                     contractType = 'inverse' if accountBalance.get('currency') != 'USD' else 'linear'

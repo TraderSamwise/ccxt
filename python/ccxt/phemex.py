@@ -95,7 +95,11 @@ class PhemexTealstreetMixin(object):
         notional = float(Precise.string_div(self.safe_string(position, 'valueEv'), evScale))  # notional = self.safe_float(position, 'value') # value of contracts in settlement currency
         collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
         leverage = float(Precise.string_div(self.safe_string(position, 'leverageEr'), '1e8'))
-        isolated = leverage != 0.0
+        isolated = True
+        if leverage < 0:
+            isolated = False
+        leverage = abs(leverage)
+
         initialMarginPercentage = float(Precise.string_div(self.safe_string(position, 'initMarginReqEr'), '1e8'))
         maintenanceMarginPercentage = float(Precise.string_div(self.safe_string(position, 'maintMarginReqEr'), '1e8'))
         initialMargin = initialMarginPercentage * notional
