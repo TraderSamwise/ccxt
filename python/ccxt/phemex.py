@@ -96,7 +96,7 @@ class PhemexTealstreetMixin(object):
         collateral = float(Precise.string_div(self.safe_string(account_balance, 'accountBalanceEv'), evScale))
         leverage = float(Precise.string_div(self.safe_string(position, 'leverageEr'), '1e8'))
         isolated = True
-        if leverage < 0:
+        if leverage <= 0:
             isolated = False
         leverage = abs(leverage)
 
