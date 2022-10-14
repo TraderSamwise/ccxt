@@ -2167,9 +2167,9 @@ class binance(Exchange):
         if stopPriceIsRequired:
             stopPrice = self.safe_number(params, 'stopPrice')
             request['workingType'] = workingType
-            request['closePosition'] = closeOnTrigger
-            if closeOnTrigger:
-                request = self.omit(request, 'reduceOnly') # binance yells about it not being necessary
+            request['reduceOnly'] = closeOnTrigger
+            # if closeOnTrigger:
+            #     request = self.omit(request, 'reduceOnly') # binance yells about it not being necessary
             if stopPrice is None:
                 raise InvalidOrder(self.id + ' createOrder() requires a stopPrice extra param for a ' + type + ' order')
             else:

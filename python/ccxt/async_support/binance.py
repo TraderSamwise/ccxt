@@ -1910,6 +1910,8 @@ class binance(Exchange):
         id = self.safe_string(order, 'orderId')
         raw_type = self.safe_string_lower(order, 'type')
         type = self.reverse_api_order_type(raw_type)
+        if type == 'Stop' and price:
+            type = 'StopLimit'
         side = self.safe_string_lower(order, 'side')
         fills = self.safe_value(order, 'fills', [])
         trades = self.parse_trades(fills, market)
@@ -1920,6 +1922,11 @@ class binance(Exchange):
         stopPrice = self.parse_number(self.omit_zero(stopPriceString))
         reduce = self.safe_value(order, 'reduceOnly')
         close = self.safe_value(order, 'closePosition')
+
+        #TEALSTREET
+        reduce = close or reduce
+        close = close or reduce
+
         trigger = self.reverse_api_trigger_type(self.safe_string(order, 'workingType'))
         return self.safe_order({
             'info': order,
