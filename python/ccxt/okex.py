@@ -1498,23 +1498,33 @@ class okex(OkexTealstreetMixin, Exchange):
             #     elif uppercaseType == 'STOP':
             #         uppercaseType = 'TAKE_PROFIT'
             # if (side == 'BUY' and stopPrice < basePrice) or (side == 'SELL' and stopPrice > basePrice):
-            if side == 'sell':
-                if stopPrice > basePrice:
-                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
-                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
-                else:
-                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
-                    request['slOrdPx'] = self.price_to_precision(symbol, price)
-            else:
-                if stopPrice < basePrice:
-                    request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
-                    request['tpOrdPx'] = self.price_to_precision(symbol, price)
-                else:
-                    request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
-                    request['slOrdPx'] = self.price_to_precision(symbol, price)
 
-            request['triggerPx'] = self.price_to_precision(symbol, stopPrice)
-            request['orderPx'] =  self.price_to_precision(symbol, price)
+            tpPrice = self.safe_number(params, 'tpPrice')
+
+            if tpPrice:
+                request['ordType'] = 'oco'
+                request['tpTriggerPx'] = self.price_to_precision(symbol, tpPrice)
+                request['tpOrdPx'] = self.price_to_precision(symbol, -1)
+                request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                request['slOrdPx'] = self.price_to_precision(symbol, -1)
+            else:
+                if side == 'sell':
+                    if stopPrice > basePrice:
+                        request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                        request['tpOrdPx'] = self.price_to_precision(symbol, price)
+                    else:
+                        request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                        request['slOrdPx'] = self.price_to_precision(symbol, price)
+                else:
+                    if stopPrice < basePrice:
+                        request['tpTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                        request['tpOrdPx'] = self.price_to_precision(symbol, price)
+                    else:
+                        request['slTriggerPx'] = self.price_to_precision(symbol, stopPrice)
+                        request['slOrdPx'] = self.price_to_precision(symbol, price)
+
+                request['triggerPx'] = self.price_to_precision(symbol, stopPrice)
+                request['orderPx'] =  self.price_to_precision(symbol, price)
 
         tradeMode = self.safe_string(params, 'tradeMode', 'hedged')
         marginType   = self.safe_string(params, 'marginType', 'cross')

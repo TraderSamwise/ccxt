@@ -2124,12 +2124,12 @@ class phemex(PhemexTealstreetMixin, Exchange):
             request['orderQty'] = int(amount)
         if type in ['Limit', 'StopLimit', 'LimitIfTouched'] or price:
             request['priceEp'] = self.to_ep(price, market)
-        basePrice = self.safe_value(params, 'basePrice')
-        if not basePrice:
-            ticker = self.fetch_ticker(symbol)
-            basePrice = ticker['last']
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice:
+            basePrice = self.safe_value(params, 'basePrice')
+            if not basePrice:
+                ticker = self.fetch_ticker(symbol)
+                basePrice = ticker['last']
             request['stopPxEp'] = self.to_ep(stopPrice, market)
             # TEALSTREET TODO: get current mark price and set to base price
             if (side == 'Buy' and stopPrice < basePrice) or (side == 'Sell' and stopPrice > basePrice):
