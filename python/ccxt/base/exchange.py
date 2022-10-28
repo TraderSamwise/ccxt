@@ -575,6 +575,9 @@ class Exchange(TealstreetMixin, object):
     def resolve_error_message_future(self, message):
         pass
 
+    def switch_isolated(self, symbol, isIsolated, buyLeverage, sellLeverage, params={}):
+        raise NotSupported(self.id + ' switch_isolated is not implemented yet')
+
     rate_limit_keywords = [
         "toomanyrequests",
         "ratelimited",
