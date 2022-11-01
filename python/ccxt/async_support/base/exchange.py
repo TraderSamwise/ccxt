@@ -24,7 +24,6 @@ from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import NotSupported
 from ccxt.base.errors import RequestTimeout
 from ccxt.base.exchange import Exchange as BaseExchange
-from python_utils.asyncio_utils import AsyncioSafeTasks
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -39,7 +38,7 @@ __all__ = [
 # -----------------------------------------------------------------------------
 
 
-class Exchange(AsyncioSafeTasks, BaseExchange):
+class Exchange(BaseExchange):
 
     def __init__(self, config={}):
         if 'asyncio_loop' in config:
@@ -370,3 +369,7 @@ class Exchange(AsyncioSafeTasks, BaseExchange):
 
     async def sleep(self, milliseconds):
         return await asyncio.sleep(milliseconds / 1000)
+
+    # TEALSTREET
+    async def fetch_account_configuration(self: 'Exchange', symbol=None, params={}):
+        return {}
