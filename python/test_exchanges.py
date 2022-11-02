@@ -21,8 +21,8 @@ mn_binance_params = {
 }
 mn_binance_coinm_exchange_pro = ccxtpro.binancecoinm(mn_binance_params)
 mn_binance_usdm_exchange_pro = ccxtpro.binanceusdm(mn_binance_params)
-mn_binance_coinm_exchange = ccxt.binancecoinm(mn_binance_params)
-mn_binance_usdm_exchange = ccxt.binanceusdm(mn_binance_params)
+mn_binance_coinm_exchange = ccxtold.binancecoinm(mn_binance_params)
+mn_binance_usdm_exchange = ccxtold.binanceusdm(mn_binance_params)
 
 # BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX BITMEX #
 mn_bitmex_params = {
@@ -32,7 +32,7 @@ mn_bitmex_params = {
     # 'wsproxy': proxy,
 }
 mn_bitmex_exchange_pro = ccxtpro.bitmex(mn_bitmex_params)
-mn_bitmex_exchange = ccxt.bitmex(mn_bitmex_params)
+mn_bitmex_exchange = ccxtold.bitmex(mn_bitmex_params)
 tn_bitmex_params = {
     'apiKey': os.environ.get('tn_bitmex_key'),
     'secret': os.environ.get('tn_bitmex_secret'),
@@ -41,7 +41,7 @@ tn_bitmex_params = {
 }
 tn_bitmex_exchange_pro = ccxtpro.bitmex(tn_bitmex_params)
 tn_bitmex_exchange_pro.set_sandbox_mode(True)
-tn_bitmex_exchange = ccxt.bitmex(tn_bitmex_params)
+tn_bitmex_exchange = ccxtold.bitmex(tn_bitmex_params)
 tn_bitmex_exchange.set_sandbox_mode(True)
 
 # BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT BYBIT #
@@ -50,8 +50,8 @@ mn_bybit_params = {
     'secret': os.environ.get('mn_bybit_secret'),
     'enableRateLimit': False,
 }
-mn_bybit_inverse_exchange = ccxt.bybitinverse(mn_bybit_params)
-mn_bybit_linear_exchange = ccxt.bybitlinear(mn_bybit_params)
+mn_bybit_inverse_exchange = ccxtold.bybitinverse(mn_bybit_params)
+mn_bybit_linear_exchange = ccxtold.bybitlinear(mn_bybit_params)
 mn_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(mn_bybit_params)
 mn_bybit_linear_exchange_pro = ccxtpro.bybitlinear(mn_bybit_params)
 
@@ -60,9 +60,9 @@ tn_bybit_params = {
     'secret': os.environ.get('tn_bybit_secret'),
     'enableRateLimit': False,
 }
-tn_bybit_inverse_exchange = ccxt.bybitinverse(tn_bybit_params)
+tn_bybit_inverse_exchange = ccxtold.bybitinverse(tn_bybit_params)
 tn_bybit_inverse_exchange.set_sandbox_mode(True)
-tn_bybit_linear_exchange = ccxt.bybitlinear(tn_bybit_params)
+tn_bybit_linear_exchange = ccxtold.bybitlinear(tn_bybit_params)
 tn_bybit_linear_exchange.set_sandbox_mode(True)
 tn_bybit_inverse_exchange_pro = ccxtpro.bybitinverse(tn_bybit_params)
 tn_bybit_inverse_exchange_pro.set_sandbox_mode(True)
@@ -81,7 +81,7 @@ mn_ftx_params = {
     # 'proxy': 'http://localhost/api/proxy/',
 }
 mn_ftx_exchange_pro = ccxtpro.ftx(mn_ftx_params)
-mn_ftx_exchange = ccxt.ftx(mn_ftx_params)
+mn_ftx_exchange = ccxtold.ftx(mn_ftx_params)
 mnc_ftx_params = {
     'apiKey': os.environ.get('mnc_ftx_key'),
     'secret': os.environ.get('mnc_ftx_secret'),
@@ -93,7 +93,7 @@ mnc_ftx_params = {
     # 'proxy': 'http://localhost/api/proxy/',
 }
 mnc_ftx_exchange_pro = ccxtpro.ftx(mnc_ftx_params)
-mnc_ftx_exchange = ccxt.ftx(mnc_ftx_params)
+mnc_ftx_exchange = ccxtold.ftx(mnc_ftx_params)
 
 # GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO GATE.IO #
 mn_gateio_params = {
@@ -103,7 +103,7 @@ mn_gateio_params = {
     # 'proxy': 'http://localhost/api/proxy/',
 }
 mn_gateio_exchange_pro = ccxtpro.gateio(mn_gateio_params)
-mn_gateio_exchange = ccxt.gateio(mn_gateio_params)
+mn_gateio_exchange = ccxtold.gateio(mn_gateio_params)
 
 # KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN KUCOIN #
 mn_kucoin_params = {
@@ -113,7 +113,7 @@ mn_kucoin_params = {
     'enableRateLimit': True
 }
 mn_kucoin_exchange_pro = ccxtpro.kucoin(mn_kucoin_params)
-mn_kucoin_exchange = ccxt.kucoin(mn_kucoin_params)
+mn_kucoin_exchange = ccxtold.kucoin(mn_kucoin_params)
 
 tn_kucoin_params = {
     'apiKey': os.environ.get('tn_kucoin_key'),
@@ -123,7 +123,7 @@ tn_kucoin_params = {
 }
 tn_kucoin_exchange_pro = ccxtpro.kucoin(tn_kucoin_params)
 tn_kucoin_exchange_pro.set_sandbox_mode(True)
-tn_kucoin_exchange = ccxt.kucoin(tn_kucoin_params)
+tn_kucoin_exchange = ccxtold.kucoin(tn_kucoin_params)
 tn_kucoin_exchange.set_sandbox_mode(True)
 
 # PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX PHEMEX #
@@ -137,7 +137,7 @@ mn_phemex_params = {
     # 'proxy': 'http://localhost/api/proxy/',
 }
 mn_phemex_exchange_pro = ccxtpro.phemex(mn_phemex_params)
-mn_phemex_exchange = ccxt.phemex(mn_phemex_params)
+mn_phemex_exchange = ccxtold.phemex(mn_phemex_params)
 tn_phemex_params = {
     'apiKey': os.environ.get('tn_phemex_key'),
     'secret': os.environ.get('tn_phemex_secret'),
@@ -149,7 +149,7 @@ tn_phemex_params = {
 }
 tn_phemex_exchange_pro = ccxtpro.phemex(tn_phemex_params)
 tn_phemex_exchange_pro.set_sandbox_mode(True)
-tn_phemex_exchange = ccxt.phemex(tn_phemex_params)
+tn_phemex_exchange = ccxtold.phemex(tn_phemex_params)
 tn_phemex_exchange.set_sandbox_mode(True)
 
 # OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX OKEX #
@@ -164,5 +164,5 @@ tn_okex_params = {
 }
 tn_okex_exchange_pro = ccxtpro.okex(tn_okex_params)
 tn_okex_exchange_pro.set_sandbox_mode(True)
-tn_okex_exchange = ccxt.okex(tn_okex_params)
+tn_okex_exchange = ccxtold.okex(tn_okex_params)
 tn_okex_exchange.set_sandbox_mode(True)

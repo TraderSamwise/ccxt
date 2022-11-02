@@ -518,7 +518,7 @@ if __name__ == "__main__":
 #
 #
 # # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# ftxExchange = ccxt.ftx({
+# ftxExchange = ccxtold.ftx({
 #     'apiKey': os.environ.get('ftx_key'),
 #     'secret': os.environ.get('ftx_secret'),
 #     'headers': {
@@ -530,7 +530,7 @@ if __name__ == "__main__":
 # ftxExchange.fetch_currencies()
 #
 # # fetch_balance [x], fetch_positions [x], fetch_orders [x] (fees not implemented, but fetch_trades has fees), fetch_my_trades [x] ('side' doesnt show for funding trades)
-# bitmexExchange = ccxt.bitmex({
+# bitmexExchange = ccxtold.bitmex({
 #     'apiKey': os.environ.get('bitmex_key'),
 #     'secret': os.environ.get('bitmex_secret'),
 #     'enableRateLimit': True,
@@ -539,7 +539,7 @@ if __name__ == "__main__":
 # bitmexExchange.urls['api'] = bitmexExchange.urls['test']
 #
 # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# bybitExchange = ccxt.bybitinverse({
+# bybitExchange = ccxtold.bybitinverse({
 #     'apiKey': os.environ.get('bybit_kjs_key'),
 #     'secret': os.environ.get('bybit_kjs_secret'),
 #     'enableRateLimit': True
@@ -547,7 +547,7 @@ if __name__ == "__main__":
 # bybitExchange.set_sandbox_mode(True)
 #
 # # fetch_balance [ ], fetch_positions [ ], fetch_orders [ ], fetch_my_trades [ ]
-# binanceExchange = ccxt.binanceusdm({
+# binanceExchange = ccxtold.binanceusdm({
 #     'apiKey': os.environ.get('binance_key'),
 #     'secret': os.environ.get('binance_secret'),
 #     'enableRateLimit': True,
@@ -560,14 +560,14 @@ if __name__ == "__main__":
 # })
 #
 # # fetch_balance [x], fetch_positions [x], fetch_orders [x], fetch_my_trades [x]
-# phemexExchange = ccxt.phemex({
+# phemexExchange = ccxtold.phemex({
 #     'apiKey': os.environ.get('phemex_key_main'),
 #     'secret': os.environ.get('phemex_secret_main'),
 #     'enableRateLimit': True,
 # })
 # # phemexExchange.urls['api'] = phemexExchange.urls['test']
 #
-# okexExchange = ccxt.okex({
+# okexExchange = ccxtold.okex({
 #     'apiKey': os.environ.get('okex_key'),
 #     'secret': os.environ.get('okex_secret'),
 #     'password': os.environ.get('okex_password'),

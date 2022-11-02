@@ -1,0 +1,15 @@
+setuptools>=38.5.1
+certifi>=2018.1.18
+requests>=2.18.4
+cryptography>=2.6.1
+
+[:python_version>="3.5.2"]
+aiohttp<3.8,>=3.7.4
+aiodns<2.1,>=1.1.1
+yarl==1.7.2
+
+[doc]
+Sphinx==1.7.0
+
+[qa]
+flake8==3.7.9

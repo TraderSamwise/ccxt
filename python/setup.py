@@ -29,7 +29,8 @@ with open(package_json, encoding='utf-8') as f:
 
 setup(
 
-    name=package['name'],
+    # name=package['name'],
+    name='ccxtold',
     version=package['version'],
 
     description=package['description'],
@@ -68,7 +69,7 @@ setup(
     ],
 
     keywords=package['keywords'],
-    packages=find_packages(exclude=['ccxt.async_support*'] if is_python_2 else []),
+    packages=find_packages(exclude=['ccxtold.async_support*'] if is_python_2 else []),
 
     install_requires=[
         'setuptools>=38.5.1',
@@ -81,7 +82,7 @@ setup(
         ':python_version>="3.5.2"': [
             'aiohttp>=3.7.4,<3.8',
             'aiodns>=1.1.1,<2.1',
-            'yarl==1.6.3',
+            'yarl==1.7.2',
         ],
         'qa': [
             'flake8==3.7.9'
