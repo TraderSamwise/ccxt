@@ -709,7 +709,7 @@ class binance(Exchange):
         if type == 'future':
             method = 'fapiPrivateGetPositionSideDual'
         elif type == 'delivery':
-            method = 'fapiPrivateGetPositionSideDual'
+            method = 'dapiPrivateGetPositionSideDual'
         accountConfig = await getattr(self, method)(query)
 
         dualSidePosition = self.safe_value(accountConfig, 'dualSidePosition')

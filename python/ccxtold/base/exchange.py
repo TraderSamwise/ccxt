@@ -952,6 +952,9 @@ class Exchange(TealstreetMixin, object):
             else:
                 result = {}
             for arg in args:
+                # TEALSTREET fix for self.balance being None
+                if arg is None:
+                    arg = {}
                 result.update(arg)
             return result
         return {}
