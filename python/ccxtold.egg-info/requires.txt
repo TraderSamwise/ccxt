@@ -4,7 +4,7 @@ requests>=2.18.4
 cryptography>=2.6.1
 
 [:python_version>="3.5.2"]
-aiohttp<3.8,>=3.7.4
+aiohttp>=3.8
 aiodns<2.1,>=1.1.1
 yarl==1.7.2
 
