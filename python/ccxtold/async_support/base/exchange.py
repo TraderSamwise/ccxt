@@ -370,6 +370,3 @@ class Exchange(BaseExchange):
     async def sleep(self, milliseconds):
         return await asyncio.sleep(milliseconds / 1000)
 
-    # TEALSTREET
-    async def fetch_account_configuration(self: 'Exchange', symbol=None, params={}):
-        return {}
