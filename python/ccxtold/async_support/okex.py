@@ -3216,13 +3216,14 @@ class okex(OkexTealstreetMixin, Exchange):
         isolated = True if self.safe_string(position, 'mgnMode') == 'isolated' else False
         hedged = False  # TODO: not sure if you can hedge positions on okex
         contracts = self.safe_float(position, 'pos')
+        _side = self.safe_string(position, 'posSide', 'net')
         if not side:
-            side = self.safe_string(position, 'posSide', 'net')
+            side = _side
             if side == 'net':
                 side = 'long' if contracts >= 0 else 'short'
             if side == 'short' and contracts > 0:
                 contracts = contracts * -1
-        tradeMode = 'oneway' if side == 'net' else 'hedged'
+        tradeMode = 'oneway' if _side == 'net' else 'hedged'
         marginType = 'isolated' if isolated else 'cross'
         id = symbol + ":" + side + ':' + marginType
         price = self.safe_float(position, 'avgPx', 0) # TODO: do we need entry?

@@ -2993,8 +2993,8 @@ class okex(OkexTealstreetMixin, Exchange):
                 'instId': market['id'],
                 'posSide': 'short',
             }
-            responses.append(self.privatePostAccountSetLeverage(self.extend(longRequest, params)))
-            responses.append(self.privatePostAccountSetLeverage(self.extend(shortRequest, params)))
+            responses.append(self.privatePostAccountSetLeverage(longRequest, params))
+            responses.append(self.privatePostAccountSetLeverage(shortRequest, params))
 
         #
         #     {
