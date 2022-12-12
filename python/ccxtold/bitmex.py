@@ -486,7 +486,7 @@ class bitmex(BitmexTealstreetMixin, Exchange):
             'countries': ['SC'],  # Seychelles
             'version': 'v1',
             'userAgent': None,
-            'rateLimit': 2000,
+            'rateLimit': 400,
             'pro': True,
             'refCode': 'Tealstreet', # Tealstreet
             'has': {
