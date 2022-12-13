@@ -47,6 +47,12 @@ module.exports = class bitmex extends Exchange {
                 '1h': '1h',
                 '1d': '1d',
             },
+            'timeframes2': {
+                '1m': '1',
+                '5m': '5',
+                '1h': '60',
+                '1d': '1440',
+            },
             'timeframeMap': {
                 '1m': '60',
                 '5m': '300',
@@ -97,6 +103,7 @@ module.exports = class bitmex extends Exchange {
                         'stats/history',
                         'trade',
                         'trade/bucketed',
+                        'udf/history',
                     ],
                 },
                 'private': {
@@ -1052,48 +1059,83 @@ module.exports = class bitmex extends Exchange {
         const market = this.market (symbol);
         const request = {
             'symbol': market['id'],
-            'binSize': this.timeframes[timeframe],
-            'partial': true,     // true == include yet-incomplete current bins
+            // 'binSize': this.timeframes[timeframe],
+            // 'partial': true,     // true == include yet-incomplete current bins
             // 'filter': filter, // filter by individual fields and do advanced queries
             // 'columns': [],    // will return all columns if omitted
             // 'start': 0,       // starting point for results (wtf?)
             // 'reverse': false, // true == newest first
             // 'endTime': '',    // ending date filter for results
         };
-        if (limit !== undefined) {
-            request['count'] = limit; // default 100, max 500
-        }
-        const duration = this.parseTimeframe (timeframe) * 1000;
-        const fetchOHLCVOpenTimestamp = this.safeValue (this.options, 'fetchOHLCVOpenTimestamp', true);
-        // if since is not set, they will return candles starting from 2017-01-01
-        if (since !== undefined) {
-            let timestamp = since;
-            if (fetchOHLCVOpenTimestamp) {
-                timestamp = this.sum (timestamp, duration);
+        request['resolution'] = this.timeframes2[timeframe];
+        request['from'] = since / 1000;
+        const parsedTimeFrame = this.parseTimeframe (timeframe);
+        const duration = parsedTimeFrame * 1000 * limit;
+        const to = this.sum (since, duration);
+        request['to'] = to / 1000;
+        // {
+        //     "s": "ok",
+        //   "t": [
+        //     1669726800,
+        //     1669730400,
+        //     1669734000,
+        //     1669737600,
+        //     1669741200
+        // ],
+        //   "c": [
+        //     4.125,
+        //     4.088,
+        //     4.134,
+        //     4.137,
+        //     4.11
+        // ],
+        //   "o": [
+        //     4.114,
+        //     4.125,
+        //     4.088,
+        //     4.134,
+        //     4.137
+        // ],
+        //   "h": [
+        //     4.16,
+        //     4.16,
+        //     4.15,
+        //     4.22,
+        //     4.14
+        // ],
+        //   "l": [
+        //     4.108,
+        //     4.045,
+        //     4.058,
+        //     4.122,
+        //     4.095
+        // ],
+        //   "v": [
+        //     1491,
+        //     2584,
+        //     2028,
+        //     4214,
+        //     1428
+        // ]
+        // }
+        const response = await this.publicGetUdfHistory (this.extend (request, params));
+        const res = [];
+        if (response.s === 'ok') {
+            const length = response.t.length;
+            for (let i = 0; i < length; i++) {
+                res.push ([
+                    (response.t[i]) * 1000,
+                    response.o[i],
+                    response.h[i],
+                    response.l[i],
+                    response.c[i],
+                    response.v[i],
+                ]);
             }
-            const ymdhms = this.ymdhms (timestamp);
-            request['startTime'] = ymdhms; // starting date filter for results
         } else {
-            request['reverse'] = true;
+            console.error (response.s);
         }
-        const response = await this.publicGetTradeBucketed (this.extend (request, params));
-        //
-        //     [
-        //         {"timestamp":"2015-09-25T13:38:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0},
-        //         {"timestamp":"2015-09-25T13:39:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0},
-        //         {"timestamp":"2015-09-25T13:40:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0}
-        //     ]
-        //
-        const result = this.parseOHLCVs (response, market, timeframe, since, limit);
-        if (fetchOHLCVOpenTimestamp) {
-            // bitmex returns the candle's close timestamp - https://github.com/ccxt/ccxt/issues/4446
-            // we can emulate the open timestamp by shifting all the timestamps one place
-            // so the previous close becomes the current open, and we drop the first candle
-            for (let i = 0; i < result.length; i++) {
-                result[i][0] = result[i][0] - duration;
-            }
-        }
-        return result;
+        return res;
     }
 
     parseTrade (trade, market = undefined) {
@@ -1656,6 +1698,9 @@ module.exports = class bitmex extends Exchange {
 
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let query = '/api/' + this.version + '/' + path;
+        if (path.startsWith ('udf')) {
+            query = '/api/' + path;
+        }
         if (method === 'GET') {
             if (Object.keys (params).length) {
                 query += '?' + this.urlencode (params);

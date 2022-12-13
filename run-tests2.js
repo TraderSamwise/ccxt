@@ -5,9 +5,9 @@ const fs = require ('fs')
 
 
 (async () => {
-    const exchange = new ccxt.bybit({ enableRateLimit: true });
+    const exchange = new ccxt.bitmex({ enableRateLimit: true });
     while (true) {
-        const res = await exchange.fetchOHLCV("XRP/USD", "1m", Date.now() - 1000*120)
+        const res = await exchange.fetchOHLCV("BNB/USDT", "1m", Date.now() - 1000 * 60 * 60);
         console.log(res)
 
     }
