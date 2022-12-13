@@ -1048,6 +1048,61 @@ module.exports = class bitmex extends Exchange {
         ];
     }
 
+    async _fetchOHLCVOld (symbol, timeframe = '1m', since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        // send JSON key/value pairs, such as {"key": "value"}
+        // filter by individual fields and do advanced queries on timestamps
+        // let filter = { 'key': 'value' };
+        // send a bare series (e.g. XBU) to nearest expiring contract in that series
+        // you can also send a timeframe, e.g. XBU:monthly
+        // timeframes: daily, weekly, monthly, quarterly, and biquarterly
+        const market = this.market (symbol);
+        const request = {
+            'symbol': market['id'],
+            'binSize': this.timeframes[timeframe],
+            'partial': true,     // true == include yet-incomplete current bins
+            // 'filter': filter, // filter by individual fields and do advanced queries
+            // 'columns': [],    // will return all columns if omitted
+            // 'start': 0,       // starting point for results (wtf?)
+            // 'reverse': false, // true == newest first
+            // 'endTime': '',    // ending date filter for results
+        };
+        if (limit !== undefined) {
+            request['count'] = limit; // default 100, max 500
+        }
+        const duration = this.parseTimeframe (timeframe) * 1000;
+        const fetchOHLCVOpenTimestamp = this.safeValue (this.options, 'fetchOHLCVOpenTimestamp', true);
+        // if since is not set, they will return candles starting from 2017-01-01
+        if (since !== undefined) {
+            let timestamp = since;
+            if (fetchOHLCVOpenTimestamp) {
+                timestamp = this.sum (timestamp, duration);
+            }
+            const ymdhms = this.ymdhms (timestamp);
+            request['startTime'] = ymdhms; // starting date filter for results
+        } else {
+            request['reverse'] = true;
+        }
+        const response = await this.publicGetTradeBucketed (this.extend (request, params));
+        //
+        //     [
+        //         {"timestamp":"2015-09-25T13:38:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0},
+        //         {"timestamp":"2015-09-25T13:39:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0},
+        //         {"timestamp":"2015-09-25T13:40:00.000Z","symbol":"XBTUSD","open":237.45,"high":237.45,"low":237.45,"close":237.45,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0}
+        //     ]
+        //
+        const result = this.parseOHLCVs (response, market, timeframe, since, limit);
+        if (fetchOHLCVOpenTimestamp) {
+            // bitmex returns the candle's close timestamp - https://github.com/ccxt/ccxt/issues/4446
+            // we can emulate the open timestamp by shifting all the timestamps one place
+            // so the previous close becomes the current open, and we drop the first candle
+            for (let i = 0; i < result.length; i++) {
+                result[i][0] = result[i][0] - duration;
+            }
+        }
+        return result;
+    }
+
     async fetchOHLCV (symbol, timeframe = '1m', since = undefined, limit = undefined, params = {}) {
         await this.loadMarkets ();
         // send JSON key/value pairs, such as {"key": "value"}
