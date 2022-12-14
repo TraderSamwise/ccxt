@@ -1910,11 +1910,12 @@ class bitmex(BitmexTealstreetMixin, Exchange):
             orderMultiplier = market['orderMultiplier']
             # request['orderQty'] = float(self.amount_to_precision(symbol, amount * orderMultiplier))
             request['orderQty'] = float(self.amount_to_precision(symbol, amount))
-        if price is not None:
+        if price:
             request['price'] = float(self.price_to_precision(symbol, price))
         stopPrice = self.safe_number_2(params, 'stopPx', 'stopPrice')
         if stopPrice:
             request['stopPx'] = float(self.price_to_precision(symbol, stopPrice))
+            params = self.omit(params, ['stopPx', 'stopPrice'])
         response = self.privatePutOrder(self.extend(request, params))
         return self.parse_order(response)
 
