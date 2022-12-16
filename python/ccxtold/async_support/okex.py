@@ -3235,7 +3235,7 @@ class okex(OkexTealstreetMixin, Exchange):
         status = 'open' if contracts != 0 else 'closed'
         entryPrice = 0 # TODO
         marginRatio = self.safe_float(position, 'mgnRatio')
-        percentage = unrealizedPnl / initialMargin
+        percentage = unrealizedPnl / initialMargin if initialMargin else 0
         collateral = None # TODO float, the maximum amount of collateral that can be lost, affected by pnl
         maxLeverage = market.get('maxLeverage')
 
