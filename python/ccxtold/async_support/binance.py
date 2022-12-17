@@ -3128,8 +3128,8 @@ class binance(Exchange):
         marketId = self.safe_string(position, 'symbol')
         market = self.safe_market(marketId, market)
         symbol = market['symbol']
-        leverageString = self.safe_string(position, 'leverage')
-        leverage = int(leverageString)
+        leverageString = self.safe_string(position, 'leverage', default_value='1')
+        leverage = int(leverageString )
         initialMarginString = self.safe_string(position, 'initialMargin')
         initialMargin = self.parse_number(initialMarginString)
         initialMarginPercentageString = Precise.string_div('1', leverageString, 8)
@@ -3189,7 +3189,7 @@ class binance(Exchange):
         marginRatio = None
         side = None
         percentage = None
-        liquidationPrice = None
+        liquidationPrice = self.safe_float(position, 'liquidationPrice')
         if notionalFloat == 0.0:
             entryPrice = None
         else:
@@ -3427,10 +3427,19 @@ class binance(Exchange):
         if type == 'future':
             method = 'fapiPrivateGetAccount'
         elif type == 'delivery':
-            method = 'dapiPrivateGetAccount'
+            method = 'dapiPrivateGetPositionRisk'
         account = await getattr(self, method)(query)
-        result = self.parse_account_positions(account)
+        if type == 'future':
+            result = self.parse_account_positions(account)
+        elif type == 'delivery':
+            result = self.parse_positions(account)
         return self.filter_by_array(result, 'symbol', symbols, False)
+
+    def parse_positions(self, positions):
+        result = []
+        for position in positions:
+            result.append(self.parse_position(position))
+        return result
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         if not (api in self.urls['api']):
