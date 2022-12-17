@@ -1497,6 +1497,7 @@ class okex(OkexTealstreetMixin, Exchange):
                 account['used'] = self.safe_string(balance, 'frozenBal')
             else:
                 account['total'] = self.safe_string(balance, 'cashBal')
+                account['totalEq'] = self.safe_string(balance, 'eq')
                 account['free'] = availEq
             result[code] = account
         result['timestamp'] = timestamp
