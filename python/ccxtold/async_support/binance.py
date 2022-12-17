@@ -3196,44 +3196,46 @@ class binance(Exchange):
             side = 'short' if (notionalFloat < 0) else 'long'
             marginRatio = self.parse_number(Precise.string_div(maintenanceMarginString, collateralString, 4))
             percentage = self.parse_number(Precise.string_mul(Precise.string_div(unrealizedPnlString, initialMarginString, 4), '100'))
-            if usdm:
-                # calculate liquidation price
-                #
-                # liquidationPrice = (walletBalance / (contracts * (±1 + mmp)))(±entryPrice / (±1 + mmp))
-                #
-                # mmp = maintenanceMarginPercentage
-                # where ± is negative for long and positive for short
-                # TODO: calculate liquidation price for coinm contracts
-                onePlusMaintenanceMarginPercentageString = None
-                entryPriceSignString = entryPriceString
-                if side == 'short':
-                    onePlusMaintenanceMarginPercentageString = Precise.string_add('1', maintenanceMarginPercentageString)
-                else:
-                    onePlusMaintenanceMarginPercentageString = Precise.string_add('-1', maintenanceMarginPercentageString)
-                    entryPriceSignString = Precise.string_mul('-1', entryPriceSignString)
-                error = False
-                try:
-                    leftSide = Precise.string_div(walletBalance, Precise.string_mul(contractsStringAbs, onePlusMaintenanceMarginPercentageString))
-                    rightSide = Precise.string_div(entryPriceSignString, onePlusMaintenanceMarginPercentageString)
-                except Exception as e:
-                    error = True
-                if not error:
-                    pricePrecision = market['precision']['price']
-                    pricePrecisionPlusOne = pricePrecision + 1
-                    pricePrecisionPlusOneString = str(pricePrecisionPlusOne)
-                    # round half up
-                    rounder = Precise('5e-' + pricePrecisionPlusOneString)
-                    rounderString = str(rounder)
-                    liquidationPriceStringRaw = Precise.string_add(leftSide, rightSide)
-                    liquidationPriceRoundedString = Precise.string_add(rounderString, liquidationPriceStringRaw)
-                    truncatedLiquidationPrice = Precise.string_div(liquidationPriceRoundedString, '1', pricePrecision)
-                    if truncatedLiquidationPrice[0] == '-':
-                        # user cannot be liquidated
-                        # since he has more collateral than the size of the position
-                        truncatedLiquidationPrice = None
-                    liquidationPrice = self.parse_number(truncatedLiquidationPrice)
-                else:
-                    liquidationPrice = 0
+            if liquidationPrice is None:
+                # TODO: DPRECATE THIS!!!! NOT NEEDED
+                if usdm:
+                    # calculate liquidation price
+                    #
+                    # liquidationPrice = (walletBalance / (contracts * (±1 + mmp)))(±entryPrice / (±1 + mmp))
+                    #
+                    # mmp = maintenanceMarginPercentage
+                    # where ± is negative for long and positive for short
+                    # TODO: calculate liquidation price for coinm contracts
+                    onePlusMaintenanceMarginPercentageString = None
+                    entryPriceSignString = entryPriceString
+                    if side == 'short':
+                        onePlusMaintenanceMarginPercentageString = Precise.string_add('1', maintenanceMarginPercentageString)
+                    else:
+                        onePlusMaintenanceMarginPercentageString = Precise.string_add('-1', maintenanceMarginPercentageString)
+                        entryPriceSignString = Precise.string_mul('-1', entryPriceSignString)
+                    error = False
+                    try:
+                        leftSide = Precise.string_div(walletBalance, Precise.string_mul(contractsStringAbs, onePlusMaintenanceMarginPercentageString))
+                        rightSide = Precise.string_div(entryPriceSignString, onePlusMaintenanceMarginPercentageString)
+                    except Exception as e:
+                        error = True
+                    if not error:
+                        pricePrecision = market['precision']['price']
+                        pricePrecisionPlusOne = pricePrecision + 1
+                        pricePrecisionPlusOneString = str(pricePrecisionPlusOne)
+                        # round half up
+                        rounder = Precise('5e-' + pricePrecisionPlusOneString)
+                        rounderString = str(rounder)
+                        liquidationPriceStringRaw = Precise.string_add(leftSide, rightSide)
+                        liquidationPriceRoundedString = Precise.string_add(rounderString, liquidationPriceStringRaw)
+                        truncatedLiquidationPrice = Precise.string_div(liquidationPriceRoundedString, '1', pricePrecision)
+                        if truncatedLiquidationPrice[0] == '-':
+                            # user cannot be liquidated
+                            # since he has more collateral than the size of the position
+                            truncatedLiquidationPrice = None
+                        liquidationPrice = self.parse_number(truncatedLiquidationPrice)
+                    else:
+                        liquidationPrice = 0
         price = entryPrice
         tradeMode = None
         positionSide = self.safe_string_2(position, 'positionSide', 'ps')
@@ -3425,14 +3427,14 @@ class binance(Exchange):
         type = self.safe_string(params, 'type', defaultType)
         query = self.omit(params, 'type')
         if type == 'future':
-            method = 'fapiPrivateGetAccount'
+            method = 'fapiPrivateGetPositionRisk'
         elif type == 'delivery':
             method = 'dapiPrivateGetPositionRisk'
-        account = await getattr(self, method)(query)
-        if type == 'future':
-            result = self.parse_account_positions(account)
-        elif type == 'delivery':
-            result = self.parse_positions(account)
+        positions = await getattr(self, method)(query)
+        # if type == 'future':
+        #     result = self.parse_account_positions(account)
+        # elif type == 'delivery':
+        result = self.parse_positions(positions)
         return self.filter_by_array(result, 'symbol', symbols, False)
 
     def parse_positions(self, positions):
