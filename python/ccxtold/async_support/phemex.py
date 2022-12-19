@@ -1567,7 +1567,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
             results = await asyncio.gather(fetch_usd, fetch_btc, fetch_eth)
             combined = {}
             for response in results:
-                if isinstance(response, ccxtold.errors.BaseError) or type(response) == TypeError:
+                if isinstance(response, ccxt.errors.BaseError) or type(response) == TypeError:
                     raise response
                 result = self.parse_swap_balance(response) if (_type == 'swap') else self.parse_spot_balance(response)
                 combined = self.deep_extend(result, combined)
@@ -2379,7 +2379,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
                 results = await asyncio.gather(fetch_usd, fetch_btc, fetch_eth)
                 combined = []
                 for response in results:
-                    if isinstance(response, ccxtold.errors.BaseError) or type(response) == TypeError:
+                    if isinstance(response, ccxt.errors.BaseError) or type(response) == TypeError:
                         raise response
                     data = self.safe_value(response, 'data', {})
                     accountBalance = self.safe_value(data, 'account', {})
