@@ -2868,7 +2868,7 @@ class phemex(PhemexTealstreetMixin, Exchange):
 
         return unifiedResponse
 
-    def switch_hedge_mode(self: 'bitmex', symbol, isHedgeMode, params={}):
+    def set_position_mode(self, isHedgeMode, symbol, params={}):
         unifiedResponse = {
             'symbol': None,
             'tradeMode': 'oneway'

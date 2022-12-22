@@ -3055,7 +3055,7 @@ class okex(OkexTealstreetMixin, Exchange):
         # }
         return unifiedResponse
 
-    def switch_hedge_mode(self, symbol, isHedgeMode, params={}):
+    def set_position_mode(self, isHedgeMode, symbol, params={}):
         hedgeMode = None
         if isHedgeMode:
             hedgeMode = 'long_short_mode'
