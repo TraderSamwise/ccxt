@@ -288,13 +288,15 @@ class BitmexTealstreetMixin(object):
         maintenanceMarginPercentage = self.safe_float(position, 'maintMarginReq') # TODO make maintenanceMargin * btcNotional?
         maintenanceMargin = float(Precise.string_div(position.get('maintMargin'), precision))
         initialMargin = float(Precise.string_div(position.get('initMargin'), precision)) # TODO make initialMargin * btcNotional?
-        unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl'), precision))
+        unrealizedPnl = float(Precise.string_div(position.get('unrealisedGrossPnl', position.get('unrealisedPnl', 0)), precision))
         realizedPnl = float(Precise.string_div(position.get('realisedPnl'), precision))
         pnl = unrealizedPnl + realizedPnl
         liquidationPrice = self.safe_string(position, 'liquidationPrice')
         status = 'open' if position.get('isOpen') else 'closed' # TODO liquidating status
         entryPrice = self.safe_float(position, 'avgEntryPrice')
-        marginRatio = maintenanceMargin / collateral if collateral else None  # not sure what this is, followed binance calc
+        marginRatio = None
+        if collateral and maintenanceMargin:
+            marginRatio = maintenanceMargin / collateral
         marginType = 'cross' if self.safe_value(position, 'crossMargin') == True else 'isolated'
         percentage = 0 if initialMargin == 0 else unrealizedPnl / initialMargin
         maxLeverage = self.safe_float(market, 'maxLeverage')
