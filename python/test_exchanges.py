@@ -1,5 +1,5 @@
 import ccxtpro
-import ccxt
+import ccxtold
 import os
 from python_utils.read_env import read_env
 read_env()
